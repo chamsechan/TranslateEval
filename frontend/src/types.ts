@@ -1,0 +1,151 @@
+export type Status =
+  | 'queued'
+  | 'preprocessing'
+  | 'running'
+  | 'cancelling'
+  | 'cancelled'
+  | 'completed'
+  | 'partial_cancelled'
+  | 'partial_failed'
+  | 'failed'
+
+export interface DatasetVersion {
+  id: string
+  version_label: string
+  change_note?: string
+  content_sha256: string
+  sample_count: number
+  source_languages: string[]
+  created_at: string
+}
+
+export interface Dataset {
+  id: string
+  key: string
+  name: string
+  description: string
+  version_count: number
+  latest_version: DatasetVersion | null
+}
+
+export interface ImportReport {
+  id: string
+  kind: string
+  status: string
+  manifest: Record<string, unknown>
+  report: {
+    valid: boolean
+    errors: Array<Record<string, unknown>>
+    summary?: Record<string, unknown>
+    diff?: Record<string, unknown>
+    datasets?: Array<Record<string, unknown>>
+  }
+  created_at: string
+}
+
+export interface PromptVersion {
+  id: string
+  version: number
+  system_template: string
+  user_template: string
+  published: boolean
+  created_at: string
+}
+
+export interface PromptProfile {
+  id: string
+  name: string
+  description: string
+  versions: PromptVersion[]
+}
+
+export interface EvaluatorRevision {
+  id: string
+  revision: number
+  config: Record<string, unknown>
+  default_threshold: number
+  created_at: string
+}
+
+export interface EvaluatorProfile {
+  id: string
+  name: string
+  evaluator_type: 'openai_compatible_llm' | 'sacrebleu_zh'
+  enabled: boolean
+  revisions: EvaluatorRevision[]
+}
+
+export interface EvaluatorJob {
+  id: string
+  name: string
+  evaluator_type: string
+  revision: number
+  prompt_version_id: string | null
+  status: Status
+  total_items: number
+  completed_items: number
+  cached_items: number
+  failed_items: number
+  cancelled_items: number
+  default_threshold: number
+  error: string | null
+}
+
+export interface DatasetJob {
+  id: string
+  dataset_key: string
+  version_label: string
+  status: Status
+  total_items: number
+  completed_items: number
+  cached_items: number
+  failed_items: number
+  cancelled_items: number
+  cancel_requested: boolean
+  evaluator_jobs: EvaluatorJob[]
+}
+
+export interface EvaluationTask {
+  id: string
+  submission_id: string
+  run_name: string
+  model_family: string
+  platform: string
+  status: Status
+  force_reevaluate: boolean
+  total_items: number
+  completed_items: number
+  cached_items: number
+  failed_items: number
+  cancelled_items: number
+  cancel_requested: boolean
+  created_at: string
+  started_at: string | null
+  finished_at: string | null
+  dataset_jobs: DatasetJob[]
+}
+
+export interface ThresholdSummary {
+  evaluator_job_id: string
+  threshold: number
+  score_min: number
+  score_max: number
+  unit: string
+  micro_mean: number | null
+  macro_mean: number | null
+  micro_accuracy: number | null
+  macro_accuracy: number | null
+  successful: number
+  failed: number
+  cancelled: number
+  total: number
+  coverage: number
+  by_language: Array<{
+    source_language: string
+    mean: number
+    accuracy: number
+    passed: number
+    count: number
+  }>
+  aggregates: Array<Record<string, unknown>>
+}

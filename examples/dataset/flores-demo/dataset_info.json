@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "dataset_key": "flores-demo",
+  "name": "FLORES 多语种演示集",
+  "version_label": "2026-08-30",
+  "change_note": "首个演示版本",
+  "description": "用于验证导入与评分闭环的小型平行语料",
+  "source_languages": [
+    {"code": "de", "name_zh": "德语"},
+    {"code": "th", "name_zh": "泰语"},
+    {"code": "vi", "name_zh": "越南语"}
+  ]
+}
+

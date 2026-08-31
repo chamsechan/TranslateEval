@@ -1,0 +1,14 @@
+.venv/
+node_modules/
+frontend/dist/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+.DS_Store
+var/*
+!var/.gitkeep

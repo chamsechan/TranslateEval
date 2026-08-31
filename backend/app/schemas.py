@@ -1,0 +1,173 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+class LanguageManifest(BaseModel):
+    code: str = Field(min_length=1, max_length=35)
+    name_zh: str = Field(min_length=1, max_length=80)
+
+    @field_validator("code")
+    @classmethod
+    def normalize_code(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class DatasetManifest(BaseModel):
+    schema_version: Literal[1]
+    dataset_key: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$")
+    name: str = Field(min_length=1, max_length=200)
+    version_label: str = Field(min_length=1, max_length=120)
+    change_note: str = ""
+    description: str = ""
+    source_languages: list[LanguageManifest] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def unique_languages(self) -> "DatasetManifest":
+        codes = [item.code for item in self.source_languages]
+        if len(codes) != len(set(codes)):
+            raise ValueError("source_languages 中存在重复语种代码")
+        return self
+
+
+class DatasetSampleInput(BaseModel):
+    sample_id: str = Field(min_length=1, max_length=240)
+    source_language: str = Field(min_length=1, max_length=35)
+    source_text: str = Field(min_length=1)
+    reference_zh: str = Field(min_length=1)
+
+    @field_validator("sample_id", "source_text", "reference_zh")
+    @classmethod
+    def reject_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("字段不能只包含空白")
+        return value
+
+    @field_validator("source_language")
+    @classmethod
+    def normalize_language(cls, value: str) -> str:
+        return value.strip().lower()
+
+
+class InferenceDatasetManifest(BaseModel):
+    dataset_key: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$")
+    dataset_content_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
+
+
+class InferenceDetails(BaseModel):
+    platform: str = Field(min_length=1, max_length=160)
+    device: str = ""
+    precision: str = ""
+    mode: Literal["source_language_provided", "auto_detect"]
+    generated_at: datetime | None = None
+    code_revision: str = ""
+    decoding: dict[str, Any] = Field(default_factory=dict)
+
+
+class ResultManifest(BaseModel):
+    schema_version: Literal[1]
+    run_name: str = Field(min_length=1, max_length=200)
+    model_family: str = Field(min_length=1, max_length=200)
+    checkpoint_name: str = Field(min_length=1, max_length=240)
+    model_version: str = ""
+    model_notes: str = ""
+    inference: InferenceDetails
+    datasets: list[InferenceDatasetManifest] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def unique_datasets(self) -> "ResultManifest":
+        keys = [item.dataset_key for item in self.datasets]
+        if len(keys) != len(set(keys)):
+            raise ValueError("datasets 中存在重复 dataset_key")
+        return self
+
+
+class PredictionInput(BaseModel):
+    sample_id: str = Field(min_length=1, max_length=240)
+    translation_zh: str = Field(min_length=1)
+    predicted_language: str | None = Field(default=None, max_length=35)
+
+    @field_validator("translation_zh")
+    @classmethod
+    def reject_blank_translation(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("translation_zh 不能只包含空白")
+        return value
+
+    @field_validator("predicted_language")
+    @classmethod
+    def normalize_predicted_language(cls, value: str | None) -> str | None:
+        return value.strip().lower() if value else None
+
+
+class PathImportRequest(BaseModel):
+    path: str = Field(min_length=1)
+    version_overrides: dict[str, str] = Field(default_factory=dict)
+
+
+class EvaluatorSelection(BaseModel):
+    evaluator_revision_id: str
+    prompt_version_id: str | None = None
+
+
+class CommitSubmissionRequest(BaseModel):
+    evaluators: list[EvaluatorSelection] = Field(min_length=1)
+    force_reevaluate: bool = False
+
+
+class PromptProfileCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    description: str = ""
+    system_template: str = Field(min_length=1)
+    user_template: str = Field(min_length=1)
+    published: bool = True
+
+
+class PromptVersionCreate(BaseModel):
+    system_template: str = Field(min_length=1)
+    user_template: str = Field(min_length=1)
+    published: bool = True
+
+
+class EvaluatorProfileCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    evaluator_type: Literal["openai_compatible_llm", "sacrebleu_zh"]
+    config: dict[str, Any]
+    default_threshold: float
+    enabled: bool = True
+
+
+class EvaluatorRevisionCreate(BaseModel):
+    config: dict[str, Any]
+    default_threshold: float
+
+
+class EvaluatorProfileUpdate(BaseModel):
+    enabled: bool
+
+
+class ThresholdSummary(BaseModel):
+    evaluator_job_id: str
+    threshold: float
+    score_min: float
+    score_max: float
+    unit: str
+    micro_mean: float | None
+    macro_mean: float | None
+    micro_accuracy: float | None
+    macro_accuracy: float | None
+    successful: int
+    failed: int
+    cancelled: int
+    total: int
+    coverage: float
+    by_language: list[dict[str, Any]]
+    aggregates: list[dict[str, Any]]
+
+
+class CompareResultsRequest(BaseModel):
+    evaluator_job_ids: list[str] = Field(min_length=2, max_length=12)
+    threshold: float

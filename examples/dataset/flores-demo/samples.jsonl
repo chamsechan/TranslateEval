@@ -1,0 +1,7 @@
+{"sample_id":"de-000001","source_language":"de","source_text":"Guten Morgen!","reference_zh":"早上好！"}
+{"sample_id":"de-000002","source_language":"de","source_text":"Vielen Dank für Ihre Hilfe.","reference_zh":"非常感谢您的帮助。"}
+{"sample_id":"th-000001","source_language":"th","source_text":"วันนี้อากาศดีมาก","reference_zh":"今天天气很好。"}
+{"sample_id":"th-000002","source_language":"th","source_text":"ยินดีที่ได้รู้จัก","reference_zh":"很高兴认识你。"}
+{"sample_id":"vi-000001","source_language":"vi","source_text":"Chúc bạn một ngày tốt lành.","reference_zh":"祝你今天愉快。"}
+{"sample_id":"vi-000002","source_language":"vi","source_text":"Tôi đang học tiếng Trung.","reference_zh":"我正在学习中文。"}
+

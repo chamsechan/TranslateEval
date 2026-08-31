@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "run_name": "qwen3-demo-run",
+  "model_family": "qwen3-0.6b",
+  "checkpoint_name": "qwen3-0.6b-demo-step-8000",
+  "model_version": "step-8000",
+  "model_notes": "用于演示完整评测流程",
+  "inference": {
+    "platform": "nvidia-1080ti",
+    "device": "GPU",
+    "precision": "fp16",
+    "mode": "source_language_provided",
+    "generated_at": "2026-08-30T12:00:00Z",
+    "code_revision": "demo",
+    "decoding": {"temperature": 0, "top_p": 1, "max_new_tokens": 512}
+  },
+  "datasets": [
+    {
+      "dataset_key": "flores-demo",
+      "dataset_content_sha256": "24fbe06801b12540f1bc455c1b570520db96d467b7886649563257a169d6fb3a"
+    }
+  ]
+}
+
