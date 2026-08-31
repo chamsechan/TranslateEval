@@ -30,7 +30,7 @@ const menuItems = [
   { key: '/tasks', icon: <UnorderedListOutlined />, label: '任务队列' },
   { key: '/results', icon: <ExperimentOutlined />, label: '评测结果' },
   { key: '/models', icon: <ExperimentOutlined />, label: '模型记录' },
-  { key: '/settings', icon: <SettingOutlined />, label: '评价设置' },
+  { key: '/settings', icon: <SettingOutlined />, label: '模型与评价设置' },
 ]
 
 export default function App() {

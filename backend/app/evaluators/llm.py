@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from time import perf_counter
 from typing import Any
 
 import httpx
@@ -22,6 +23,71 @@ DEFAULT_USER_TEMPLATE = """源语种：{source_language}
 候选译文：{translation_zh}
 
 返回格式：{{"score": 0到10之间的浮点数, "reason": "简短中文理由"}}"""
+
+
+async def check_openai_compatible_connection(
+    config: dict[str, Any], *, transport: httpx.AsyncBaseTransport | None = None
+) -> dict[str, Any]:
+    """通过 OpenAI 兼容的 /models 接口检查服务、凭证和模型名。"""
+    normalized = OpenAICompatibleEvaluator.validate_config(config)
+    started = perf_counter()
+    try:
+        async with httpx.AsyncClient(
+            base_url=normalized["base_url"].rstrip("/") + "/",
+            timeout=min(float(normalized["timeout_seconds"]), 10.0),
+            headers={"Authorization": f"Bearer {normalized['api_key']}"},
+            transport=transport,
+        ) as client:
+            response = await client.get("models")
+    except httpx.HTTPError as exc:
+        return {
+            "status": "disconnected",
+            "detail": f"无法连接模型服务：{exc.__class__.__name__}",
+            "latency_ms": None,
+            "model_available": None,
+        }
+
+    latency_ms = round((perf_counter() - started) * 1000)
+    if response.status_code >= 400:
+        if response.status_code in {401, 403}:
+            detail = f"模型服务已响应，但身份验证失败（HTTP {response.status_code}）"
+        else:
+            detail = f"模型服务返回 HTTP {response.status_code}"
+        return {
+            "status": "disconnected",
+            "detail": detail,
+            "latency_ms": latency_ms,
+            "model_available": None,
+        }
+
+    model_ids: set[str] = set()
+    try:
+        payload = response.json()
+        if isinstance(payload, dict) and isinstance(payload.get("data"), list):
+            model_ids = {
+                str(item["id"])
+                for item in payload["data"]
+                if isinstance(item, dict) and item.get("id") is not None
+            }
+    except (TypeError, ValueError):
+        # 某些兼容服务的 /models 不返回标准结构，但 2xx 仍说明服务可达。
+        pass
+
+    configured_model = str(normalized["model"])
+    model_available = configured_model in model_ids if model_ids else None
+    if model_available is False:
+        return {
+            "status": "disconnected",
+            "detail": f"服务可达，但未找到模型 {configured_model}",
+            "latency_ms": latency_ms,
+            "model_available": False,
+        }
+    return {
+        "status": "connected",
+        "detail": f"服务与模型 {configured_model} 可用",
+        "latency_ms": latency_ms,
+        "model_available": model_available,
+    }
 
 
 class _SafeValues(dict[str, str]):
@@ -160,4 +226,3 @@ class OpenAICompatibleEvaluator(BaseEvaluator):
 
     async def close(self) -> None:
         await self.client.aclose()
-

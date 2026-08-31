@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import SessionLocal, get_session
 from .evaluators import validate_evaluator_config
+from .evaluators.llm import check_openai_compatible_connection
 from .importers import (
     ImportValidationError,
     commit_dataset_import,
@@ -696,6 +697,29 @@ def list_evaluator_profiles(
     if enabled_only:
         query = query.where(EvaluatorProfile.enabled.is_(True))
     return [evaluator_profile_dict(item) for item in session.scalars(query)]
+
+
+@router.post("/evaluator-profiles/{profile_id}/connection-test")
+async def test_evaluator_connection(
+    profile_id: str, session: Session = Depends(get_session)
+) -> dict[str, Any]:
+    profile = session.get(EvaluatorProfile, profile_id)
+    if not profile:
+        raise fail(404, "评价器配置不存在")
+    if profile.evaluator_type != "openai_compatible_llm":
+        return {
+            "status": "connected",
+            "detail": "本地评价器可用，无需连接外部模型服务",
+            "latency_ms": 0,
+            "model_available": True,
+        }
+    if not profile.revisions:
+        raise fail(400, "评价器尚无可用修订")
+    latest = max(profile.revisions, key=lambda item: item.revision)
+    try:
+        return await check_openai_compatible_connection(latest.config)
+    except ValueError as exc:
+        raise fail(400, str(exc)) from exc
 
 
 @router.post("/evaluator-profiles")

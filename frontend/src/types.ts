@@ -75,6 +75,13 @@ export interface EvaluatorProfile {
   revisions: EvaluatorRevision[]
 }
 
+export interface EvaluatorConnection {
+  status: 'connected' | 'disconnected'
+  detail: string
+  latency_ms: number | null
+  model_available: boolean | null
+}
+
 export interface EvaluatorJob {
   id: string
   name: string

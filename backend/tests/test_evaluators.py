@@ -5,7 +5,12 @@ import pytest
 
 from app.evaluators.base import RetriableEvaluatorError, ScoreInput
 from app.evaluators.bleu import SacreBleuZhEvaluator
-from app.evaluators.llm import OpenAICompatibleEvaluator, parse_json_content, render_template
+from app.evaluators.llm import (
+    OpenAICompatibleEvaluator,
+    check_openai_compatible_connection,
+    parse_json_content,
+    render_template,
+)
 
 
 @pytest.mark.asyncio
@@ -48,3 +53,32 @@ async def test_openai_compatible_structured_score() -> None:
     assert result.reason == "准确"
     await evaluator.close()
 
+
+@pytest.mark.asyncio
+async def test_openai_compatible_connection_checks_configured_model() -> None:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/models"
+        assert request.headers["Authorization"] == "Bearer secret"
+        return httpx.Response(200, json={"data": [{"id": "judge-a"}]})
+
+    result = await check_openai_compatible_connection(
+        {"base_url": "https://judge.invalid/v1", "model": "judge-a", "api_key": "secret"},
+        transport=httpx.MockTransport(handler),
+    )
+    assert result["status"] == "connected"
+    assert result["model_available"] is True
+    assert result["latency_ms"] is not None
+
+
+@pytest.mark.asyncio
+async def test_openai_compatible_connection_reports_missing_model() -> None:
+    async def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"data": [{"id": "judge-b"}]})
+
+    result = await check_openai_compatible_connection(
+        {"base_url": "https://judge.invalid/v1", "model": "judge-a", "api_key": "secret"},
+        transport=httpx.MockTransport(handler),
+    )
+    assert result["status"] == "disconnected"
+    assert result["model_available"] is False
+    assert "judge-a" in result["detail"]

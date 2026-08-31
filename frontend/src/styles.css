@@ -96,6 +96,11 @@ body { margin: 0; min-width: 1120px; min-height: 100vh; }
 .source-cell { max-width: 330px; white-space: normal; line-height: 1.55; }
 .reason-text { color: #5e6d82; font-size: 12px; line-height: 1.55; }
 .settings-warning { background: #fff9ed; border: 1px solid #f5dfb5; border-radius: 10px; padding: 12px 15px; color: #885d15; }
+.model-service-card { height: 100%; }
+.model-connection { margin-top: 14px; padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 14px; background: #f5f7fa; border: 1px solid #e8edf4; }
+.model-connection.connected { background: #f0fbf7; border-color: #c9eee1; }
+.model-connection.disconnected { background: #fff4f3; border-color: #f5d0cd; }
+.model-connection .ant-typography { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .code-template { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: #f5f7fa; padding: 12px; border-radius: 8px; white-space: pre-wrap; }
 .empty-soft { padding: 52px 0; background: #fafbfd; border: 1px dashed #dce4ef; border-radius: 12px; }
 @media (max-width: 1250px) { .app-content { padding-inline: 22px; } }
