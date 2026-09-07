@@ -30,7 +30,7 @@ export default function ModelsPage() {
           { title: '模型族', dataIndex: 'model_family', render: (value: string) => <Tag color="blue">{value}</Tag> },
           { title: '版本', dataIndex: 'model_version', render: (value: string) => value || '—' },
           { title: '推理平台', dataIndex: 'inference_platform' },
-          { title: '模式', dataIndex: 'inference_mode', render: (value: string) => value === 'auto_detect' ? <Tag color="purple">自动识别语种</Tag> : <Tag>已提供源语种</Tag> },
+          { title: '模式', dataIndex: 'inference_mode', render: (value: string) => <Tag color={value === 'auto_detect' ? 'purple' : undefined}>{value === 'auto_detect' ? '自动识别语种' : value === 'source_language_provided' ? '已提供源语种' : value}</Tag> },
           { title: '备注', dataIndex: 'notes', ellipsis: true },
           { title: '提交时间', dataIndex: 'created_at', render: formatDate },
           { title: '操作', render: (_, row) => <Button type="link" onClick={() => setSelected(row.id)}>运行详情</Button> },

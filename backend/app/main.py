@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 
 from .api import router
+from .import_api import router as import_router
 from .config import settings
 from .database import SessionLocal, init_db
 from .seed import seed_defaults
@@ -53,6 +54,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(router)
+app.include_router(import_router)
 
 if settings.frontend_dist.is_dir():
     app.mount("/", SPAStaticFiles(directory=settings.frontend_dist, html=True), name="frontend")

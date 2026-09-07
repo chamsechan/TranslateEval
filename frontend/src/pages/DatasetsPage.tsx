@@ -1,15 +1,16 @@
-import { CheckCircleOutlined, CloudUploadOutlined, DatabaseOutlined, FolderOpenOutlined, HistoryOutlined, PlusOutlined, WarningOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Col, Descriptions, Empty, Form, Input, Modal, Row, Space, Skeleton, Statistic, Tabs, Tag, Timeline, Typography, Upload } from 'antd'
+import { CheckCircleOutlined, DatabaseOutlined, HistoryOutlined, PlusOutlined, WarningOutlined } from '@ant-design/icons'
+import { Alert, App, Button, Card, Col, Descriptions, Empty, Modal, Row, Space, Skeleton, Statistic, Tag, Timeline, Typography } from 'antd'
 import { useState } from 'react'
 import { api, formatDate } from '../api'
 import PageHeader from '../components/PageHeader'
 import DatasetSamples from '../components/DatasetSamples'
 import QueryError from '../components/QueryError'
+import ImportSource from '../components/ImportSource'
+import DatasetImportEditor from '../components/DatasetImportEditor'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { Dataset, DatasetVersion, ImportReport } from '../types'
 
-const { Dragger } = Upload
-const fieldLabels: Record<string, string> = { dataset_key: '数据集标识', name: '名称', version_label: '版本标签', sample_count: '样本数', source_languages: '源语种', content_sha256: '内容哈希', added: '新增', removed: '移除', source_changed: '源文变化', reference_changed: '参考译文变化', unchanged: '未变化' }
+const fieldLabels: Record<string, string> = { dataset_key: '数据集标识', name: '名称', version_label: '版本标签', sample_count: '样本数', source_languages: '源语种', languages: '源语种', is_new_dataset: '新数据集', content_sha256: '内容哈希', added: '新增', removed: '移除', source_changed: '源文变化', reference_changed: '参考译文变化', unchanged: '未变化' }
 
 export default function DatasetsPage() {
   const { message } = App.useApp()
@@ -18,29 +19,14 @@ export default function DatasetsPage() {
   const load = datasetQuery.refresh
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [path, setPath] = useState('')
-  const [file, setFile] = useState<File | null>(null)
+  const [draft, setDraft] = useState<ImportReport | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
   const [selected, setSelected] = useState<Dataset | null>(null)
   const [sampleVersion, setSampleVersion] = useState<DatasetVersion | null>(null)
   const versionQuery = useApiQuery<DatasetVersion[]>(selected ? `/datasets/${selected.id}/versions` : null)
   const versions = versionQuery.data || []
 
-  const resetModal = () => { setOpen(false); setReport(null); setPath(''); setFile(null) }
-  const validate = async () => {
-    setLoading(true)
-    try {
-      let value: ImportReport
-      if (file) {
-        const body = new FormData(); body.append('file', file)
-        value = await api('/dataset-imports/validate-upload', { method: 'POST', body })
-      } else {
-        value = await api('/dataset-imports/validate', { method: 'POST', body: JSON.stringify({ path }) })
-      }
-      setReport(value)
-      if (value.report.valid) message.success('核验通过，可以写入新版本')
-    } catch (error) { message.error((error as Error).message) } finally { setLoading(false) }
-  }
+  const resetModal = () => { setOpen(false); setReport(null); setDraft(null) }
   const commit = async () => {
     if (!report) return
     setLoading(true)
@@ -76,17 +62,10 @@ export default function DatasetsPage() {
           </Col>
         ))}
       </Row>
-      {!datasetQuery.loading && !datasetQuery.error && !datasets.length && <Empty className="empty-soft" description="还没有数据集，先导入 dataset_info.json 与 samples.jsonl" />}
+      {!datasetQuery.loading && !datasetQuery.error && !datasets.length && <Empty className="empty-soft" description="还没有数据集，先导入 samples.jsonl 并填写数据集信息" />}
 
       <Modal title="导入数据集或新版本" width={760} open={open} onCancel={() => { if (!loading) resetModal() }} footer={report ? [<Button key="back" disabled={loading} onClick={() => setReport(null)}>修改并重新核验</Button>, report.report.valid && <Button key="commit" type="primary" loading={loading} onClick={commit}>确认写入不可变版本</Button>] : null}>
-        {!report ? <>
-          <Alert type="info" showIcon message="导入采用严格模式" description="缺失文件、重复 ID、未声明语种或格式错误都会阻止整批写入，并生成核验报告。" style={{ marginBottom: 18 }} />
-          <Tabs onChange={() => { setPath(''); setFile(null) }} items={[
-            { key: 'path', label: '服务器目录', children: <Form layout="vertical"><Form.Item label="数据集目录或 ZIP 的本机路径" required><Input size="large" prefix={<FolderOpenOutlined />} placeholder="/data/corpora/flores-devtest" value={path} onChange={(e) => { setPath(e.target.value); setFile(null) }} /></Form.Item></Form> },
-            { key: 'upload', label: '上传 ZIP', children: <Dragger fileList={file ? [{ uid: 'dataset-zip', name: file.name, status: 'done' }] : []} accept=".zip" maxCount={1} beforeUpload={(value) => { setFile(value); setPath(''); return false }} onRemove={() => setFile(null)}><p className="ant-upload-drag-icon"><CloudUploadOutlined /></p><p>拖入或选择数据集 ZIP</p><p className="ant-upload-hint">ZIP 根目录应包含 dataset_info.json 和 samples.jsonl</p></Dragger> },
-          ]} />
-          <Button type="primary" size="large" block loading={loading} disabled={!path && !file} onClick={validate}>开始核验</Button>
-        </> : <div className={report.report.valid ? 'validation-ok' : 'validation-error'} style={{ paddingLeft: 18 }}>
+        {!report ? (draft ? <DatasetImportEditor draft={draft} datasets={datasets} onBusy={setLoading} onBack={() => setDraft(null)} onValidated={(value) => { setDraft(value); setReport(value) }} /> : <ImportSource kind="dataset" onPrepared={setDraft} onBusy={setLoading} />) : <div className={report.report.valid ? 'validation-ok' : 'validation-error'} style={{ paddingLeft: 18 }}>
           <Alert type={report.report.valid ? 'success' : 'error'} showIcon icon={report.report.valid ? <CheckCircleOutlined /> : <WarningOutlined />} message={report.report.valid ? '核验通过' : '核验失败'} description={report.report.valid ? '数据结构、ID 与语种声明均有效。' : `发现 ${report.report.errors.length} 项问题，数据库未发生变化。`} />
           {report.report.summary && <Descriptions bordered size="small" column={{ xs: 1, sm: 2 }} style={{ marginTop: 18 }} items={Object.entries(report.report.summary).map(([key, value]) => ({ key, label: fieldLabels[key] || key, children: Array.isArray(value) ? value.join(', ') : String(value) }))} />}
           {report.report.diff && <Card size="small" title="相对最新版本的变化" style={{ marginTop: 16 }}><Space wrap size="large">{['added', 'removed', 'source_changed', 'reference_changed', 'unchanged'].map((key) => <Statistic key={key} title={fieldLabels[key]} value={Number(report.report.diff?.[key] || 0)} valueStyle={{ fontSize: 18 }} />)}</Space></Card>}

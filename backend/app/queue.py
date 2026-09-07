@@ -751,7 +751,7 @@ def language_detection_summary(session: Session, dataset_job_id: str) -> dict[st
     if not job:
         raise ValueError("数据集任务不存在")
     model_run = job.task.submission.model_run
-    if model_run.inference_mode != "auto_detect":
+    if not model_run.detects_language:
         return {"applicable": False, "reason": "本次推理已提供源语种"}
     submission_dataset = job.submission_dataset
     rows = session.execute(

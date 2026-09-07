@@ -46,8 +46,23 @@ export interface ImportReport {
     summary?: Record<string, unknown>
     diff?: Record<string, unknown>
     datasets?: Array<Record<string, unknown>>
+    has_manifest?: boolean
+    detected_languages?: string[]
+    root_predictions?: boolean
+    prediction_directories?: string[]
   }
   created_at: string
+}
+
+export type ImportOptionCategory = 'model' | 'device' | 'platform' | 'precision' | 'inference_mode'
+
+export interface ImportOption {
+  id: string
+  category: ImportOptionCategory
+  value: string
+  label: string
+  enabled: boolean
+  detects_language: boolean
 }
 
 export interface PromptVersion {

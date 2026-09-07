@@ -98,6 +98,11 @@ def test_language_detection_metrics_when_auto_detect_is_enabled(session_factory)
         task = session.get(queue.EvaluationTask, task_id)
         assert task is not None
         task.submission.model_run.inference_mode = "auto_detect"
+        # New imports preserve detection behavior alongside the mode code.
+        run = task.submission.model_run
+        run.result_info = {**run.result_info, "inference": {
+            **run.result_info["inference"], "mode": "auto_detect", "detects_language": True,
+        }}
         predictions = list(
             session.scalars(
                 select(Prediction).where(

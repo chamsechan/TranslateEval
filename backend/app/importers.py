@@ -26,6 +26,7 @@ from .models import (
 )
 from .normalization import dataset_content_hash, normalize_text, sample_content_hash, sha256_text
 from .schemas import DatasetManifest, DatasetSampleInput, PredictionInput, ResultManifest
+from .import_options import remember_manifest_options, snapshot_inference_mode
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -68,13 +69,19 @@ def stage_source(source_path: str | Path, kind: str) -> Path:
         elif source.suffix.lower() == ".zip":
             _safe_extract(source, target)
             children = list(target.iterdir())
-            if len(children) == 1 and children[0].is_dir():
+            manifest_name = "dataset_info.json" if kind == "dataset" else "result_info.json"
+            if len(children) == 1 and children[0].is_dir() and (
+                kind == "dataset" or (children[0] / manifest_name).is_file()
+                or not (children[0] / "predictions.jsonl").is_file()
+            ):
                 nested = children[0]
                 for child in list(nested.iterdir()):
                     shutil.move(str(child), target / child.name)
                 nested.rmdir()
+        elif source.suffix.lower() == ".jsonl":
+            shutil.copy2(source, target / ("samples.jsonl" if kind == "dataset" else "predictions.jsonl"))
         else:
-            raise ImportValidationError("只支持目录或 .zip 文件")
+            raise ImportValidationError("只支持目录、.zip 或 .jsonl 文件")
     except Exception:
         shutil.rmtree(target, ignore_errors=True)
         raise
@@ -140,15 +147,21 @@ def _report_record(
 
 def validate_dataset_import(session: Session, source_path: str | Path) -> ImportValidationReport:
     staged = stage_source(source_path, "dataset")
+    return validate_dataset_staged(session, staged)
+
+
+def validate_dataset_staged(session: Session, staged: Path,
+                            manifest_data: dict[str, Any] | None = None) -> ImportValidationReport:
     errors: list[dict[str, Any]] = []
     try:
-        manifest = _load_json(staged / "dataset_info.json", DatasetManifest)
-    except ImportValidationError as exc:
+        manifest = (DatasetManifest.model_validate(manifest_data) if manifest_data is not None
+                    else _load_json(staged / "dataset_info.json", DatasetManifest))
+    except (ImportValidationError, ValidationError) as exc:
         return _report_record(
             session,
             kind="dataset",
             staged_path=staged,
-            manifest={},
+            manifest=manifest_data or {},
             report={"valid": False, "errors": [{"message": str(exc)}]},
         )
 
@@ -352,19 +365,40 @@ def validate_submission_import(
     version_overrides: dict[str, str] | None = None,
 ) -> ImportValidationReport:
     staged = stage_source(source_path, "submission")
+    return validate_submission_staged(session, staged, version_overrides=version_overrides)
+
+
+def prediction_path(staged: Path, dataset_key: str, dataset_count: int) -> Path:
+    if dataset_count == 1 and (staged / "predictions.jsonl").is_file():
+        return staged / "predictions.jsonl"
+    return staged / dataset_key / "predictions.jsonl"
+
+
+def validate_submission_staged(
+    session: Session, staged: Path, manifest_data: dict[str, Any] | None = None,
+    version_overrides: dict[str, str] | None = None,
+) -> ImportValidationReport:
     overrides = version_overrides or {}
     try:
-        manifest = _load_json(staged / "result_info.json", ResultManifest)
-    except ImportValidationError as exc:
+        manifest = (ResultManifest.model_validate(manifest_data) if manifest_data is not None
+                    else _load_json(staged / "result_info.json", ResultManifest))
+    except (ImportValidationError, ValidationError) as exc:
         return _report_record(
             session,
             kind="submission",
             staged_path=staged,
-            manifest={},
+            manifest=manifest_data or {},
             report={"valid": False, "errors": [{"message": str(exc)}]},
         )
 
+    snapshot_inference_mode(session, manifest)
     errors: list[dict[str, Any]] = []
+    file_keys = {p.parent.name for p in staged.glob("*/predictions.jsonl")}
+    manifest_keys = {entry.dataset_key for entry in manifest.datasets}
+    if file_keys - manifest_keys:
+        errors.append({"message": "存在未选择数据集的预测文件", "dataset_keys": sorted(file_keys - manifest_keys)})
+    if (staged / "predictions.jsonl").is_file() and (file_keys or len(manifest.datasets) != 1):
+        errors.append({"message": "根目录 predictions.jsonl 只能对应一个数据集，不能与子目录预测混用"})
     dataset_reports: list[dict[str, Any]] = []
     for dataset_entry in manifest.datasets:
         dataset = session.scalar(select(Dataset).where(Dataset.key == dataset_entry.dataset_key))
@@ -399,7 +433,7 @@ def validate_submission_import(
             )
 
         predictions, row_errors = _load_jsonl(
-            staged / dataset_entry.dataset_key / "predictions.jsonl", PredictionInput
+            prediction_path(staged, dataset_entry.dataset_key, len(manifest.datasets)), PredictionInput
         )
         for error in row_errors:
             error["dataset_key"] = dataset_entry.dataset_key
@@ -461,7 +495,13 @@ def validate_submission_import(
         "summary": {
             "run_name": manifest.run_name,
             "model_family": manifest.model_family,
+            "checkpoint_name": manifest.checkpoint_name,
+            "model_version": manifest.model_version,
             "platform": manifest.inference.platform,
+            "device": manifest.inference.device,
+            "precision": manifest.inference.precision,
+            "mode": manifest.inference.mode,
+            "detects_language": manifest.inference.detects_language,
             "dataset_count": len(manifest.datasets),
             "prediction_count": sum(item["prediction_count"] for item in dataset_reports),
         },
@@ -497,7 +537,7 @@ def commit_submission_import(
     for dataset_entry in manifest.datasets:
         mapping = report_by_key[dataset_entry.dataset_key]
         predictions, errors = _load_jsonl(
-            Path(record.staged_path) / dataset_entry.dataset_key / "predictions.jsonl", PredictionInput,
+            prediction_path(Path(record.staged_path), dataset_entry.dataset_key, len(manifest.datasets)), PredictionInput,
         )
         if errors or mapping.get("predictions_sha256") != prediction_content_hash(predictions):
             raise ImportValidationError("暂存结果内容已变化或核验记录需要升级，请重新核验")
@@ -505,6 +545,7 @@ def commit_submission_import(
         if len(predictions) != len(expected) or {row.sample_id for row in predictions} != expected:
             raise ImportValidationError("预测 ID 与数据集版本不完整匹配，请重新核验")
         verified_predictions[dataset_entry.dataset_key] = predictions
+    remember_manifest_options(session, manifest)
     model_run = ModelRun(
         run_name=manifest.run_name,
         model_family=manifest.model_family,

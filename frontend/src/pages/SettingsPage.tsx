@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { api, formatDate } from '../api'
 import PageHeader from '../components/PageHeader'
 import QueryError from '../components/QueryError'
+import ImportOptionsPanel from '../components/ImportOptionsPanel'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorConnection, EvaluatorProfile, PromptProfile } from '../types'
 
@@ -97,10 +98,11 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="模型与评价设置" subtitle="在这里维护评分模型服务、查看联通状态，并管理 Prompt 版本。" />
+      <PageHeader title="模型与评价设置" subtitle="维护导入下拉选项、评分模型服务和 Prompt 版本。" />
       <QueryError error={evaluatorQuery.error || promptQuery.error} retry={load} />
       {(evaluatorQuery.loading || promptQuery.loading) && !evaluatorQuery.data && <Skeleton active />}
       <Tabs items={[
+        { key: 'import-options', label: '导入下拉选项', children: <ImportOptionsPanel /> },
         { key: 'evaluators', label: <Space><ApiOutlined />模型服务 / 评价器</Space>, children: <>
           <Alert className="settings-warning" type="warning" showIcon icon={<KeyOutlined />} message="API Key 按已确认方案明文保存在本机 SQLite" description="接口不会回传原值，页面只显示掩码，应用日志禁止打印密钥。备份数据库时请按敏感文件处理。" />
           <Alert style={{ marginTop: 12 }} type="info" showIcon message="编辑会生成新修订" description="Base URL、模型名或 API Key 变更后，新任务使用最新修订，已有任务仍保留原配置快照。" />

@@ -26,6 +26,13 @@ class DatasetManifest(BaseModel):
     description: str = ""
     source_languages: list[LanguageManifest] = Field(min_length=1)
 
+    @field_validator("name", "version_label")
+    @classmethod
+    def reject_blank_metadata(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("字段不能只包含空白")
+        return value
+
     @model_validator(mode="after")
     def unique_languages(self) -> "DatasetManifest":
         codes = [item.code for item in self.source_languages]
@@ -60,12 +67,20 @@ class InferenceDatasetManifest(BaseModel):
 
 class InferenceDetails(BaseModel):
     platform: str = Field(min_length=1, max_length=160)
-    device: str = ""
-    precision: str = ""
-    mode: Literal["source_language_provided", "auto_detect"]
+    device: str = Field(default="", max_length=200)
+    precision: str = Field(default="", max_length=200)
+    mode: str = Field(min_length=1, max_length=40)
+    detects_language: bool | None = None
     generated_at: datetime | None = None
     code_revision: str = ""
     decoding: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("platform", "mode")
+    @classmethod
+    def reject_blank_metadata(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("字段不能只包含空白")
+        return value
 
 
 class ResultManifest(BaseModel):
@@ -73,10 +88,17 @@ class ResultManifest(BaseModel):
     run_name: str = Field(min_length=1, max_length=200)
     model_family: str = Field(min_length=1, max_length=200)
     checkpoint_name: str = Field(min_length=1, max_length=240)
-    model_version: str = ""
+    model_version: str = Field(default="", max_length=120)
     model_notes: str = ""
     inference: InferenceDetails
     datasets: list[InferenceDatasetManifest] = Field(min_length=1)
+
+    @field_validator("run_name", "model_family", "checkpoint_name")
+    @classmethod
+    def reject_blank_metadata(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("字段不能只包含空白")
+        return value
 
     @model_validator(mode="after")
     def unique_datasets(self) -> "ResultManifest":
@@ -107,6 +129,43 @@ class PredictionInput(BaseModel):
 class PathImportRequest(BaseModel):
     path: str = Field(min_length=1)
     version_overrides: dict[str, str] = Field(default_factory=dict)
+
+
+class ImportManifestRequest(BaseModel):
+    manifest: dict[str, Any]
+
+
+ImportOptionCategory = Literal["model", "device", "platform", "precision", "inference_mode"]
+
+
+class ImportOptionUpdate(BaseModel):
+    label: str = Field(min_length=1, max_length=200)
+    enabled: bool = True
+    detects_language: bool = False
+
+    @field_validator("label", mode="before")
+    @classmethod
+    def trim_label(cls, value: str) -> str:
+        return value.strip() if isinstance(value, str) else value
+
+
+class ImportOptionCreate(ImportOptionUpdate):
+    category: ImportOptionCategory
+    value: str = Field(min_length=1, max_length=200)
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def trim_value(cls, value: str) -> str:
+        return value.strip() if isinstance(value, str) else value
+
+    @model_validator(mode="after")
+    def valid_option(self) -> "ImportOptionCreate":
+        limit = {"platform": 160, "inference_mode": 40}.get(self.category, 200)
+        if len(self.value) > limit:
+            raise ValueError(f"选项值不能超过 {limit} 个字符")
+        if self.category != "inference_mode" and self.detects_language:
+            raise ValueError("只有推理模式可以设置语种识别统计")
+        return self
 
 
 class EvaluatorSelection(BaseModel):

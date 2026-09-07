@@ -45,6 +45,18 @@ class Language(Base, TimestampMixin):
     name_zh: Mapped[str] = mapped_column(String(80), nullable=False)
 
 
+class ImportOption(Base, TimestampMixin):
+    __tablename__ = "import_options"
+    __table_args__ = (UniqueConstraint("category", "value", name="uq_import_option_value"),)
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    category: Mapped[str] = mapped_column(String(40), nullable=False)
+    value: Mapped[str] = mapped_column(String(200), nullable=False)
+    label: Mapped[str] = mapped_column(String(200), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    detects_language: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
 class Dataset(Base, TimestampMixin):
     __tablename__ = "datasets"
 
@@ -117,6 +129,11 @@ class ModelRun(Base, TimestampMixin):
     inference_platform: Mapped[str] = mapped_column(String(160), index=True, nullable=False)
     inference_mode: Mapped[str] = mapped_column(String(40), nullable=False)
     result_info: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+    @property
+    def detects_language(self) -> bool:
+        value = self.result_info.get("inference", {}).get("detects_language")
+        return value if isinstance(value, bool) else self.inference_mode == "auto_detect"
 
 
 class InferenceSubmission(Base, TimestampMixin):

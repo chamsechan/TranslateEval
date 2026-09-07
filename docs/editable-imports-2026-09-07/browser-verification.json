@@ -1,0 +1,11 @@
+{
+  "page_errors": [],
+  "checks": [
+    "maintained model option created",
+    "JSONL-only dataset completed, validated, and committed",
+    "JSON metadata prefilled, dropdowns edited, back/edit preserved values, snapshots saved",
+    "JSONL-only predictions configured from blank form, version selected, and committed",
+    "1024px settings layout fits viewport",
+    "inline option maintenance adds and renames platform, refreshes dropdown, and preserves unfinished import"
+  ]
+}
