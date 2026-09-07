@@ -6,6 +6,13 @@ export function getApiBase(): string {
   return `${base}/api`
 }
 
+export class ApiError extends Error {
+  constructor(message: string, public status: number, public code?: string) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
   const response = await fetch(`${getApiBase()}${normalizedPath}`, {
@@ -17,15 +24,21 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   })
   if (!response.ok) {
     let detail = `请求失败 (${response.status})`
+    let code: string | undefined
     try {
       const body = await response.json()
       if (typeof body.detail === 'string') detail = body.detail
       else if (Array.isArray(body.detail)) detail = body.detail.map((item: { loc?: Array<string | number>; msg?: string }) => `${item.loc?.filter((part) => part !== 'body').join('.') || '参数'}：${item.msg || '格式无效'}`).join('；')
+      else if (body.detail && typeof body.detail === 'object') {
+        if (typeof body.detail.message === 'string') detail = body.detail.message
+        if (typeof body.detail.code === 'string') code = body.detail.code
+      }
     } catch {
       // Keep the status-based error when the body is not JSON.
     }
-    throw new Error(detail)
+    throw new ApiError(detail, response.status, code)
   }
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
     Boolean,
@@ -55,6 +56,10 @@ class ImportOption(Base, TimestampMixin):
     label: Mapped[str] = mapped_column(String(200), nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     detects_language: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    platform: Mapped[str] = mapped_column(String(160), default="", nullable=False)
+    sdk: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    sdk_version: Mapped[str] = mapped_column(String(200), default="", nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class Dataset(Base, TimestampMixin):
@@ -201,6 +206,7 @@ class PromptProfile(Base, TimestampMixin):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     versions: Mapped[list["PromptVersion"]] = relationship(
         back_populates="profile", cascade="all, delete-orphan"
     )
@@ -210,6 +216,7 @@ class PromptVersion(Base):
     __tablename__ = "prompt_versions"
     __table_args__ = (
         UniqueConstraint("profile_id", "version", name="uq_prompt_version"),
+        UniqueConstraint("profile_id", "version_label", name="uq_prompt_version_label"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
@@ -217,6 +224,12 @@ class PromptVersion(Base):
         ForeignKey("prompt_profiles.id", ondelete="CASCADE"), index=True, nullable=False
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False)
+    version_label: Mapped[str] = mapped_column(
+        String(160),
+        default=lambda context: utcnow().astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
+        + f".{context.get_current_parameters().get('version', 1)}",
+        nullable=False,
+    )
     system_template: Mapped[str] = mapped_column(Text, nullable=False)
     user_template: Mapped[str] = mapped_column(Text, nullable=False)
     published: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

@@ -7,6 +7,7 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
@@ -135,20 +136,80 @@ def evaluator_profile_dict(profile: EvaluatorProfile) -> dict[str, Any]:
     }
 
 
-def prompt_profile_dict(profile: PromptProfile) -> dict[str, Any]:
+def prompt_deletion_status(
+    session: Session, version_ids: list[str]
+) -> dict[str, dict[str, Any]]:
+    result_ids = set(
+        session.scalars(
+            select(ScoreResult.prompt_version_id)
+            .where(ScoreResult.prompt_version_id.in_(version_ids))
+            .union(
+                select(EvaluatorJob.prompt_version_id)
+                .join(EvaluationItem, EvaluationItem.evaluator_job_id == EvaluatorJob.id)
+                .where(
+                    EvaluatorJob.prompt_version_id.in_(version_ids),
+                    EvaluationItem.score_result_id.is_not(None),
+                )
+            )
+        )
+    )
+    task_ids = set(
+        session.scalars(
+            select(EvaluatorJob.prompt_version_id).where(
+                EvaluatorJob.prompt_version_id.in_(version_ids)
+            )
+        )
+    )
+    return {
+        version_id: {
+            "has_results": version_id in result_ids,
+            "can_delete": version_id not in result_ids | task_ids,
+            "delete_block_reason": (
+                "已有评测结果，无法删除"
+                if version_id in result_ids
+                else "已有评测任务引用，无法删除"
+                if version_id in task_ids
+                else None
+            ),
+        }
+        for version_id in version_ids
+    }
+
+
+def next_prompt_version_label(profile: PromptProfile, requested: str = "") -> str:
+    if requested.strip():
+        return requested.strip()
+    date_label = datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
+    sequence = 0
+    for version in profile.versions:
+        prefix, _, suffix = version.version_label.rpartition(".")
+        if prefix == date_label and suffix.isascii() and suffix.isdigit():
+            sequence = max(sequence, int(suffix))
+    return f"{date_label}.{sequence + 1}"
+
+
+def prompt_profile_dict(profile: PromptProfile, session: Session) -> dict[str, Any]:
+    statuses = prompt_deletion_status(session, [item.id for item in profile.versions])
+    has_results = any(status["has_results"] for status in statuses.values())
+    blocked = [status["delete_block_reason"] for status in statuses.values() if not status["can_delete"]]
     return {
         "id": profile.id,
         "name": profile.name,
         "description": profile.description,
         "created_at": utc_iso(profile.created_at),
+        "has_results": has_results,
+        "can_delete": not blocked,
+        "delete_block_reason": "已有评测结果，无法删除" if has_results else next(iter(blocked), None),
         "versions": [
             {
                 "id": item.id,
                 "version": item.version,
+                "version_label": item.version_label,
                 "system_template": item.system_template,
                 "user_template": item.user_template,
                 "published": item.published,
                 "created_at": utc_iso(item.created_at),
+                **statuses[item.id],
             }
             for item in sorted(profile.versions, key=lambda row: row.version, reverse=True)
         ],
@@ -450,10 +511,14 @@ def submission_detail(submission_id: str, session: Session = Depends(get_session
     if not submission:
         raise fail(404, "推理提交不存在")
     model = submission.model_run
+    inference = model.result_info.get("inference", {})
     return {
         "id": submission.id,
         "summary": {
             "run_name": model.run_name, "model_family": model.model_family,
+            "device": inference.get("device", ""),
+            "sdk": inference.get("sdk", ""), "sdk_version": inference.get("sdk_version", ""),
+            "precision": inference.get("precision", ""), "mode": model.inference_mode,
             "platform": model.inference_platform, "dataset_count": len(submission.datasets),
             "prediction_count": sum(dataset.prediction_count for dataset in submission.datasets),
         },
@@ -902,8 +967,10 @@ def update_evaluator_profile(
 @router.get("/prompt-profiles")
 def list_prompt_profiles(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
     return [
-        prompt_profile_dict(item)
-        for item in session.scalars(select(PromptProfile).order_by(PromptProfile.name))
+        prompt_profile_dict(item, session)
+        for item in session.scalars(
+            select(PromptProfile).where(PromptProfile.deleted.is_(False)).order_by(PromptProfile.name)
+        )
     ]
 
 
@@ -912,13 +979,22 @@ def create_prompt_profile(
     body: PromptProfileCreate, session: Session = Depends(get_session)
 ) -> dict[str, Any]:
     try:
-        profile = PromptProfile(name=body.name, description=body.description)
+        profile = session.scalar(
+            select(PromptProfile).where(PromptProfile.name == body.name, PromptProfile.deleted.is_(True))
+        )
+        if profile:
+            profile.deleted = False
+            profile.description = body.description
+            profile.created_at = datetime.now(UTC)
+        else:
+            profile = PromptProfile(name=body.name, description=body.description)
         session.add(profile)
         session.flush()
         session.add(
             PromptVersion(
                 profile_id=profile.id,
                 version=1,
+                version_label=next_prompt_version_label(profile, body.version_label),
                 system_template=body.system_template,
                 user_template=body.user_template,
                 published=body.published,
@@ -926,7 +1002,7 @@ def create_prompt_profile(
         )
         session.commit()
         session.refresh(profile)
-        return prompt_profile_dict(profile)
+        return prompt_profile_dict(profile, session)
     except IntegrityError as exc:
         session.rollback()
         raise fail(400, "Prompt 名称已存在") from exc
@@ -939,21 +1015,68 @@ def create_prompt_version(
     session: Session = Depends(get_session),
 ) -> dict[str, Any]:
     profile = session.get(PromptProfile, profile_id)
-    if not profile:
+    if not profile or profile.deleted:
         raise fail(404, "Prompt 配置不存在")
     next_version = max((item.version for item in profile.versions), default=0) + 1
     session.add(
         PromptVersion(
             profile_id=profile.id,
             version=next_version,
+            version_label=next_prompt_version_label(profile, body.version_label),
             system_template=body.system_template,
             user_template=body.user_template,
             published=body.published,
         )
     )
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise fail(409, "Prompt 版本标签已存在，请使用其他标签或重试") from exc
     session.refresh(profile)
-    return prompt_profile_dict(profile)
+    return prompt_profile_dict(profile, session)
+
+
+@router.delete("/prompt-versions/{version_id}")
+def delete_prompt_version(
+    version_id: str, session: Session = Depends(get_session)
+) -> dict[str, bool]:
+    version = session.get(PromptVersion, version_id)
+    if not version:
+        raise fail(404, "Prompt 版本不存在")
+    status = prompt_deletion_status(session, [version_id])[version_id]
+    if not status["can_delete"]:
+        raise fail(409, status["delete_block_reason"])
+    profile = version.profile
+    session.delete(version)
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise fail(409, "此 Prompt 版本已被引用，无法删除") from exc
+    session.expire(profile, ["versions"])
+    return {"deleted": True}
+
+
+@router.delete("/prompt-profiles/{profile_id}")
+def delete_prompt_profile(
+    profile_id: str, session: Session = Depends(get_session)
+) -> dict[str, bool]:
+    profile = session.get(PromptProfile, profile_id)
+    if not profile or profile.deleted:
+        raise fail(404, "Prompt 配置不存在")
+    status = prompt_profile_dict(profile, session)
+    if not status["can_delete"]:
+        raise fail(409, status["delete_block_reason"])
+    # Retain the name so startup defaults do not recreate a removed configuration.
+    profile.versions.clear()
+    profile.deleted = True
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise fail(409, "此 Prompt 配置已被引用，无法删除") from exc
+    return {"deleted": True}
 
 
 def model_run_dict(item: ModelRun) -> dict[str, Any]:

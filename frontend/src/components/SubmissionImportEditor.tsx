@@ -1,5 +1,5 @@
-import { Alert, App, Button, Card, Col, Form, Input, Modal, Row, Select, Space, Typography } from 'antd'
-import { useState } from 'react'
+import { Alert, App, AutoComplete, Button, Card, Col, Form, Input, Modal, Row, Select, Space, Typography } from 'antd'
+import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { Dataset, DatasetVersion, ImportOption, ImportOptionCategory, ImportReport } from '../types'
@@ -46,12 +46,52 @@ export default function SubmissionImportEditor({ draft, onValidated, onBack }: {
   const inference = draft.manifest.inference && typeof draft.manifest.inference === 'object' ? draft.manifest.inference as Record<string, unknown> : {}
   const initialValues = { ...draft.manifest, inference, decoding_text: JSON.stringify(inference.decoding || {}, null, 2) }
   const currentValues = Form.useWatch([], form)
+  const currentInference = currentValues?.inference || inference
+  const importOptions = optionsQuery.data || []
+  const sdkOptions = [...new Set(importOptions.filter((item) => item.category === 'device' && item.platform === currentInference.platform && item.enabled && item.sdk).map((item) => item.sdk))].map((value) => ({ value }))
+  useEffect(() => {
+    if (!form.getFieldValue(['inference', 'mode']) && optionsQuery.data?.some((item) => item.category === 'inference_mode' && item.value === 'default' && item.enabled)) form.setFieldValue(['inference', 'mode'], 'default')
+  }, [form, optionsQuery.data])
+  const changePlatform = (platform: string) => {
+    const selectedDevice = importOptions.find((item) => item.category === 'device' && item.value === form.getFieldValue(['inference', 'device']))
+    const clearDevice = !!selectedDevice?.platform && selectedDevice.platform !== platform
+    const hadSdk = !!form.getFieldValue(['inference', 'sdk']) || !!form.getFieldValue(['inference', 'sdk_version'])
+    form.setFieldValue(['inference', 'sdk'], '')
+    form.setFieldValue(['inference', 'sdk_version'], '')
+    if (clearDevice) form.setFieldValue(['inference', 'device'], undefined)
+    if (clearDevice || hadSdk) message.info(`平台已变更，已清空${clearDevice ? '不匹配的设备及 ' : ''}SDK 信息，请重新确认。`)
+  }
+  const changeDevice = (value?: string) => {
+    const device = importOptions.find((item) => item.category === 'device' && item.value === value)
+    if (!device) return
+    const previousPlatform = form.getFieldValue(['inference', 'platform'])
+    const platformChanged = !!device.platform && device.platform !== previousPlatform
+    if (device.platform) form.setFieldValue(['inference', 'platform'], device.platform)
+    if (platformChanged || device.sdk) {
+      const previousSdk = form.getFieldValue(['inference', 'sdk'])
+      const previousVersion = form.getFieldValue(['inference', 'sdk_version'])
+      form.setFieldValue(['inference', 'sdk'], device.sdk || '')
+      form.setFieldValue(['inference', 'sdk_version'], device.sdk_version || '')
+      if (platformChanged || previousSdk !== (device.sdk || '') || previousVersion !== (device.sdk_version || '')) message.info('已根据设备更新平台、SDK 和版本，请确认实际使用的信息。')
+    } else if (device.sdk_version) {
+      form.setFieldValue(['inference', 'sdk_version'], device.sdk_version)
+    }
+  }
+  const changeSdk = () => {
+    if (form.getFieldValue(['inference', 'sdk_version'])) {
+      form.setFieldValue(['inference', 'sdk_version'], '')
+      message.info('SDK 已变更，请重新填写对应的版本。')
+    }
+  }
   const dropdown = (category: ImportOptionCategory, name: string | string[], required = false) => {
     const current = Array.isArray(name) ? currentValues?.[name[0]]?.[name[1]] : currentValues?.[name]
-    const options = (optionsQuery.data || []).filter((item) => item.category === category)
+    const options = importOptions.filter((item) => item.category === category && (category !== 'device' || !currentInference.platform || !item.platform || item.platform === currentInference.platform || item.value === current))
     return <Form.Item name={name} label={optionLabels[category]} rules={required ? [{ required: true, message: `请选择${optionLabels[category]}` }] : []}>
-      <Select showSearch allowClear={!required} optionFilterProp="label" loading={optionsQuery.loading} placeholder={`选择${optionLabels[category]}`} options={[
-        ...options.map((item) => ({ value: item.value, label: `${item.label}${!item.enabled ? '（已停用）' : ''}`, disabled: !item.enabled && item.value !== current })),
+      <Select showSearch allowClear={!required} optionFilterProp="label" loading={optionsQuery.loading} placeholder={`选择${optionLabels[category]}`} onChange={category === 'platform' ? changePlatform : category === 'device' ? changeDevice : undefined} options={[
+        ...options.map((item) => {
+          const platformUnavailable = category === 'device' && !!item.platform && item.platform !== currentInference.platform && !importOptions.some((platform) => platform.category === 'platform' && platform.value === item.platform && platform.enabled)
+          return { value: item.value, label: `${item.label}${!item.enabled ? '（已停用）' : platformUnavailable ? '（所属平台不可选）' : ''}`, disabled: (!item.enabled || platformUnavailable) && item.value !== current }
+        }),
         ...(typeof current === 'string' && current && !options.some((item) => item.value === current) ? [{ value: current, label: `${current}（导入值）` }] : []),
       ]} />
     </Form.Item>
@@ -64,7 +104,7 @@ export default function SubmissionImportEditor({ draft, onValidated, onBack }: {
       if (!decoding || typeof decoding !== 'object' || Array.isArray(decoding)) throw new Error('解码参数必须是 JSON 对象')
       setLoading(true)
       const value = await api<ImportReport>(`/import-reports/${draft.id}/validate`, { method: 'POST', body: JSON.stringify({ manifest: {
-        ...draft.manifest, ...manifest, inference: { ...inference, ...manifest.inference, device: manifest.inference.device || '', precision: manifest.inference.precision || '', generated_at: manifest.inference.generated_at || null, decoding },
+        ...draft.manifest, ...manifest, inference: { ...inference, ...manifest.inference, device: manifest.inference.device || '', sdk: manifest.inference.sdk || '', sdk_version: manifest.inference.sdk_version || '', precision: manifest.inference.precision || '', generated_at: manifest.inference.generated_at || null, decoding },
       } }) })
       onValidated(value)
     } catch (error) { if (error instanceof Error) message.error(error.message) } finally { setLoading(false) }
@@ -82,6 +122,8 @@ export default function SubmissionImportEditor({ draft, onValidated, onBack }: {
         <Col xs={24} md={12}><Form.Item name="model_version" label="模型版本"><Input maxLength={120} /></Form.Item></Col>
         <Col xs={24} md={12}>{dropdown('platform', ['inference', 'platform'], true)}</Col>
         <Col xs={24} md={12}>{dropdown('device', ['inference', 'device'])}</Col>
+        <Col xs={24} md={12}><Form.Item name={['inference', 'sdk']} label="SDK" extra="可选择当前平台已有的 SDK，或输入实际使用的 SDK。"><AutoComplete disabled={!currentInference.platform || loading} options={sdkOptions} onChange={changeSdk} filterOption={(input, option) => String(option?.value || '').toLowerCase().includes(input.toLowerCase())} placeholder={currentInference.platform ? '选择或输入该平台的 SDK' : '请先选择平台'} maxLength={200} /></Form.Item></Col>
+        <Col xs={24} md={12}><Form.Item name={['inference', 'sdk_version']} label="SDK 版本"><Input maxLength={200} placeholder="填写实际使用的 SDK 版本" /></Form.Item></Col>
         <Col xs={24} md={12}>{dropdown('precision', ['inference', 'precision'])}</Col>
         <Col xs={24} md={12}>{dropdown('inference_mode', ['inference', 'mode'], true)}</Col>
       </Row>

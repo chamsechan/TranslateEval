@@ -63,14 +63,22 @@ export interface ImportOption {
   label: string
   enabled: boolean
   detects_language: boolean
+  platform: string
+  sdk: string
+  sdk_version: string
+  has_results: boolean
 }
 
 export interface PromptVersion {
   id: string
   version: number
+  version_label: string
   system_template: string
   user_template: string
   published: boolean
+  has_results: boolean
+  can_delete: boolean
+  delete_block_reason: string | null
   created_at: string
 }
 
@@ -78,6 +86,9 @@ export interface PromptProfile {
   id: string
   name: string
   description: string
+  has_results: boolean
+  can_delete: boolean
+  delete_block_reason: string | null
   versions: PromptVersion[]
 }
 

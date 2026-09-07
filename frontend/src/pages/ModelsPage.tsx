@@ -30,7 +30,7 @@ export default function ModelsPage() {
           { title: '模型族', dataIndex: 'model_family', render: (value: string) => <Tag color="blue">{value}</Tag> },
           { title: '版本', dataIndex: 'model_version', render: (value: string) => value || '—' },
           { title: '推理平台', dataIndex: 'inference_platform' },
-          { title: '模式', dataIndex: 'inference_mode', render: (value: string) => <Tag color={value === 'auto_detect' ? 'purple' : undefined}>{value === 'auto_detect' ? '自动识别语种' : value === 'source_language_provided' ? '已提供源语种' : value}</Tag> },
+          { title: '模式', dataIndex: 'inference_mode', render: (value: string) => <Tag>{({ default: '默认', thinking: '思考', non_thinking: '不思考', auto_detect: '自动识别语种（历史模式）', source_language_provided: '已提供源语种（历史模式）' } as Record<string, string>)[value] || value}</Tag> },
           { title: '备注', dataIndex: 'notes', ellipsis: true },
           { title: '提交时间', dataIndex: 'created_at', render: formatDate },
           { title: '操作', render: (_, row) => <Button type="link" onClick={() => setSelected(row.id)}>运行详情</Button> },
@@ -45,7 +45,7 @@ export default function ModelsPage() {
             { key: 'checkpoint', label: '检查点', children: detail.checkpoint_name },
             { key: 'platform', label: '推理平台', children: detail.inference_platform },
             { key: 'version', label: '模型版本', children: detail.model_version || '—' },
-            ...Object.entries({ device: '设备', precision: '精度', generated_at: '推理时间', code_revision: '代码版本' }).map(([key, label]) => ({ key, label, children: String(inference[key] || '—') })),
+            ...Object.entries({ device: '设备', sdk: 'SDK', sdk_version: 'SDK 版本', precision: '精度', generated_at: '推理时间', code_revision: '代码版本' }).map(([key, label]) => ({ key, label, children: String(inference[key] || '—') })),
             { key: 'notes', label: '备注', children: detail.notes || '—', span: 2 },
           ]} />
           <Typography.Title level={5}>解码参数</Typography.Title>

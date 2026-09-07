@@ -11,7 +11,8 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorProfile, ImportReport, PromptProfile } from '../types'
 
 interface ExistingSubmission { id: string; summary: Record<string, string | number>; datasets: Array<{ dataset_key: string; version_label: string; prediction_count: number }> }
-const summaryLabels: Record<string, string> = { run_name: '运行名称', model_family: '模型', checkpoint_name: '检查点', model_version: '模型版本', platform: '推理平台', device: '设备', precision: '精度 / 量化位宽', mode: '推理模式', detects_language: '统计语种识别', dataset_count: '数据集数', prediction_count: '预测条数' }
+const summaryLabels: Record<string, string> = { run_name: '运行名称', model_family: '模型', checkpoint_name: '检查点', model_version: '模型版本', platform: '推理平台', device: '设备', sdk: 'SDK', sdk_version: 'SDK 版本', precision: '精度 / 量化位宽', mode: '推理模式', detects_language: '统计语种识别', dataset_count: '数据集数', prediction_count: '预测条数' }
+const modeLabels: Record<string, string> = { default: '默认', thinking: '思考', non_thinking: '不思考', auto_detect: '自动识别语种（历史模式）', source_language_provided: '已提供源语种（历史模式）' }
 
 export default function SubmitPage() {
   const [params] = useSearchParams()
@@ -45,7 +46,7 @@ function SubmissionForm({ submissionId }: { submissionId: string | null }) {
     }
   }, [evaluatorQuery.data])
 
-  const publishedPrompts = useMemo(() => prompts.flatMap((profile) => profile.versions.filter((version) => version.published).map((version) => ({ value: version.id, label: `${profile.name} · v${version.version}` }))), [prompts])
+  const publishedPrompts = useMemo(() => prompts.flatMap((profile) => profile.versions.filter((version) => version.published).map((version) => ({ value: version.id, label: `${profile.name} · ${version.version_label}` }))), [prompts])
 
   const toggleEvaluator = (revisionId: string, checked: boolean, type: string) => {
     setSelected((current) => checked ? [...current, revisionId] : current.filter((id) => id !== revisionId))
@@ -87,7 +88,7 @@ function SubmissionForm({ submissionId }: { submissionId: string | null }) {
 
       {step === 1 && (report || existing) && <Space direction="vertical" size={18} style={{ width: '100%' }}>
         <Card className="panel-card" title={<Space><SafetyCertificateOutlined style={{ color: '#10a779' }} />{existing ? '已保存的推理结果' : '核验摘要'}</Space>} extra={<Button disabled={loading} type="link" onClick={() => { if (submissionId) navigate('/submit'); else { setStep(0); setReport(null) } }}>{existing ? '导入其他结果' : '修改导入信息'}</Button>}>
-          <Descriptions bordered column={{ xs: 1, sm: 2, xl: 3 }} size="small" items={Object.entries(existing?.summary || report?.report.summary || {}).map(([key, value]) => ({ key, label: summaryLabels[key] || key, children: typeof value === 'boolean' ? (value ? '是' : '否') : value === 'auto_detect' ? '自动识别语种' : value === 'source_language_provided' ? '已提供源语种' : String(value || '—') }))} />
+          <Descriptions bordered column={{ xs: 1, sm: 2, xl: 3 }} size="small" items={Object.entries(existing?.summary || report?.report.summary || {}).map(([key, value]) => ({ key, label: summaryLabels[key] || key, children: typeof value === 'boolean' ? (value ? '是' : '否') : key === 'mode' ? modeLabels[String(value)] || String(value) : String(value ?? '—') }))} />
           <Row gutter={12} style={{ marginTop: 16 }}>{(existing?.datasets || report?.report.datasets)?.map((item) => <Col xs={24} md={8} key={String(item.dataset_key)}><Card size="small"><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{String(item.dataset_key)}</Typography.Text><Tag color="success">匹配</Tag></Space><div style={{ marginTop: 8 }}><Typography.Text type="secondary">版本 {String(item.version_label)} · {String(item.prediction_count)} 条</Typography.Text></div></Card></Col>)}</Row>
         </Card>
         <Card className="panel-card" title="2. 选择评价方式" extra={<Typography.Text type="secondary">可多选，评价器依次执行</Typography.Text>}>
