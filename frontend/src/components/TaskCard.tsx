@@ -73,7 +73,7 @@ export default function TaskCard({ task, onChange }: { task: EvaluationTask; onC
               <Space>
                 <span>{evaluator.completed_items}/{evaluator.total_items}</span>
                 {evaluator.failed_items > 0 && <Button size="small" disabled={active.has(evaluator.status) || task.status === 'cancelling'} onClick={() => retryEvaluator(evaluator.id)}>重试失败项</Button>}
-                {(evaluator.completed_items > 0 || evaluator.failed_items > 0) && <Button size="small" type="link" onClick={() => navigate(`/results/${evaluator.id}`)}>{evaluator.completed_items ? '查看结果' : '查看失败明细'}</Button>}
+                <Button size="small" type="link" onClick={() => navigate(`/results/${evaluator.id}`)}>查看结果</Button>
               </Space>
               {evaluator.error && <Typography.Text type="danger" ellipsis={{ tooltip: evaluator.error }} className="evaluator-error">{evaluator.error}</Typography.Text>}
             </div>

@@ -122,6 +122,25 @@ def comparison_checks(session: Session, jobs: list[EvaluatorJob]) -> dict[str, A
     }
 
 
+def comparable_item_score(evaluator_type: str):
+    # SacreBLEU may return 100.00000000000004 for an exact match. Normalize
+    # floating-point noise at its upper bound for filtering and presentation.
+    if evaluator_type == "sacrebleu_zh":
+        return case((ScoreResult.score.between(100 - 1e-9, 100 + 1e-9), 100.0), else_=ScoreResult.score)
+    return ScoreResult.score
+
+
+def scored_item_condition(evaluator_type: str):
+    """Only current, completed scores on the evaluator's scale count as scored."""
+    maximum = 100 if evaluator_type == "sacrebleu_zh" else 10
+    return func.coalesce(
+        (EvaluationItem.status == "completed")
+        & ScoreResult.id.is_not(None)
+        & comparable_item_score(evaluator_type).between(0, maximum),
+        False,
+    )
+
+
 def threshold_summary(session: Session, job_id: str, threshold: float) -> dict[str, Any]:
     job = session.get(EvaluatorJob, job_id)
     if not job:
@@ -129,14 +148,15 @@ def threshold_summary(session: Session, job_id: str, threshold: float) -> dict[s
     evaluator_type = job.evaluator_revision.profile.evaluator_type
     validate_threshold(evaluator_type, threshold)
     dataset = job.dataset_job.submission_dataset
-    successful = (EvaluationItem.status == "completed") & ScoreResult.id.is_not(None)
+    successful = scored_item_condition(evaluator_type)
+    score_value = comparable_item_score(evaluator_type)
     rows = session.execute(
         select(
             DatasetSample.source_language,
             func.count(DatasetSample.id).label("total"),
             func.sum(case((successful, 1), else_=0)).label("count"),
             func.avg(case((successful, ScoreResult.score), else_=None)).label("mean"),
-            func.sum(case((successful & (ScoreResult.score >= threshold), 1), else_=0)).label("passed"),
+            func.sum(case((successful & (score_value >= threshold), 1), else_=0)).label("passed"),
             func.sum(case((EvaluationItem.status == "failed", 1), else_=0)).label("failed"),
             func.sum(case((EvaluationItem.status == "cancelled", 1), else_=0)).label("cancelled"),
         )
@@ -148,12 +168,14 @@ def threshold_summary(session: Session, job_id: str, threshold: float) -> dict[s
         .group_by(DatasetSample.source_language).order_by(DatasetSample.source_language)
     ).mappings().all()
     by_language = [
-        {**row, "accuracy": row["passed"] / row["count"] if row["count"] else None, "coverage": row["count"] / row["total"]}
+        {**row, "accuracy": row["passed"] / row["total"],
+         "coverage": row["count"] / row["total"], "unscored": row["total"] - row["count"]}
         for row in rows
     ]
     scored_languages = [row for row in by_language if row["count"]]
     successful_count = sum(row["count"] for row in by_language)
     total = sum(row["total"] for row in by_language)
+    passed = sum(row["passed"] for row in by_language)
     aggregates = [
         {"metric_name": row.metric_name, "source_language": row.source_language, "value": row.value,
          "sample_count": row.sample_count, "unit": row.unit, "details": row.details}
@@ -171,9 +193,9 @@ def threshold_summary(session: Session, job_id: str, threshold: float) -> dict[s
         "unit": "BLEU" if evaluator_type == "sacrebleu_zh" else "point",
         "micro_mean": sum(row["mean"] * row["count"] for row in scored_languages) / successful_count if successful_count else None,
         "macro_mean": sum(row["mean"] for row in scored_languages) / len(scored_languages) if scored_languages else None,
-        "micro_accuracy": sum(row["passed"] for row in by_language) / successful_count if successful_count else None,
-        "macro_accuracy": sum(row["accuracy"] for row in scored_languages) / len(scored_languages) if scored_languages else None,
-        "successful": successful_count, "total": total,
+        "micro_accuracy": passed / total if total else None,
+        "macro_accuracy": sum(row["accuracy"] for row in by_language) / len(by_language) if by_language else None,
+        "successful": successful_count, "total": total, "passed": passed, "unscored": total - successful_count,
         "failed": sum(row["failed"] for row in by_language),
         "cancelled": sum(row["cancelled"] for row in by_language),
         "coverage": successful_count / total if total else 0,

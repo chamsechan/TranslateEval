@@ -91,6 +91,13 @@ body { margin: 0; min-width: 320px; min-height: 100vh; }
 .score-ring div { z-index:1; text-align:center; }
 .score-ring strong { display:block; font-size:25px; }
 .score-ring span { color:#a9bfd9; font-size:11px; }
+.result-summary-caption { margin-top: 18px; color: #c3d3e8; line-height: 1.7; }
+.result-table-link { padding-inline: 0; }
+.result-items-section { scroll-margin-top: 24px; }
+.result-items-section:focus-visible { outline: 2px solid #246bfd; outline-offset: 4px; border-radius: 12px; }
+.result-filters { width: 100%; align-items: end; }
+.result-filter { display: flex; flex-direction: column; gap: 6px; color: #5e6d82; font-size: 13px; }
+.result-error-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .chart-box { height: 320px; width: 100%; }
 .score-cell { font-variant-numeric: tabular-nums; font-weight: 650; color: #173666; }
 .source-cell { max-width: 330px; white-space: normal; line-height: 1.55; }

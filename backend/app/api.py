@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -46,7 +46,7 @@ from .models import (
     SubmissionDataset,
 )
 from .validation import validate_threshold
-from .queries import cancelled_item_counts, comparison_checks, model_search, page_tasks, task_change_version, task_load_options, threshold_summary
+from .queries import cancelled_item_counts, comparable_item_score, comparison_checks, model_search, page_tasks, scored_item_condition, task_change_version, task_load_options, threshold_summary
 from .queue import (
     JobStateConflict,
     cancel_dataset_job,
@@ -778,44 +778,66 @@ def evaluator_job_items(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     language: str | None = None,
-    item_status: str | None = None,
+    item_status: Literal["completed", "failed", "cancelled", "queued", "running", "unscored"] | None = None,
     sort: Literal["id", "score"] = "id",
     direction: Literal["asc", "desc"] = "asc",
+    score_operator: Literal["eq", "lt", "lte", "gt", "gte"] | None = None,
+    score_value: float | None = None,
     session: Session = Depends(get_session),
 ) -> dict[str, Any]:
     job = session.get(EvaluatorJob, job_id)
     if not job:
         raise fail(404, "评价器任务不存在")
     submission_dataset = job.dataset_job.submission_dataset
-    filters = [EvaluationItem.evaluator_job_id == job.id]
-    if item_status:
+    evaluator_type = job.evaluator_revision.profile.evaluator_type
+    if (score_operator is None) != (score_value is None):
+        raise fail(400, "得分筛选需同时提供比较方式和得分")
+    if score_value is not None:
+        try:
+            validate_threshold(evaluator_type, score_value)
+        except ValueError as exc:
+            raise fail(400, str(exc).replace("阈值", "筛选得分")) from exc
+    scored = scored_item_condition(evaluator_type)
+    current_score = comparable_item_score(evaluator_type)
+    filters = [DatasetSample.dataset_version_id == submission_dataset.dataset_version_id]
+    if item_status == "unscored":
+        filters.append(~scored)
+    elif item_status == "completed":
+        filters.append(scored)
+    elif item_status:
         filters.append(EvaluationItem.status == item_status)
     if language:
         filters.append(DatasetSample.source_language == language)
+    if score_operator is not None:
+        comparisons = {
+            "eq": current_score == score_value,
+            "lt": current_score < score_value,
+            "lte": current_score <= score_value,
+            "gt": current_score > score_value,
+            "gte": current_score >= score_value,
+        }
+        filters.extend([scored, comparisons[score_operator]])
     base = (
-        select(EvaluationItem, Prediction, DatasetSample, ScoreResult)
-        .join(Prediction, EvaluationItem.prediction_id == Prediction.id)
-        .join(
-            DatasetSample,
-            (DatasetSample.dataset_version_id == submission_dataset.dataset_version_id)
-            & (DatasetSample.sample_id == Prediction.sample_id),
+        select(EvaluationItem, Prediction, DatasetSample, ScoreResult, scored.label("scored"), current_score.label("current_score"))
+        .select_from(DatasetSample)
+        .outerjoin(
+            Prediction,
+            (Prediction.submission_dataset_id == submission_dataset.id)
+            & (Prediction.sample_id == DatasetSample.sample_id),
+        )
+        .outerjoin(
+            EvaluationItem,
+            (EvaluationItem.evaluator_job_id == job.id)
+            & (EvaluationItem.prediction_id == Prediction.id),
         )
         .outerjoin(ScoreResult, EvaluationItem.score_result_id == ScoreResult.id)
         .where(*filters)
     )
-    count_query = (
-        select(func.count(EvaluationItem.id))
-        .join(Prediction, EvaluationItem.prediction_id == Prediction.id)
-        .join(
-            DatasetSample,
-            (DatasetSample.dataset_version_id == submission_dataset.dataset_version_id)
-            & (DatasetSample.sample_id == Prediction.sample_id),
-        )
-        .where(*filters)
-    )
-    order = [EvaluationItem.id.asc()]
+    count_query = select(func.count()).select_from(base.subquery())
+    order = [DatasetSample.id.desc() if direction == "desc" else DatasetSample.id.asc()]
     if sort == "score":
-        order = [ScoreResult.score.is_(None), ScoreResult.score.desc() if direction == "desc" else ScoreResult.score.asc(), EvaluationItem.id.asc()]
+        visible_score = case((scored, current_score), else_=None)
+        order = [visible_score.is_(None), visible_score.desc() if direction == "desc" else visible_score.asc(), DatasetSample.id.asc()]
     rows = session.execute(
         base.order_by(*order).offset((page - 1) * page_size).limit(page_size)
     ).all()
@@ -825,27 +847,28 @@ def evaluator_job_items(
         "page_size": page_size,
         "items": [
             {
-                "id": item.id,
-                "sample_id": prediction.sample_id,
+                "id": item.id if item else f"sample:{sample.id}",
+                "sample_id": sample.sample_id,
                 "source_language": sample.source_language,
                 "source_text": sample.source_text,
                 "reference_zh": sample.reference_zh,
-                "translation_zh": prediction.translation_zh,
-                "predicted_language": prediction.predicted_language,
-                "status": item.status,
-                "cache_hit": item.cache_hit,
-                "attempts": item.attempts,
-                "error": item.error,
-                "score": score.score if score else None,
-                "score_min": score.score_min if score else None,
-                "score_max": score.score_max if score else None,
-                "unit": score.unit if score else None,
-                "reason": score.reason if score else None,
-                "actual_prompt_version_id": score.prompt_version_id if score else None,
-                "actual_evaluator_model": score.evaluator_model if score else None,
-                "actual_base_url": score.base_url if score else None,
+                "translation_zh": prediction.translation_zh if prediction else "",
+                "predicted_language": prediction.predicted_language if prediction else None,
+                "status": item.status if item else "unscored",
+                "scored": bool(is_scored),
+                "cache_hit": item.cache_hit if item else False,
+                "attempts": item.attempts if item else 0,
+                "error": item.error if item else None,
+                "score": value if is_scored else None,
+                "score_min": score.score_min if is_scored else None,
+                "score_max": score.score_max if is_scored else None,
+                "unit": score.unit if is_scored else None,
+                "reason": score.reason if is_scored else None,
+                "actual_prompt_version_id": score.prompt_version_id if is_scored else None,
+                "actual_evaluator_model": score.evaluator_model if is_scored else None,
+                "actual_base_url": score.base_url if is_scored else None,
             }
-            for item, prediction, sample, score in rows
+            for item, prediction, sample, score, is_scored, value in rows
         ],
     }
 

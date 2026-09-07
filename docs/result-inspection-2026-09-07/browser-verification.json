@@ -1,0 +1,328 @@
+{
+  "checkedAt": "2026-09-07T11:59:47.346Z",
+  "fixture": {
+    "database": "/tmp/result-inspection-2026-09-07.wMWerA/test.db",
+    "job_id": "inspection-job",
+    "url": "http://127.0.0.1:8768/#/results/inspection-job",
+    "samples": [
+      {
+        "sample_id": "th-eq8-a",
+        "language": "th",
+        "status": "completed",
+        "score": 8
+      },
+      {
+        "sample_id": "th-eq8-b",
+        "language": "th",
+        "status": "completed",
+        "score": 8
+      },
+      {
+        "sample_id": "th-lt8",
+        "language": "th",
+        "status": "completed",
+        "score": 7.5
+      },
+      {
+        "sample_id": "th-zero",
+        "language": "th",
+        "status": "completed",
+        "score": 0
+      },
+      {
+        "sample_id": "th-failed",
+        "language": "th",
+        "status": "failed",
+        "score": 10
+      },
+      {
+        "sample_id": "th-cancelled",
+        "language": "th",
+        "status": "cancelled",
+        "score": null
+      },
+      {
+        "sample_id": "th-no-item",
+        "language": "th",
+        "status": "missing_item",
+        "score": null
+      },
+      {
+        "sample_id": "th-no-prediction",
+        "language": "th",
+        "status": "missing_prediction",
+        "score": null
+      },
+      {
+        "sample_id": "vi-nine",
+        "language": "vi",
+        "status": "completed",
+        "score": 9
+      },
+      {
+        "sample_id": "vi-ten",
+        "language": "vi",
+        "status": "completed",
+        "score": 10
+      },
+      {
+        "sample_id": "vi-five",
+        "language": "vi",
+        "status": "completed",
+        "score": 5
+      },
+      {
+        "sample_id": "vi-queued",
+        "language": "vi",
+        "status": "queued",
+        "score": null
+      },
+      {
+        "sample_id": "id-failed",
+        "language": "id",
+        "status": "failed",
+        "score": null
+      },
+      {
+        "sample_id": "id-running",
+        "language": "id",
+        "status": "running",
+        "score": null
+      }
+    ],
+    "expected": {
+      "total": 14,
+      "successful": 7,
+      "passed_threshold_8": 4,
+      "accuracy_threshold_8": 0.2857142857142857,
+      "accuracy_threshold_9": 0.14285714285714285,
+      "th_total": 8,
+      "th_passed": 2,
+      "th_unscored": 4
+    }
+  },
+  "checks": [
+    {
+      "name": "1440px initial layout has no document overflow",
+      "passed": true
+    },
+    {
+      "name": "Overall and per-language accuracy use all 14 samples",
+      "passed": true
+    },
+    {
+      "name": "Click language opens that language details",
+      "passed": true
+    },
+    {
+      "name": "Language + score equals 8 returns exactly two matching samples",
+      "passed": true
+    },
+    {
+      "name": "Language + score less than 8 returns low scores including zero",
+      "passed": true
+    },
+    {
+      "name": "Threshold changes accuracy and verdict without changing score filters",
+      "passed": true
+    },
+    {
+      "name": "Clear resets combined filters and returns every dataset sample",
+      "passed": true
+    },
+    {
+      "name": "Unscored count links to failed/cancelled/missing records for that language",
+      "passed": true
+    },
+    {
+      "name": "Expand failed row exposes the error and original/reference/translation text",
+      "passed": true
+    },
+    {
+      "name": "Unscored status can be selected directly across languages",
+      "passed": true
+    },
+    {
+      "name": "Equal to zero only returns a scored zero, not missing scores",
+      "passed": true
+    },
+    {
+      "name": "All five numeric comparisons correctly use scored samples",
+      "passed": true
+    },
+    {
+      "name": "Unscored selection clears numeric condition and disables incompatible controls",
+      "passed": true
+    },
+    {
+      "name": "Each scoring status is independently searchable",
+      "passed": true
+    },
+    {
+      "name": "Language selector combines with completed status and score filters",
+      "passed": true
+    },
+    {
+      "name": "An impossible score condition gives a useful empty-state message",
+      "passed": true
+    },
+    {
+      "name": "1024px layout keeps controls accessible without document overflow",
+      "passed": true
+    },
+    {
+      "name": "No browser JS errors or failed API requests",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "nonBlockingResources": [
+    {
+      "type": "console.error",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "location": {
+        "url": "http://127.0.0.1:8768/favicon.ico",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "apiCalls": [
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&score_operator=eq&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&item_status=unscored",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=unscored",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&score_operator=eq&score_value=0",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&score_operator=eq&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&score_operator=lte&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&score_operator=gt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&score_operator=gte&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=unscored",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=failed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=cancelled",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=queued",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=running",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=completed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=vi&item_status=completed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=vi&item_status=completed&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=vi&item_status=completed&score_operator=eq&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=vi&item_status=completed&score_operator=eq&score_value=4",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8768/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    }
+  ]
+}

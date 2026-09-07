@@ -1,0 +1,57 @@
+{
+  "evaluator_job_id": "inspection-job",
+  "threshold": 8,
+  "score_min": 0,
+  "score_max": 10,
+  "unit": "point",
+  "micro_mean": 6.785714285714286,
+  "macro_mean": 6.9375,
+  "micro_accuracy": 0.2857142857142857,
+  "macro_accuracy": 0.25,
+  "successful": 7,
+  "total": 14,
+  "passed": 4,
+  "unscored": 7,
+  "failed": 2,
+  "cancelled": 1,
+  "coverage": 0.5,
+  "by_language": [
+    {
+      "source_language": "id",
+      "total": 2,
+      "count": 0,
+      "mean": null,
+      "passed": 0,
+      "failed": 1,
+      "cancelled": 0,
+      "accuracy": 0,
+      "coverage": 0,
+      "unscored": 2
+    },
+    {
+      "source_language": "th",
+      "total": 8,
+      "count": 4,
+      "mean": 5.875,
+      "passed": 2,
+      "failed": 1,
+      "cancelled": 1,
+      "accuracy": 0.25,
+      "coverage": 0.5,
+      "unscored": 4
+    },
+    {
+      "source_language": "vi",
+      "total": 4,
+      "count": 3,
+      "mean": 8,
+      "passed": 2,
+      "failed": 0,
+      "cancelled": 0,
+      "accuracy": 0.5,
+      "coverage": 0.75,
+      "unscored": 1
+    }
+  ],
+  "aggregates": []
+}

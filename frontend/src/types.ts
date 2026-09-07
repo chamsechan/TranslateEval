@@ -175,6 +175,8 @@ export interface ThresholdSummary {
   macro_mean: number | null
   micro_accuracy: number | null
   macro_accuracy: number | null
+  passed: number
+  unscored: number
   successful: number
   failed: number
   cancelled: number
@@ -185,6 +187,7 @@ export interface ThresholdSummary {
     mean: number | null
     accuracy: number | null
     passed: number
+    unscored: number
     count: number
     total: number
     failed: number

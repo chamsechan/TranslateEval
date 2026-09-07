@@ -217,6 +217,8 @@ class ThresholdSummary(BaseModel):
     micro_accuracy: float | None
     macro_accuracy: float | None
     successful: int
+    passed: int
+    unscored: int
     failed: int
     cancelled: int
     total: int
