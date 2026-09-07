@@ -225,6 +225,10 @@ def test_bleu_perfect_score_roundoff_is_counted_and_filterable(client, mixed_res
     with session_factory() as session:
         job = session.get(EvaluatorJob, job_id)
         job.evaluator_revision.profile.evaluator_type = "sacrebleu_zh"
+        for stored in session.scalars(select(ScoreResult).join(EvaluationItem).where(EvaluationItem.evaluator_job_id == job_id)):
+            stored.evaluator_type = "sacrebleu_zh"
+            stored.score_max = 100
+            stored.unit = "BLEU"
         score = session.scalar(select(ScoreResult).join(EvaluationItem).join(Prediction).where(
             EvaluationItem.evaluator_job_id == job_id, Prediction.sample_id == sample_ids[0],
         ))

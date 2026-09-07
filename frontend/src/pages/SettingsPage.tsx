@@ -8,7 +8,7 @@ import ImportOptionsPanel from '../components/ImportOptionsPanel'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorConnection, EvaluatorProfile, PromptProfile } from '../types'
 
-type EvaluatorForm = { name: string; evaluator_type: 'openai_compatible_llm' | 'sacrebleu_zh'; base_url?: string; model?: string; api_key?: string; concurrency?: number; timeout_seconds?: number; max_retries?: number; default_threshold: number; tokenize?: string; smooth_method?: string }
+type EvaluatorForm = { name: string; evaluator_type: 'openai_compatible_llm' | 'sacrebleu_zh'; base_url?: string; model?: string; api_key?: string; concurrency?: number; timeout_seconds?: number; max_retries?: number; default_threshold: number; tokenize?: string; smooth_method?: string; cache_policy?: 'content_model' | 'strict_revision' }
 type PromptForm = { name?: string; description?: string; version_label?: string; system_template: string; user_template: string; published: boolean }
 type ConnectionState = EvaluatorConnection | { status: 'checking'; detail: string; latency_ms: null; model_available: null }
 
@@ -56,7 +56,7 @@ export default function SettingsPage() {
   const openEvaluator = () => {
     setRevisionProfile(null)
     evaluatorForm.resetFields()
-    evaluatorForm.setFieldsValue({ evaluator_type: 'openai_compatible_llm', concurrency: 8, timeout_seconds: 60, max_retries: 3, default_threshold: 8 })
+    evaluatorForm.setFieldsValue({ evaluator_type: 'openai_compatible_llm', concurrency: 8, timeout_seconds: 60, max_retries: 3, default_threshold: 8, cache_policy: 'content_model' })
     setEvaluatorOpen(true)
   }
   const openEvaluatorRevision = (profile: EvaluatorProfile) => {
@@ -68,6 +68,7 @@ export default function SettingsPage() {
       evaluator_type: profile.evaluator_type,
       base_url: String(config.base_url || ''), model: String(config.model || ''), api_key: '',
       concurrency: Number(config.concurrency ?? 8), timeout_seconds: Number(config.timeout_seconds ?? 60), max_retries: Number(config.max_retries ?? 3),
+      cache_policy: config.cache_policy === 'strict_revision' ? 'strict_revision' : 'content_model',
       tokenize: String(config.tokenize || 'zh'), smooth_method: String(config.smooth_method || 'exp'), default_threshold: latest.default_threshold,
     })
     setEvaluatorOpen(true)
@@ -78,7 +79,7 @@ export default function SettingsPage() {
       setSavingEvaluator(true)
       const original = revisionProfile?.revisions[0].config || {}
       const config = value.evaluator_type === 'openai_compatible_llm'
-        ? { ...original, base_url: value.base_url, model: value.model, api_key: value.api_key, concurrency: value.concurrency, timeout_seconds: value.timeout_seconds, max_retries: value.max_retries, temperature: original.temperature ?? 0, max_tokens: original.max_tokens ?? 256 }
+        ? { ...original, base_url: value.base_url, model: value.model, api_key: value.api_key, concurrency: value.concurrency, timeout_seconds: value.timeout_seconds, max_retries: value.max_retries, cache_policy: value.cache_policy || 'content_model', temperature: original.temperature ?? 0, max_tokens: original.max_tokens ?? 256 }
         : { ...original, tokenize: value.tokenize || 'zh', smooth_method: value.smooth_method || 'exp', effective_order: original.effective_order ?? true }
       if (revisionProfile) await api(`/evaluator-profiles/${revisionProfile.id}/revisions`, { method: 'POST', body: JSON.stringify({ config, default_threshold: value.default_threshold }) })
       else await api('/evaluator-profiles', { method: 'POST', body: JSON.stringify({ name: value.name, evaluator_type: value.evaluator_type, config, default_threshold: value.default_threshold, enabled: true }) })
@@ -168,9 +169,10 @@ export default function SettingsPage() {
           {evaluatorType === 'openai_compatible_llm' ? <>
             <Form.Item name="base_url" label="Base URL" rules={[{ required: true }]}><Input placeholder="https://example.com/v1/" /></Form.Item>
             <Row gutter={14}><Col span={12}><Form.Item name="model" label="评分模型名" rules={[{ required: true }]}><Input placeholder="qwen3-judge" /></Form.Item></Col><Col span={12}><Form.Item name="api_key" label={revisionProfile ? 'API Key（留空沿用）' : 'API Key'} rules={revisionProfile ? [] : [{ required: true }]}><Input.Password /></Form.Item></Col></Row>
+            <Form.Item name="cache_policy" label="评分缓存策略" extra="验证新 Prompt 或配置效果时可选择严格模式；提交时开启强制重新评分将跳过缓存。"><Select options={[{ value: 'content_model', label: '按内容与模型复用（兼容历史，跨 Prompt / 配置）' }, { value: 'strict_revision', label: '严格匹配评价修订、Prompt 与服务地址' }]} /></Form.Item>
             <Row gutter={14}><Col span={8}><Form.Item name="concurrency" label="并发数"><InputNumber min={1} max={64} style={{ width: '100%' }} /></Form.Item></Col><Col span={8}><Form.Item name="timeout_seconds" label="超时（秒）"><InputNumber min={1} style={{ width: '100%' }} /></Form.Item></Col><Col span={8}><Form.Item name="max_retries" label="最大重试"><InputNumber min={0} max={10} style={{ width: '100%' }} /></Form.Item></Col></Row>
           </> : <Row gutter={14}><Col span={12}><Form.Item name="tokenize" label="Tokenizer" initialValue="zh"><Input /></Form.Item></Col><Col span={12}><Form.Item name="smooth_method" label="平滑方式" initialValue="exp"><Select options={['exp', 'floor', 'add-k', 'none'].map((value) => ({ value, label: value }))} /></Form.Item></Col></Row>}
-          <Form.Item name="default_threshold" label="结果页默认准确阈值" rules={[{ required: true }]}><InputNumber min={0} max={evaluatorType === 'sacrebleu_zh' ? 100 : 10} step={0.1} style={{ width: '100%' }} /></Form.Item>
+          <Form.Item name="default_threshold" label="结果页默认通过阈值" rules={[{ required: true }]}><InputNumber min={0} max={evaluatorType === 'sacrebleu_zh' ? 100 : 10} step={0.1} style={{ width: '100%' }} /></Form.Item>
         </Form>
       </Modal>
 

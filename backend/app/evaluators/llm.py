@@ -15,6 +15,7 @@ from .base import (
     RetriableEvaluatorError,
     ScoreInput,
     ScoreOutput,
+    finite_number,
 )
 
 
@@ -151,22 +152,24 @@ class OpenAICompatibleEvaluator(BaseEvaluator):
 
     @classmethod
     def validate_config(cls, config: dict[str, Any]) -> dict[str, Any]:
-        base_url = str(config.get("base_url", "")).strip()
-        model = str(config.get("model", "")).strip()
-        api_key = str(config.get("api_key", "")).strip()
+        for name in ("base_url", "model", "api_key"):
+            if not isinstance(config.get(name, ""), str):
+                raise ValueError(f"{name} 必须是文本")
+        base_url = config.get("base_url", "").strip()
+        model = config.get("model", "").strip()
+        api_key = config.get("api_key", "").strip()
         if not base_url.startswith(("http://", "https://")):
             raise ValueError("base_url 必须以 http:// 或 https:// 开头")
         if not model:
             raise ValueError("必须填写评分模型名")
         if not api_key:
             raise ValueError("必须填写 API Key")
-        concurrency = int(config.get("concurrency", 8))
-        if concurrency < 1 or concurrency > 64:
-            raise ValueError("concurrency 必须在 1 到 64 之间")
-        timeout = float(config.get("timeout_seconds", 60))
-        retries = int(config.get("max_retries", 3))
-        if timeout <= 0 or retries < 0 or retries > 10:
-            raise ValueError("超时或重试次数无效")
+        concurrency = finite_number(config.get("concurrency", 8), "concurrency", 1, 64, integer=True)
+        timeout = finite_number(config.get("timeout_seconds", 60), "timeout_seconds", 0.01, 3600)
+        retries = finite_number(config.get("max_retries", 3), "max_retries", 0, 10, integer=True)
+        cache_policy = config.get("cache_policy", "content_model")
+        if not isinstance(cache_policy, str) or cache_policy not in {"content_model", "strict_revision"}:
+            raise ValueError("cache_policy 必须为 content_model 或 strict_revision")
         return {
             "base_url": base_url,
             "model": model,
@@ -174,8 +177,9 @@ class OpenAICompatibleEvaluator(BaseEvaluator):
             "concurrency": concurrency,
             "timeout_seconds": timeout,
             "max_retries": retries,
-            "temperature": float(config.get("temperature", 0)),
-            "max_tokens": int(config.get("max_tokens", 256)),
+            "temperature": finite_number(config.get("temperature", 0), "temperature", 0, 2),
+            "max_tokens": finite_number(config.get("max_tokens", 256), "max_tokens", 1, 131072, integer=True),
+            "cache_policy": cache_policy,
         }
 
     @property

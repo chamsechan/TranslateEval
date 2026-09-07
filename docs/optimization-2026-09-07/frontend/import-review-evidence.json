@@ -1,0 +1,10 @@
+{
+  "scope": "isolated temporary SQLite DB and fixture files; no application data or source modified",
+  "valid_dataset_tamper_rejected": true,
+  "dataset_publication_uses_verified_snapshot": true,
+  "valid_prediction_tamper_rejected": true,
+  "prediction_publication_uses_verified_snapshot": true,
+  "concurrent_dataset_commit_returns_one_version": true,
+  "exception_during_index_read_removes_private_directory": true,
+  "passed": true
+}

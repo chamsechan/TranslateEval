@@ -7,6 +7,7 @@ import PageHeader from '../components/PageHeader'
 import QueryError from '../components/QueryError'
 import ImportSource from '../components/ImportSource'
 import SubmissionImportEditor from '../components/SubmissionImportEditor'
+import { forgetImportJob, ImportCommitStatus, rememberedImportJob, startImportCommit } from '../components/ImportCommitProgress'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorProfile, ImportReport, PromptProfile } from '../types'
 
@@ -23,6 +24,9 @@ export default function SubmitPage() {
 function SubmissionForm({ submissionId }: { submissionId: string | null }) {
   const { message } = App.useApp()
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const [storedJobId, setStoredJobId] = useState(() => submissionId ? null : rememberedImportJob('submission'))
+  const importJobId = params.get('import_job') || storedJobId
   const [step, setStep] = useState(submissionId ? 1 : 0)
   const [draft, setDraft] = useState<ImportReport | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
@@ -63,21 +67,29 @@ function SubmissionForm({ submissionId }: { submissionId: string | null }) {
     if (selections.some((item) => item.prompt_version_id === undefined)) return message.warning('请为所有 LLM 评价器选择 Prompt 版本')
     setLoading(true)
     try {
-      const endpoint = existing ? `/submissions/${existing.id}/evaluations` : `/submission-imports/${report!.id}/commit`
-      const value = await api<{ task_id: string }>(endpoint, { method: 'POST', body: JSON.stringify({ evaluators: selections, force_reevaluate: force }) })
-      message.success('评测任务已进入工作队列')
-      navigate(`/tasks?task=${value.task_id}`)
+      const body = { evaluators: selections, force_reevaluate: force }
+      if (existing) {
+        const value = await api<{ task_id: string }>(`/submissions/${existing.id}/evaluations`, { method: 'POST', body: JSON.stringify(body) })
+        message.success('评测任务已进入工作队列')
+        navigate(`/tasks?task=${value.task_id}`)
+      } else {
+        const job = await startImportCommit(report!.id, body)
+        setStoredJobId(job.id)
+        setParams(previous => { const next = new URLSearchParams(previous); next.set('import_job', job.id); return next }, { replace: true })
+        message.success('已开始后台导入，完成后进入评测队列')
+      }
     } catch (error) { message.error((error as Error).message) } finally { setLoading(false) }
   }
 
   return (
     <>
       <PageHeader title={submissionId ? '再次评测' : '提交评测'} subtitle={submissionId ? '复用已保存的预测，选择最新模型配置或其他 Prompt，创建独立评测任务。' : '核验标准结果目录，选择数据集版本与一个或多个评价器。'} />
+      {importJobId && <ImportCommitStatus key={importJobId} jobId={importJobId} onCompleted={job => { setStoredJobId(null); if (job.result?.task_id) navigate(`/tasks?task=${encodeURIComponent(job.result.task_id)}`) }} onDismiss={() => { forgetImportJob('submission', importJobId); setStoredJobId(null); setParams(previous => { const next = new URLSearchParams(previous); next.delete('import_job'); return next }, { replace: true }) }} />}
       <QueryError error={existingQuery.error} retry={existingQuery.refresh} />
       {existingQuery.loading && !existing && <Skeleton active />}
       <QueryError error={evaluatorQuery.error || promptQuery.error} retry={() => { evaluatorQuery.refresh(); promptQuery.refresh() }} />
-      <Card className="panel-card" style={{ marginBottom: 20 }}><Steps current={step} items={[{ title: '导入与核验', icon: <FileSearchOutlined /> }, { title: '选择评价方式', icon: <ApiOutlined /> }, { title: '进入评分队列', icon: <CheckCircleOutlined /> }]} /></Card>
-      {step === 0 && <Card className="panel-card" title="1. 导入与编辑推理结果信息">
+      <Card className="panel-card" style={{ marginBottom: 20 }}><Steps current={importJobId ? 2 : step} items={[{ title: '导入与核验', icon: <FileSearchOutlined /> }, { title: '选择评价方式', icon: <ApiOutlined /> }, { title: '进入评分队列', icon: <CheckCircleOutlined /> }]} /></Card>
+      {!importJobId && step === 0 && <Card className="panel-card" title="1. 导入与编辑推理结果信息">
         {draft ? <SubmissionImportEditor draft={draft} onBack={() => { setDraft(null); setReport(null) }} onValidated={(value) => {
           setDraft(value); setReport(value)
           if (value.report.valid) { setStep(1); message.success('推理结果与数据集版本完全匹配') }
@@ -86,7 +98,7 @@ function SubmissionForm({ submissionId }: { submissionId: string | null }) {
         {report && !report.report.valid && <Alert type="error" showIcon message="未通过核验，请修改信息或更换文件后重新核验" description={<div className="code-template" style={{ marginTop: 10 }}>{report.report.errors.map((item) => JSON.stringify(item, null, 2)).join('\n')}</div>} style={{ marginTop: 20 }} />}
       </Card>}
 
-      {step === 1 && (report || existing) && <Space direction="vertical" size={18} style={{ width: '100%' }}>
+      {!importJobId && step === 1 && (report || existing) && <Space direction="vertical" size={18} style={{ width: '100%' }}>
         <Card className="panel-card" title={<Space><SafetyCertificateOutlined style={{ color: '#10a779' }} />{existing ? '已保存的推理结果' : '核验摘要'}</Space>} extra={<Button disabled={loading} type="link" onClick={() => { if (submissionId) navigate('/submit'); else { setStep(0); setReport(null) } }}>{existing ? '导入其他结果' : '修改导入信息'}</Button>}>
           <Descriptions bordered column={{ xs: 1, sm: 2, xl: 3 }} size="small" items={Object.entries(existing?.summary || report?.report.summary || {}).map(([key, value]) => ({ key, label: summaryLabels[key] || key, children: typeof value === 'boolean' ? (value ? '是' : '否') : key === 'mode' ? modeLabels[String(value)] || String(value) : String(value ?? '—') }))} />
           <Row gutter={12} style={{ marginTop: 16 }}>{(existing?.datasets || report?.report.datasets)?.map((item) => <Col xs={24} md={8} key={String(item.dataset_key)}><Card size="small"><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{String(item.dataset_key)}</Typography.Text><Tag color="success">匹配</Tag></Space><div style={{ marginTop: 8 }}><Typography.Text type="secondary">版本 {String(item.version_label)} · {String(item.prediction_count)} 条</Typography.Text></div></Card></Col>)}</Row>
@@ -98,13 +110,13 @@ function SubmissionForm({ submissionId }: { submissionId: string | null }) {
               const checked = selected.includes(revision.id)
               return <Col span={12} key={profile.id}><Card size="small" style={{ borderColor: checked ? '#7da8ff' : undefined, background: checked ? '#f7faff' : undefined }}>
                 <Space align="start" style={{ width: '100%', justifyContent: 'space-between' }}><Checkbox checked={checked} onChange={(event) => toggleEvaluator(revision.id, event.target.checked, profile.evaluator_type)}><Typography.Text strong>{profile.name}</Typography.Text></Checkbox><Tag color={profile.evaluator_type === 'sacrebleu_zh' ? 'purple' : 'blue'}>{profile.evaluator_type === 'sacrebleu_zh' ? 'BLEU' : 'LLM'}</Tag></Space>
-                <div style={{ margin: '8px 0 0 24px', color: '#718096', fontSize: 12 }}>配置修订 r{revision.revision} · 默认阈值 {revision.default_threshold}</div>
-                {checked && profile.evaluator_type === 'openai_compatible_llm' && <div style={{ margin: '12px 0 0 24px' }}><Select style={{ width: '100%' }} placeholder="选择 Prompt 版本" options={publishedPrompts} value={promptByRevision[revision.id]} onChange={(value) => setPromptByRevision((current) => ({ ...current, [revision.id]: value }))} /></div>}
+                <div style={{ margin: '8px 0 0 24px', color: '#718096', fontSize: 12 }}>配置修订 r{revision.revision} · 默认通过阈值 {revision.default_threshold}{profile.evaluator_type === 'openai_compatible_llm' && ` · ${revision.config.cache_policy === 'strict_revision' ? '严格缓存' : '按内容与模型复用缓存'}`}</div>
+                {checked && profile.evaluator_type === 'openai_compatible_llm' && <div style={{ margin: '12px 0 0 24px' }}><Select showSearch optionFilterProp="label" style={{ width: '100%' }} placeholder="选择 Prompt 版本" options={publishedPrompts} value={promptByRevision[revision.id]} onChange={(value) => setPromptByRevision((current) => ({ ...current, [revision.id]: value }))} /></div>}
               </Card></Col>
             })}
           </Row>
           {!evaluators.some((item) => item.evaluator_type === 'openai_compatible_llm') && <Alert type="warning" showIcon message="尚未配置 OpenAI 兼容评价器" description="当前可以运行 BLEU；在评价设置页面添加 Base URL、模型名和 API Key 后即可多选 LLM 评分。" style={{ marginTop: 16 }} />}
-          <Card size="small" style={{ marginTop: 18, background: '#fafbfd' }}><Space style={{ width: '100%', justifyContent: 'space-between' }}><div><Typography.Text strong>强制重新评分</Typography.Text><div><Typography.Text type="secondary">关闭时按“语句对 + 评分模型名”复用最近成功评分，忽略 Prompt 和服务地址的变化。验证新 Prompt 的效果时请开启。</Typography.Text></div></div><Switch checked={force} onChange={setForce} /></Space></Card>
+          <Card size="small" style={{ marginTop: 18, background: '#fafbfd' }}><Space style={{ width: '100%', justifyContent: 'space-between' }}><div><Typography.Text strong>强制重新评分</Typography.Text><div><Typography.Text type="secondary">开启后跳过缓存。关闭时遵循各评价器的缓存策略；验证新 Prompt 时可用严格缓存模式或开启强制评分。</Typography.Text></div></div><Switch checked={force} onChange={setForce} /></Space></Card>
           <Button type="primary" size="large" block loading={loading} onClick={submit} style={{ marginTop: 18 }}>提交并进入工作队列</Button>
         </Card>
       </Space>}

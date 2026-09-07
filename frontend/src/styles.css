@@ -154,3 +154,8 @@ body { margin: 0; min-width: 320px; min-height: 100vh; }
   .prompt-profiles .ant-card-head-title { width: 100%; }
   .prompt-profiles .ant-card-extra { margin-inline-start: 0; }
 }
+
+.comparison-column-title { white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+.comparison-column-title > div, .comparison-column-title > .ant-typography-secondary { font-size: 12px; font-weight: 400; }
+.comparison-matrix .ant-table-cell { vertical-align: top; }
+.ant-pagination { flex-wrap: wrap; row-gap: 8px; }

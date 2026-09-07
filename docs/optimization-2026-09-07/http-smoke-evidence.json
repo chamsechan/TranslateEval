@@ -1,0 +1,187 @@
+{
+  "migration": "INFO  [alembic.runtime.migration] Context impl SQLiteImpl.\nINFO  [alembic.runtime.migration] Will assume non-transactional DDL.\nINFO  [alembic.runtime.migration] Running upgrade  -> 0001, Initial schema.\nINFO  [alembic.runtime.migration] Running upgrade 0001 -> 0002, Put evaluator model first in the LLM cache lookup index.\nINFO  [alembic.runtime.migration] Running upgrade 0002 -> 0003, Maintain import dropdown options.\nINFO  [alembic.runtime.migration] Running upgrade 0003 -> 0004, Add device SDK metadata and persistent option deletion.\nINFO  [alembic.runtime.migration] Running upgrade 0004 -> 0005, Add date labels to Prompt versions.\nINFO  [alembic.runtime.migration] Running upgrade 0005 -> 0006, Persistent language counts, query invalidation and queue/read indexes.\nINFO  [alembic.runtime.migration] Running upgrade 0006 -> 0007, Persistent background import publication jobs.\n",
+  "backend": "real HTTP and separate worker",
+  "external_model_calls": 0,
+  "dataset_import": {
+    "id": "0a9b95b1-6332-4e0a-9585-c5819c4c4ff8",
+    "report_id": "dba3637a-1de2-4a68-a1c0-43a188c90c68",
+    "kind": "dataset",
+    "status": "completed",
+    "phase": "completed",
+    "error": null,
+    "result": {
+      "dataset_version_id": "6ce880e1-cff4-4224-b072-1a27202acfad",
+      "content_sha256": "24fbe06801b12540f1bc455c1b570520db96d467b7886649563257a169d6fb3a"
+    },
+    "created_at": "2026-09-07T14:39:45.125130Z",
+    "started_at": "2026-09-07T14:39:45.434755Z",
+    "finished_at": "2026-09-07T14:39:45.463013Z"
+  },
+  "submission_import": {
+    "id": "c3885b5e-a91b-4296-82e2-0f1d77fddb72",
+    "report_id": "b2a6a9d4-8ee7-4667-b137-92a412720fee",
+    "kind": "submission",
+    "status": "completed",
+    "phase": "completed",
+    "error": null,
+    "result": {
+      "submission_id": "6418fab8-3cd1-4fa2-a13f-2870c3b47971",
+      "task_id": "bdcfe1c4-0da6-4246-b504-eba791873d39"
+    },
+    "created_at": "2026-09-07T14:39:45.549640Z",
+    "started_at": "2026-09-07T14:39:45.969359Z",
+    "finished_at": "2026-09-07T14:39:46.072497Z"
+  },
+  "observed_dataset_phases": [
+    "completed",
+    "queued",
+    "writing"
+  ],
+  "observed_submission_phases": [
+    "completed",
+    "queued",
+    "writing"
+  ],
+  "summary": {
+    "evaluator_job_id": "c776d4de-ac9f-4f18-8910-5df09ced1eb5",
+    "threshold": 20.0,
+    "score_min": 0,
+    "score_max": 100,
+    "unit": "BLEU",
+    "micro_mean": 50.22608397865719,
+    "macro_mean": 50.22608397865719,
+    "micro_accuracy": 0.8333333333333334,
+    "macro_accuracy": 0.8333333333333334,
+    "successful": 6,
+    "total": 6,
+    "passed": 5,
+    "unscored": 0,
+    "failed": 0,
+    "cancelled": 0,
+    "coverage": 1.0,
+    "by_language": [
+      {
+        "source_language": "de",
+        "total": 2,
+        "count": 2,
+        "passed": 2,
+        "failed": 0,
+        "cancelled": 0,
+        "mean": 79.84745896009822,
+        "accuracy": 1.0,
+        "coverage": 1.0,
+        "unscored": 0
+      },
+      {
+        "source_language": "th",
+        "total": 2,
+        "count": 2,
+        "passed": 2,
+        "failed": 0,
+        "cancelled": 0,
+        "mean": 41.9210311648377,
+        "accuracy": 1.0,
+        "coverage": 1.0,
+        "unscored": 0
+      },
+      {
+        "source_language": "vi",
+        "total": 2,
+        "count": 2,
+        "passed": 1,
+        "failed": 0,
+        "cancelled": 0,
+        "mean": 28.909761811035658,
+        "accuracy": 0.5,
+        "coverage": 1.0,
+        "unscored": 0
+      }
+    ],
+    "aggregates": [
+      {
+        "metric_name": "sentence_mean",
+        "source_language": "",
+        "value": 50.22608397865719,
+        "sample_count": 6,
+        "unit": "BLEU",
+        "details": {}
+      },
+      {
+        "metric_name": "corpus_bleu",
+        "source_language": "",
+        "value": 43.55230256064554,
+        "sample_count": 6,
+        "unit": "BLEU",
+        "details": {
+          "signature": "nrefs:1|case:mixed|eff:yes|tok:zh|smooth:exp|version:2.6.0"
+        }
+      },
+      {
+        "metric_name": "sentence_mean",
+        "source_language": "de",
+        "value": 79.84745896009822,
+        "sample_count": 2,
+        "unit": "BLEU",
+        "details": {}
+      },
+      {
+        "metric_name": "corpus_bleu",
+        "source_language": "de",
+        "value": 68.15612934162696,
+        "sample_count": 2,
+        "unit": "BLEU",
+        "details": {
+          "signature": "nrefs:1|case:mixed|eff:yes|tok:zh|smooth:exp|version:2.6.0"
+        }
+      },
+      {
+        "metric_name": "sentence_mean",
+        "source_language": "th",
+        "value": 41.9210311648377,
+        "sample_count": 2,
+        "unit": "BLEU",
+        "details": {}
+      },
+      {
+        "metric_name": "corpus_bleu",
+        "source_language": "th",
+        "value": 38.313857634479305,
+        "sample_count": 2,
+        "unit": "BLEU",
+        "details": {
+          "signature": "nrefs:1|case:mixed|eff:yes|tok:zh|smooth:exp|version:2.6.0"
+        }
+      },
+      {
+        "metric_name": "sentence_mean",
+        "source_language": "vi",
+        "value": 28.909761811035658,
+        "sample_count": 2,
+        "unit": "BLEU",
+        "details": {}
+      },
+      {
+        "metric_name": "corpus_bleu",
+        "source_language": "vi",
+        "value": 27.33162784822734,
+        "sample_count": 2,
+        "unit": "BLEU",
+        "details": {
+          "signature": "nrefs:1|case:mixed|eff:yes|tok:zh|smooth:exp|version:2.6.0"
+        }
+      },
+      {
+        "metric_name": "macro_sentence_mean",
+        "source_language": "",
+        "value": 50.22608397865719,
+        "sample_count": 3,
+        "unit": "BLEU",
+        "details": {}
+      }
+    ]
+  },
+  "high_threshold_passed": 1,
+  "strictly_comparable": true,
+  "language_filtered_rows": 2,
+  "completed_jobs": 2
+}

@@ -208,6 +208,9 @@ def test_result_sort_composes_with_filters_and_remains_batched(client, sortable_
     version_id = rows[0]["dataset"]["dataset_version_id"]
     rows = all_pages(client, endpoint, sort="micro_mean", dataset_version_id=version_id)
     assert [row["evaluator"]["id"] for row in rows] == ["job-4"]
+    # A legacy terminal job builds its durable summary once, before comparing
+    # steady-state query counts at different page sizes.
+    assert client.get(endpoint, params={"sort": "micro_accuracy"}).status_code == 200
     one, small_count = counted_request(client, session_factory, endpoint, sort="micro_accuracy", page_size=1)
     many, large_count = counted_request(client, session_factory, endpoint, sort="micro_accuracy", page_size=100)
     assert len(one["items"]) == 1 and len(many["items"]) == 5

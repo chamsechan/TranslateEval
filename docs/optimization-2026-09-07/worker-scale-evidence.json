@@ -1,0 +1,136 @@
+[
+  {
+    "stage": "fixture",
+    "count": 24000,
+    "seconds": 2.6242920270001378,
+    "peak_rss_mib": 71.15625,
+    "database_bytes": 35676160,
+    "sql": {
+      "statements": 204,
+      "pragma": 41,
+      "create": 72,
+      "select": 19,
+      "insert": 72
+    }
+  },
+  {
+    "stage": "create_task",
+    "count": 24000,
+    "seconds": 0.3283134890000383,
+    "peak_rss_mib": 69.2265625,
+    "database_bytes": 42668032,
+    "sql": {
+      "statements": 15,
+      "select": 8,
+      "insert": 4,
+      "update": 3
+    },
+    "total_items": 24000
+  },
+  {
+    "stage": "first_batch",
+    "count": 24000,
+    "seconds": 0.06013738799993007,
+    "peak_rss_mib": 67.76953125,
+    "database_bytes": 42668032,
+    "sql": {
+      "statements": 4,
+      "select": 4
+    },
+    "rows": 512,
+    "identity_map_size": 1536
+  },
+  {
+    "stage": "complete_scoring",
+    "count": 24000,
+    "seconds": 36.98596977700004,
+    "peak_rss_mib": 119.53125,
+    "database_bytes": 63397888,
+    "sql": {
+      "statements": 6449,
+      "update": 3758,
+      "select": 1665,
+      "with": 187,
+      "insert": 835,
+      "delete": 4
+    },
+    "status": "completed",
+    "error": null,
+    "completed": 24000,
+    "failed": 0,
+    "score_results": 24000,
+    "max_batch_rows": 512,
+    "max_identity_map_size": 3079,
+    "full_progress_recounts": 2,
+    "evaluator": "real_sacrebleu",
+    "local_judge_calls": 0,
+    "real_model_calls": 0
+  },
+  {
+    "stage": "fixture",
+    "count": 400000,
+    "seconds": 54.8767875609999,
+    "peak_rss_mib": 71.98046875,
+    "database_bytes": 590561280,
+    "sql": {
+      "statements": 957,
+      "pragma": 41,
+      "create": 72,
+      "select": 18,
+      "insert": 826
+    }
+  },
+  {
+    "stage": "create_task",
+    "count": 400000,
+    "seconds": 5.176605699999982,
+    "peak_rss_mib": 68.89453125,
+    "database_bytes": 711270400,
+    "sql": {
+      "statements": 16,
+      "select": 9,
+      "insert": 4,
+      "update": 3
+    },
+    "total_items": 400000
+  },
+  {
+    "stage": "first_batch",
+    "count": 400000,
+    "seconds": 0.06457242600004065,
+    "peak_rss_mib": 67.78125,
+    "database_bytes": 711270400,
+    "sql": {
+      "statements": 4,
+      "select": 4
+    },
+    "rows": 512,
+    "identity_map_size": 1536
+  },
+  {
+    "stage": "complete_scoring",
+    "count": 400000,
+    "seconds": 492.8473959580001,
+    "peak_rss_mib": 90.53125,
+    "database_bytes": 1100800000,
+    "sql": {
+      "statements": 105636,
+      "update": 62508,
+      "select": 27455,
+      "with": 3125,
+      "insert": 12544,
+      "delete": 4
+    },
+    "status": "completed",
+    "error": null,
+    "completed": 400000,
+    "failed": 0,
+    "score_results": 400000,
+    "max_batch_rows": 512,
+    "max_identity_map_size": 3080,
+    "full_progress_recounts": 2,
+    "evaluator": "deterministic_local_judge",
+    "local_judge_calls": 400000,
+    "real_model_calls": 0
+  }
+]

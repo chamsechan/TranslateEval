@@ -1,0 +1,3773 @@
+{
+  "description": "Original real import helpers; bounded-memory indexes and bulk writes; no model requests.",
+  "measurements": [
+    {
+      "stage": "generate",
+      "count": 24000,
+      "seconds": 0.6890653469999961,
+      "peak_rss_mib": 65.4609375,
+      "baseline_rss_mib": 62.2109375,
+      "sql": {
+        "statements": 148,
+        "selects": 17
+      },
+      "disk": {
+        "db_bytes": 380928,
+        "wal_bytes": 0,
+        "total_bytes": 28437490
+      },
+      "languages": 40,
+      "samples_per_language": 600,
+      "source_mean_bytes": 161.53708333333333,
+      "reference_mean_bytes": 193.53708333333333,
+      "samples_jsonl_bytes": 10753780,
+      "predictions_jsonl_bytes": 6540890
+    },
+    {
+      "stage": "dataset_validate",
+      "count": 24000,
+      "seconds": 0.9056858319999037,
+      "peak_rss_mib": 70.7578125,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 3,
+        "selects": 2
+      },
+      "disk": {
+        "db_bytes": 389120,
+        "wal_bytes": 0,
+        "total_bytes": 39199608
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v1",
+          "sample_count": 24000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "6c896dd59debcdbc48324ce6e945670a8e824364f37078187b4adeba8eda12ba",
+          "is_new_dataset": true
+        },
+        "diff": {
+          "base_version_id": null,
+          "base_version_label": null,
+          "added": 24000,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 0,
+          "both_changed": 0,
+          "unchanged": 0,
+          "details": [
+            {
+              "sample_id": "af-00000000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007960",
+              "change": "added"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "stage": "dataset_commit",
+      "count": 24000,
+      "seconds": 1.9925489209999796,
+      "peak_rss_mib": 77.2109375,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 36,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 20877312,
+        "wal_bytes": 0,
+        "total_bytes": 59687854
+      },
+      "sample_count": 24000
+    },
+    {
+      "stage": "dataset_diff_validate",
+      "count": 24000,
+      "seconds": 1.0390920369999321,
+      "peak_rss_mib": 73.359375,
+      "baseline_rss_mib": 62.203125,
+      "sql": {
+        "statements": 7,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 20881408,
+        "wal_bytes": 0,
+        "total_bytes": 70453798
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v2",
+          "sample_count": 24000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "13fced3384670e4c34375271d04149b8f4b92d5ea91ceb35360746acde49a7cc",
+          "is_new_dataset": false
+        },
+        "diff": {
+          "base_version_id": "ab34ef44-fa03-4c6f-9231-69eed3234918",
+          "base_version_label": "v1",
+          "added": 0,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 240,
+          "both_changed": 0,
+          "unchanged": 23760,
+          "details": [
+            {
+              "sample_id": "af-00000000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015900",
+              "change": "reference_changed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "stage": "dataset_diff_commit",
+      "count": 24000,
+      "seconds": 2.0304472110000233,
+      "peak_rss_mib": 77.1953125,
+      "baseline_rss_mib": 62.2421875,
+      "sql": {
+        "statements": 34,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 41435136,
+        "wal_bytes": 0,
+        "total_bytes": 91007580
+      },
+      "sample_count": 24000
+    },
+    {
+      "stage": "submission_validate",
+      "count": 24000,
+      "seconds": 0.57983638099995,
+      "peak_rss_mib": 72.61328125,
+      "baseline_rss_mib": 62.20703125,
+      "sql": {
+        "statements": 6,
+        "selects": 5
+      },
+      "disk": {
+        "db_bytes": 41435136,
+        "wal_bytes": 0,
+        "total_bytes": 97549215
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "run_name": "scale-predictions",
+          "model_family": "synthetic",
+          "checkpoint_name": "synthetic-v1",
+          "model_version": "",
+          "platform": "synthetic",
+          "device": "",
+          "sdk": "",
+          "sdk_version": "",
+          "precision": "",
+          "mode": "default",
+          "detects_language": true,
+          "dataset_count": 1,
+          "prediction_count": 24000
+        },
+        "datasets": [
+          {
+            "dataset_key": "scale-test",
+            "dataset_version_id": "ab34ef44-fa03-4c6f-9231-69eed3234918",
+            "version_label": "v1",
+            "prediction_count": 24000,
+            "predictions_sha256": "78a81f72741c2d857e09559524d9b78700c736c228b9800ba2d266df26cf8bee",
+            "missing_count": 0,
+            "unknown_count": 0,
+            "content_sha256": "6c896dd59debcdbc48324ce6e945670a8e824364f37078187b4adeba8eda12ba"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "submission_commit",
+      "count": 24000,
+      "seconds": 1.7039264379999395,
+      "peak_rss_mib": 75.5625,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 39,
+        "selects": 8
+      },
+      "disk": {
+        "db_bytes": 55840768,
+        "wal_bytes": 0,
+        "total_bytes": 111954901
+      },
+      "submission_id": "6a0a9d15-cf27-4338-aeea-ec916bdc481a"
+    },
+    {
+      "stage": "generate",
+      "count": 400000,
+      "seconds": 7.7358960279999565,
+      "peak_rss_mib": 65.5703125,
+      "baseline_rss_mib": 62.1953125,
+      "sql": {
+        "statements": 148,
+        "selects": 17
+      },
+      "disk": {
+        "db_bytes": 380928,
+        "wal_bytes": 0,
+        "total_bytes": 470357570
+      },
+      "languages": 40,
+      "samples_per_language": 10000,
+      "source_mean_bytes": 162.722225,
+      "reference_mean_bytes": 194.722225,
+      "samples_jsonl_bytes": 180177780,
+      "predictions_jsonl_bytes": 109488890
+    },
+    {
+      "stage": "dataset_validate",
+      "count": 400000,
+      "seconds": 15.363975612000104,
+      "peak_rss_mib": 74.2578125,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 3,
+        "selects": 2
+      },
+      "disk": {
+        "db_bytes": 389120,
+        "wal_bytes": 0,
+        "total_bytes": 650543688
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v1",
+          "sample_count": 400000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "7b9ab7c00ba6ed5c40cf9ed7bb07147001ac16d951c5874d1cc7487e56dd16c1",
+          "is_new_dataset": true
+        },
+        "diff": {
+          "base_version_id": null,
+          "base_version_label": null,
+          "added": 400000,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 0,
+          "both_changed": 0,
+          "unchanged": 0,
+          "details": [
+            {
+              "sample_id": "af-00000000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00000960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00001960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00002960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00003960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00004960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00005960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00006960",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007000",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007040",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007080",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007120",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007160",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007200",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007240",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007280",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007320",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007360",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007400",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007440",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007480",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007520",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007560",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007600",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007640",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007680",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007720",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007760",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007800",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007840",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007880",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007920",
+              "change": "added"
+            },
+            {
+              "sample_id": "af-00007960",
+              "change": "added"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "stage": "dataset_commit",
+      "count": 400000,
+      "seconds": 41.38783322099994,
+      "peak_rss_mib": 77.7109375,
+      "baseline_rss_mib": 62.13671875,
+      "sql": {
+        "statements": 412,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 341667840,
+        "wal_bytes": 0,
+        "total_bytes": 991822462
+      },
+      "sample_count": 400000
+    },
+    {
+      "stage": "dataset_diff_validate",
+      "count": 400000,
+      "seconds": 18.27496088700002,
+      "peak_rss_mib": 74.26171875,
+      "baseline_rss_mib": 62.203125,
+      "sql": {
+        "statements": 7,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 341671936,
+        "wal_bytes": 0,
+        "total_bytes": 1172136486
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v2",
+          "sample_count": 400000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "4c68dc87a4a5e1ffe0bbc9bee2aff0e904a8fc729fdc37bd42fe3e139f1cbe93",
+          "is_new_dataset": false
+        },
+        "diff": {
+          "base_version_id": "86230024-4a61-477f-8db2-b7b152337d1f",
+          "base_version_label": "v1",
+          "added": 0,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 4000,
+          "both_changed": 0,
+          "unchanged": 396000,
+          "details": [
+            {
+              "sample_id": "af-00000000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039800",
+              "change": "reference_changed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "stage": "dataset_diff_commit",
+      "count": 400000,
+      "seconds": 41.75966227699996,
+      "peak_rss_mib": 77.66015625,
+      "baseline_rss_mib": 63.03125,
+      "sql": {
+        "statements": 410,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 682749952,
+        "wal_bytes": 0,
+        "total_bytes": 1513214556
+      },
+      "sample_count": 400000
+    },
+    {
+      "stage": "submission_validate",
+      "count": 400000,
+      "seconds": 9.496865926999817,
+      "peak_rss_mib": 75.46875,
+      "baseline_rss_mib": 63.31640625,
+      "sql": {
+        "statements": 6,
+        "selects": 5
+      },
+      "disk": {
+        "db_bytes": 682749952,
+        "wal_bytes": 0,
+        "total_bytes": 1622704191
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "run_name": "scale-predictions",
+          "model_family": "synthetic",
+          "checkpoint_name": "synthetic-v1",
+          "model_version": "",
+          "platform": "synthetic",
+          "device": "",
+          "sdk": "",
+          "sdk_version": "",
+          "precision": "",
+          "mode": "default",
+          "detects_language": true,
+          "dataset_count": 1,
+          "prediction_count": 400000
+        },
+        "datasets": [
+          {
+            "dataset_key": "scale-test",
+            "dataset_version_id": "86230024-4a61-477f-8db2-b7b152337d1f",
+            "version_label": "v1",
+            "prediction_count": 400000,
+            "predictions_sha256": "1e773379fc87f485924b1c24568104a7fcebf3adafdd1ba88691877346f55654",
+            "missing_count": 0,
+            "unknown_count": 0,
+            "content_sha256": "7b9ab7c00ba6ed5c40cf9ed7bb07147001ac16d951c5874d1cc7487e56dd16c1"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "submission_commit",
+      "count": 400000,
+      "seconds": 35.61568621000015,
+      "peak_rss_mib": 76.16015625,
+      "baseline_rss_mib": 62.20703125,
+      "sql": {
+        "statements": 415,
+        "selects": 8
+      },
+      "disk": {
+        "db_bytes": 924405760,
+        "wal_bytes": 0,
+        "total_bytes": 1864360053
+      },
+      "submission_id": "4bd6fb64-88dc-4f4f-8caa-38776c9116e4"
+    }
+  ]
+}

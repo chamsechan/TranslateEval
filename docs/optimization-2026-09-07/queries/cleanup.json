@@ -1,0 +1,58 @@
+{
+  "removed": [
+    {
+      "path": "/tmp/te-scale-fixed-400000.db",
+      "bytes": 3490025472
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000.db-wal",
+      "bytes": 0
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000.db-shm",
+      "bytes": 32768
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-2jobs-compare_two-sql.json",
+      "bytes": 14681
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-2jobs-items_first-sql.json",
+      "bytes": 6937
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-2jobs-items_score-sql.json",
+      "bytes": 10796
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-2jobs-results_mean_one-sql.json",
+      "bytes": 27385
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-2jobs-results_one-sql.json",
+      "bytes": 17535
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-6jobs-compare_two-sql.json",
+      "bytes": 14683
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-6jobs-items_score-sql.json",
+      "bytes": 8434
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-6jobs-results_mean_one-sql.json",
+      "bytes": 24485
+    },
+    {
+      "path": "/tmp/te-scale-fixed-400000-6jobs-results_one-sql.json",
+      "bytes": 16093
+    }
+  ],
+  "total_bytes_removed": 3490199269,
+  "sql_archive": "query-sql-traces.zip",
+  "archived_sql_traces": 9,
+  "archive_bytes": 20893,
+  "all_owned_paths_absent": true,
+  "business_database_accessed": false
+}

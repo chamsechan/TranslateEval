@@ -1,0 +1,757 @@
+{
+  "fixture": {
+    "api": "fully mocked; total fields do not insert real rows",
+    "datasets": 20,
+    "versionsPerDataset": 20,
+    "languages": 40,
+    "samplesPerLanguage": 10000,
+    "versionSamples": 400000,
+    "queuePageTasks": 20,
+    "datasetsPerTask": 12,
+    "evaluatorsPerDataset": 2,
+    "viewport": [
+      1440,
+      1000
+    ]
+  },
+  "datasetDirectory": {
+    "height": 1025,
+    "width": 1440,
+    "viewportHeight": 1000,
+    "viewportWidth": 1440,
+    "rows": 10
+  },
+  "versionDirectory": {
+    "height": 661,
+    "rows": 10
+  },
+  "versionLanguageDrilldown": {
+    "url": "http://localhost:4188/#/datasets?version=version-1-1&language=tl"
+  },
+  "samples": {
+    "rows": 100,
+    "url": "http://localhost:4188/#/datasets?version=version-1-20&sample_page_size=100&sample_page=500",
+    "lastRequest": {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "500",
+        "page_size": "100"
+      }
+    }
+  },
+  "resultDetails": {
+    "url": "http://localhost:4188/#/results/eval-1?language_q=%E8%8F%B2%E5%BE%8B%E5%AE%BE&language=tl&page=50&page_size=100",
+    "rows": 100,
+    "lastRequest": {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "50",
+        "page_size": "100",
+        "sort": "id",
+        "direction": "asc",
+        "language": "tl"
+      }
+    }
+  },
+  "identification": {
+    "overall": "50%",
+    "covered": "100%",
+    "coverage": "50%"
+  },
+  "chart": {
+    "viewport": 1024,
+    "renderedLabels": [
+      "ar",
+      "bg",
+      "bn",
+      "cs",
+      "da",
+      "de",
+      "el",
+      "en",
+      "es",
+      "fa",
+      "fi",
+      "fr",
+      "he",
+      "hi",
+      "hu",
+      "id",
+      "it",
+      "ja",
+      "km",
+      "ko"
+    ]
+  },
+  "tasks": {
+    "height": 5244,
+    "width": 1440,
+    "viewportHeight": 1000,
+    "viewportWidth": 1440,
+    "cards": 20,
+    "datasetBlocks": 0
+  },
+  "cancel": {
+    "failureVisible": true,
+    "retrySucceeded": true
+  },
+  "matrix": {
+    "row": "菲律宾语（tl） → 中文（zh）\t\n88.0%\n通过 8,800 / 10,000\n覆盖 100.0% · 未评分 0\n\t\n50.0%\nΔ -38.00 个百分点\n通过 5,000 / 10,000\n覆盖 100.0% · 未评分 0\n\t不含此语种",
+    "drilldown": "http://localhost:4188/#/results/eval-2?return_to=%2Fresults&threshold=8&language=tl"
+  },
+  "importRepair": {
+    "datasetKeys": [
+      "corpus-01"
+    ]
+  },
+  "asyncSubmission": {
+    "restoredAfterRefresh": true,
+    "navigatedToTask": true
+  },
+  "asyncDataset": {
+    "restoredAfterRefresh": true,
+    "completed": true
+  },
+  "asyncRetry": {
+    "restoredFromGlobalHistory": true,
+    "reusedServerRequest": true
+  },
+  "cachePolicy": {
+    "saved": "strict_revision"
+  },
+  "resultSse": {
+    "scopedUrls": [
+      "/api/tasks/changes?evaluator_job_id=eval-1"
+    ],
+    "eventsSent": 11,
+    "automaticSummaryRequests": 3,
+    "automaticGapMs": [
+      4999,
+      5000
+    ],
+    "manualRefreshImmediate": true,
+    "pendingRefreshCancelledOnLeave": true,
+    "otherPagesRemainGlobal": true
+  },
+  "passed": true,
+  "errors": [],
+  "requests": [
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/datasets/dataset-1/versions",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-1",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-1/samples",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/dataset-versions/version-1-20",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "1",
+        "page_size": "20"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-20",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "1",
+        "page_size": "20"
+      }
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "1",
+        "page_size": "100"
+      }
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "1",
+        "page_size": "100"
+      }
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "500",
+        "page_size": "100"
+      }
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "500",
+        "page_size": "100"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-20",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "500",
+        "page_size": "100"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {
+        "evaluator_job_id": "eval-1"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/dataset-jobs/job-1-1/language-detection-summary",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "100",
+        "sort": "id",
+        "direction": "asc",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "50",
+        "page_size": "100",
+        "sort": "id",
+        "direction": "asc",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "50",
+        "page_size": "100",
+        "sort": "id",
+        "direction": "asc",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {
+        "evaluator_job_id": "eval-1"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/dataset-jobs/job-1-1/language-detection-summary",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/tasks/page",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "group": "active",
+        "q": ""
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/tasks/task-1/cancel",
+      "query": {}
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/tasks/task-1/cancel",
+      "query": {}
+    },
+    {
+      "path": "/tasks/page",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "group": "active",
+        "q": ""
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/results/page",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "q": "",
+        "status_group": "all"
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/results/compare",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-2",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-2/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-2/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {
+        "evaluator_job_id": "eval-2"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles",
+      "query": {
+        "enabled_only": "true"
+      }
+    },
+    {
+      "path": "/prompt-profiles",
+      "query": {}
+    },
+    {
+      "path": "/submission-imports/prepare",
+      "query": {}
+    },
+    {
+      "path": "/import-options",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/datasets/dataset-1/versions",
+      "query": {}
+    },
+    {
+      "path": "/import-reports/draft-1/validate",
+      "query": {}
+    },
+    {
+      "path": "/import-reports/draft-1/commit-job",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-submission",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-submission",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles",
+      "query": {
+        "enabled_only": "true"
+      }
+    },
+    {
+      "path": "/prompt-profiles",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-submission",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-submission",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/dataset-imports/prepare",
+      "query": {}
+    },
+    {
+      "path": "/import-reports/draft-dataset/validate",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/import-reports/draft-dataset/commit-job",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-dataset",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-dataset",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-dataset",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/async-dataset",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs",
+      "query": {
+        "limit": "20"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/old-failed",
+      "query": {}
+    },
+    {
+      "path": "/import-reports/prior-report/commit-job",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs",
+      "query": {
+        "limit": "20"
+      }
+    },
+    {
+      "path": "/import-commit-jobs/old-failed",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/old-failed",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs",
+      "query": {
+        "limit": "20"
+      }
+    },
+    {
+      "path": "/import-commit-jobs/old-failed",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs/old-failed",
+      "query": {}
+    },
+    {
+      "path": "/import-commit-jobs",
+      "query": {
+        "limit": "20"
+      }
+    },
+    {
+      "path": "/import-commit-jobs",
+      "query": {
+        "limit": "20"
+      }
+    },
+    {
+      "path": "/import-options",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles",
+      "query": {}
+    },
+    {
+      "path": "/prompt-profiles",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles/profile-1/connection-test",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles/profile-1/revisions",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles",
+      "query": {}
+    },
+    {
+      "path": "/prompt-profiles",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles/profile-1/connection-test",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/dataset-jobs/job-1-1/language-detection-summary",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/tasks/page",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "group": "active",
+        "q": ""
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    }
+  ]
+}

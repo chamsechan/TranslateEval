@@ -12,6 +12,12 @@ class Base(DeclarativeBase):
     pass
 
 
+@event.listens_for(Base.metadata, "after_create")
+def install_query_invalidation(_metadata, connection, **_kwargs):
+    from .read_model_schema import install_read_model_triggers
+    install_read_model_triggers(connection)
+
+
 def create_db_engine(database_url: str | None = None) -> Engine:
     url = database_url or settings.database_url
     engine = create_engine(
@@ -27,6 +33,7 @@ def create_db_engine(database_url: str | None = None) -> Engine:
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("PRAGMA busy_timeout=30000")
+            cursor.execute("PRAGMA cache_size=-32768")
             cursor.close()
 
     return engine
@@ -46,3 +53,30 @@ def init_db() -> None:
 
     Base.metadata.create_all(engine)
 
+
+def optimize_database(bind_or_session, *, analyze: bool = False) -> None:
+    """Refresh SQLite planning statistics after imports or substantial work.
+
+    Normal calls use bounded PRAGMA optimize; migrations and explicit maintenance
+    may request a complete ANALYZE. The caller owns a supplied Session transaction.
+    """
+    def optimize(connection):
+        if connection.dialect.name != "sqlite":
+            return
+        if analyze:
+            connection.exec_driver_sql("ANALYZE")
+        else:
+            previous_limit = connection.exec_driver_sql("PRAGMA analysis_limit").scalar()
+            connection.exec_driver_sql("PRAGMA analysis_limit=1000")
+            try:
+                connection.exec_driver_sql("PRAGMA optimize=0x10002")
+            finally:
+                connection.exec_driver_sql(f"PRAGMA analysis_limit={int(previous_limit or 0)}")
+    if isinstance(bind_or_session, Session):
+        connection = bind_or_session.connection()
+        optimize(connection)
+    elif isinstance(bind_or_session, Engine):
+        with bind_or_session.begin() as connection:
+            optimize(connection)
+    else:
+        optimize(bind_or_session)

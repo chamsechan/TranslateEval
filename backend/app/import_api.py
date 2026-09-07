@@ -6,27 +6,95 @@ import tempfile
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .api import report_dict
+from .api import report_dict, utc_iso
 from .config import settings
 from .database import get_session
 from .import_options import has_results_expression, option_has_results, remember_option
 from .importers import (
-    ImportValidationError, _load_jsonl, _report_record, stage_source,
+    ImportValidationError, _report_record, stage_source,
     validate_dataset_staged, validate_submission_staged,
 )
-from .models import ImportOption, ImportValidationReport
+from .import_index import iter_jsonl
+from .models import ImportCommitJob, ImportOption, ImportValidationReport
 from .schemas import (
-    DatasetSampleInput, ImportManifestRequest, ImportOptionCategory,
+    CommitSubmissionRequest, DatasetSampleInput, ImportManifestRequest, ImportOptionCategory,
     ImportOptionCreate, ImportOptionUpdate, PathImportRequest,
 )
 
 router = APIRouter(prefix="/api")
 ImportKind = Literal["dataset", "submission"]
+
+
+def import_job_dict(job: ImportCommitJob) -> dict[str, Any]:
+    return {
+        "id": job.id, "report_id": job.report_id, "kind": job.kind,
+        "status": job.status, "phase": job.phase, "error": job.error,
+        "result": job.result, "created_at": utc_iso(job.created_at),
+        "started_at": utc_iso(job.started_at), "finished_at": utc_iso(job.finished_at),
+    }
+
+
+@router.post("/import-reports/{report_id}/commit-job", status_code=202)
+def enqueue_import_commit(report_id: str, body: dict[str, Any] | None = None,
+                          session: Session = Depends(get_session)) -> dict[str, Any]:
+    report = session.get(ImportValidationReport, report_id)
+    if not report:
+        raise HTTPException(404, "导入核验记录不存在")
+    if not report.report.get("valid"):
+        raise HTTPException(400, "核验未通过，不能提交")
+    existing = session.scalar(select(ImportCommitJob).where(ImportCommitJob.report_id == report_id))
+    if existing and existing.status != "failed":
+        return import_job_dict(existing)
+    payload = (body or {}) if body else (existing.request if existing else {})
+    if report.kind == "submission":
+        try:
+            payload = CommitSubmissionRequest.model_validate(payload).model_dump(mode="json")
+        except ValidationError as exc:
+            raise HTTPException(422, "请选择有效的评价器后提交") from exc
+    else:
+        payload = {}
+    if existing:
+        from sqlalchemy import update
+        session.execute(update(ImportCommitJob).where(
+            ImportCommitJob.id == existing.id, ImportCommitJob.status == "failed",
+        ).values(status="queued", phase="queued", request=payload, result={}, error=None,
+                 started_at=None, finished_at=None))
+        session.commit()
+        session.refresh(existing)
+        return import_job_dict(existing)
+    job = ImportCommitJob(report_id=report_id, kind=report.kind, request=payload)
+    session.add(job)
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        job = session.scalar(select(ImportCommitJob).where(ImportCommitJob.report_id == report_id))
+        if job is None:
+            raise
+    return import_job_dict(job)
+
+
+@router.get("/import-commit-jobs")
+def list_import_commit_jobs(limit: int = Query(20, ge=1, le=100),
+                            session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    jobs = session.scalars(select(ImportCommitJob).order_by(
+        ImportCommitJob.created_at.desc(), ImportCommitJob.id.desc(),
+    ).limit(limit))
+    return [import_job_dict(job) for job in jobs]
+
+
+@router.get("/import-commit-jobs/{job_id}")
+def get_import_commit_job(job_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    job = session.get(ImportCommitJob, job_id)
+    if not job:
+        raise HTTPException(404, "后台导入任务不存在")
+    return import_job_dict(job)
 
 
 def check_prefill_structure(manifest: dict[str, Any], kind: ImportKind) -> None:
@@ -149,6 +217,15 @@ def delete_option(option_id: str, confirm: bool = False,
 
 def prepare_import(session: Session, source: str | Path, kind: ImportKind) -> ImportValidationReport:
     staged = stage_source(source, kind)
+    try:
+        return _prepare_staged(session, staged, kind)
+    except Exception:
+        session.rollback()
+        shutil.rmtree(staged, ignore_errors=True)
+        raise
+
+
+def _prepare_staged(session: Session, staged: Path, kind: ImportKind) -> ImportValidationReport:
     manifest_path = staged / ("dataset_info.json" if kind == "dataset" else "result_info.json")
     manifest: dict[str, Any] = {}
     if manifest_path.is_file():
@@ -163,11 +240,15 @@ def prepare_import(session: Session, source: str | Path, kind: ImportKind) -> Im
     report: dict[str, Any] = {"valid": False, "errors": [], "has_manifest": manifest_path.is_file()}
     if kind == "dataset":
         manifest.pop("source_languages", None)
-        samples, errors = _load_jsonl(staged / "samples.jsonl", DatasetSampleInput)
+        errors: list[dict[str, Any]] = []
+        count = 0
+        languages: set[str] = set()
+        for item in iter_jsonl(staged / "samples.jsonl", DatasetSampleInput, errors):
+            languages.add(item.source_language)
+            count += 1
         report["errors"] = errors
-        languages = {item.source_language for item in samples}
         report["detected_languages"] = sorted(languages)
-        report["sample_count"] = len(samples)
+        report["sample_count"] = count
     else:
         root_predictions = (staged / "predictions.jsonl").is_file()
         keys = sorted(p.parent.name for p in staged.glob("*/predictions.jsonl"))

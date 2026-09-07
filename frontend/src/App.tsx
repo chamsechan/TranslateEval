@@ -8,11 +8,12 @@ import {
   SettingOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, Layout, Menu, Space, Spin, Typography } from 'antd'
+import { Button, Drawer, Layout, Menu, Space, Spin, Typography } from 'antd'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { api } from './api'
 
+const ImportCommitHistory = lazy(() => import('./components/ImportCommitProgress'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const DatasetsPage = lazy(() => import('./pages/DatasetsPage'))
 const ModelsPage = lazy(() => import('./pages/ModelsPage'))
@@ -35,6 +36,7 @@ const menuItems = [
 
 export default function App() {
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1200)
+  const [importsOpen, setImportsOpen] = useState(false)
   const [serviceStatus, setServiceStatus] = useState<'checking' | 'connected' | 'worker-offline' | 'offline'>('checking')
   const navigate = useNavigate()
   const location = useLocation()
@@ -78,11 +80,13 @@ export default function App() {
       <Layout>
         <Header className="app-header">
           <Button aria-label={collapsed ? '展开导航' : '收起导航'} type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
-          <Space className="header-status">
+          <Space className="header-status" wrap size={[10, 4]}>
+            <Button size="small" onClick={() => setImportsOpen(true)}>导入进度</Button>
             <span className={`live-dot ${serviceStatus}`} />
             <Typography.Text type={serviceStatus === 'connected' ? 'secondary' : 'warning'}>{serviceText}</Typography.Text>
           </Space>
         </Header>
+        <Drawer title="后台导入记录" width={860} open={importsOpen} onClose={() => setImportsOpen(false)} destroyOnHidden><Suspense fallback={<Spin />}><ImportCommitHistory onNavigate={() => setImportsOpen(false)} /></Suspense></Drawer>
         <Content className="app-content">
           <Suspense fallback={<div style={{ display: 'grid', placeItems: 'center', height: '60vh' }}><Spin size="large" /></div>}>
             <Routes>

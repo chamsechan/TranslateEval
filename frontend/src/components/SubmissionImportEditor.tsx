@@ -6,19 +6,19 @@ import type { Dataset, DatasetVersion, ImportOption, ImportOptionCategory, Impor
 import ImportOptionsPanel, { optionLabels } from './ImportOptionsPanel'
 import QueryError from './QueryError'
 
-function VersionFields({ index, datasets, root }: { index: number; datasets: Dataset[]; root: boolean }) {
+function VersionFields({ index, datasets, root, directories, onRemove, removable }: { index: number; datasets: Dataset[]; root: boolean; directories: string[]; onRemove: () => void; removable: boolean }) {
   const form = Form.useFormInstance()
   const key = Form.useWatch(['datasets', index, 'dataset_key'], form)
   const hash = Form.useWatch(['datasets', index, 'dataset_content_sha256'], form)
   const dataset = datasets.find((item) => item.key === key)
   const query = useApiQuery<DatasetVersion[]>(dataset ? `/datasets/${dataset.id}/versions` : null)
   const versions = query.data || []
-  return <Card size="small" style={{ marginBottom: 12 }}>
+  return <Card size="small" style={{ marginBottom: 12 }} extra={<Button danger size="small" disabled={!removable} onClick={onRemove}>删除此数据集条目</Button>}>
     <Row gutter={16}>
       <Col xs={24} md={10}><Form.Item name={[index, 'dataset_key']} label="数据集" rules={[{ required: true }]}>
-        <Select showSearch optionFilterProp="label" disabled={!root} options={[
-          ...datasets.map((item) => ({ value: item.key, label: `${item.name} · ${item.key}` })),
-          ...(key && !dataset ? [{ value: key, label: `${key}（尚未导入）` }] : []),
+        <Select showSearch optionFilterProp="label" options={[
+          ...datasets.filter(item => root || directories.includes(item.key)).map((item) => ({ value: item.key, label: `${item.name} · ${item.key}` })),
+          ...(key && (!dataset || (!root && !directories.includes(key))) ? [{ value: key, label: `${key}（${!dataset ? '尚未导入' : '未匹配预测目录'}）`, disabled: true }] : []),
         ]} placeholder="选择预测对应的数据集" onChange={() => form.setFieldValue(['datasets', index, 'dataset_content_sha256'], undefined)} />
       </Form.Item></Col>
       <Col xs={24} md={14}><Form.Item name={[index, 'dataset_content_sha256']} label="数据集版本" rules={[{ required: true, message: '请选择数据集版本' }, { validator: async (_, value) => { if (value && query.data && !versions.some((item) => item.content_sha256 === value)) throw new Error('哈希未匹配，请选择已导入的版本') } }]}>
@@ -29,6 +29,7 @@ function VersionFields({ index, datasets, root }: { index: number; datasets: Dat
       </Form.Item></Col>
     </Row>
     <QueryError error={query.error} retry={query.refresh} />
+    {!root && key && !directories.includes(key) && <Alert type="warning" showIcon message="此条目没有同名预测目录。请选择实际存在的目录对应数据集，或删除多余条目。" style={{ marginBottom: 12 }} />}
     {key && !dataset && <Alert type="warning" message="请先在数据集页面导入对应语料，再刷新数据集列表。" />}
     {hash && <Typography.Paragraph type="secondary" style={{ overflowWrap: 'anywhere', marginBottom: 0 }}>内容哈希：{hash}</Typography.Paragraph>}
   </Card>
@@ -43,6 +44,8 @@ export default function SubmissionImportEditor({ draft, onValidated, onBack }: {
   const datasetQuery = useApiQuery<Dataset[]>('/datasets')
   const [manage, setManage] = useState(false)
   const [loading, setLoading] = useState(false)
+  const directories = draft.report.prediction_directories || []
+  const rootOnly = !!draft.report.root_predictions && directories.length === 0
   const inference = draft.manifest.inference && typeof draft.manifest.inference === 'object' ? draft.manifest.inference as Record<string, unknown> : {}
   const initialValues = { ...draft.manifest, inference, decoding_text: JSON.stringify(inference.decoding || {}, null, 2) }
   const currentValues = Form.useWatch([], form)
@@ -134,7 +137,12 @@ export default function SubmissionImportEditor({ draft, onValidated, onBack }: {
       </Row>
       <Form.Item name="decoding_text" label="解码参数（JSON，可选）"><Input.TextArea rows={3} /></Form.Item>
       <Typography.Title level={5}>预测对应的数据集版本</Typography.Title>
-      <Form.List name="datasets">{(fields) => <>{fields.map((field) => <VersionFields key={field.key} index={field.name} datasets={datasetQuery.data || []} root={!!draft.report.root_predictions} />)}</>}</Form.List>
+      <Typography.Paragraph type="secondary">{rootOnly ? '根目录 predictions.jsonl 关联一个数据集；多余的元信息条目可删除。' : '目录名与数据集标识对应。可删除多余元信息条目，或重新选择已有预测目录对应的数据集；不会移动或改名文件。'}</Typography.Paragraph>
+      <Form.List name="datasets" rules={[{ validator: async (_, value) => { if (!value?.length) throw new Error('至少保留一个数据集'); if (rootOnly && value.length !== 1) throw new Error('根目录预测文件只能关联一个数据集，请删除多余条目') } }]}>{(fields, { add, remove }, { errors }) => <>
+        {fields.map((field) => <VersionFields key={field.key} index={field.name} datasets={datasetQuery.data || []} root={rootOnly} directories={directories} removable={fields.length > 1} onRemove={() => remove(field.name)} />)}
+        {!!directories.length && <Button onClick={() => { const selected = new Set((form.getFieldValue('datasets') || []).map((entry: { dataset_key?: string }) => entry?.dataset_key)); for (const key of directories) if (!selected.has(key)) add({ dataset_key: key }) }}>补齐预测目录条目</Button>}
+        <Form.ErrorList errors={errors} />
+      </>}</Form.List>
     </Form>
     <Space><Button disabled={loading} onClick={onBack}>更换文件</Button><Button type="primary" loading={loading} onClick={validate}>核验模型信息、数据集版本和预测 ID</Button></Space>
     <Modal title="维护导入下拉选项" width={860} open={manage} footer={null} onCancel={() => { setManage(false); optionsQuery.refresh() }} destroyOnHidden><ImportOptionsPanel /></Modal>

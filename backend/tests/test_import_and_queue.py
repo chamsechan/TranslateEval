@@ -121,6 +121,12 @@ def test_language_detection_metrics_when_auto_detect_is_enabled(session_factory)
         assert result["covered"] == 5
         assert result["correct"] == 4
         assert result["accuracy"] == 0.8
+        assert result["accuracy_on_covered"] == 0.8
+        assert result["accuracy_overall"] == 4 / 6
+        assert result["coverage"] == 5 / 6
+        missing_language = predictions[-1].sample_id.split("-", 1)[0]
+        language = next(row for row in result["by_language"] if row["source_language"] == missing_language)
+        assert language["recall_overall"] == 0.5
         assert len(result["confusion_matrix"]) == 3
 
 

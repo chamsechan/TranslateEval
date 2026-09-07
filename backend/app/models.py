@@ -91,6 +91,8 @@ class DatasetVersion(Base, TimestampMixin):
     content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     sample_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     source_languages: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    # Immutable version statistics; NULL marks legacy or externally changed data.
+    language_counts: Mapped[dict[str, int] | None] = mapped_column(JSON(none_as_null=True), nullable=True)
 
     dataset: Mapped[Dataset] = relationship(back_populates="versions")
     samples: Mapped[list["DatasetSample"]] = relationship(
@@ -379,6 +381,8 @@ class EvaluationItem(Base):
     __tablename__ = "evaluation_items"
     __table_args__ = (
         UniqueConstraint("evaluator_job_id", "prediction_id", name="uq_job_prediction"),
+        Index("ix_items_job_status_id", "evaluator_job_id", "status", "id"),
+        Index("ix_items_score_result", "score_result_id"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -430,3 +434,20 @@ class ImportValidationReport(Base, TimestampMixin):
     staged_path: Mapped[str] = mapped_column(Text, nullable=False)
     manifest: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     report: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+class ImportCommitJob(Base, TimestampMixin):
+    __tablename__ = "import_commit_jobs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    report_id: Mapped[str] = mapped_column(
+        ForeignKey("import_validation_reports.id"), unique=True, nullable=False,
+    )
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="queued", index=True, nullable=False)
+    phase: Mapped[str] = mapped_column(String(32), default="queued", nullable=False)
+    request: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    result: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    error: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -1,0 +1,1 @@
+{"case": "compare_two", "samples_per_version": 400000, "jobs": 2, "http_status": 200, "seconds": 25.318415382000012, "sql_count": 49, "baseline_rss_mb": 74.31640625, "peak_rss_mb": 113.5859375, "response_bytes": 13621, "slowest_cursor_execute_seconds": 0.0005426039999747445}

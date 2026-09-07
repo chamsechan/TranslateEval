@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import random
+import time
+import uuid
+import logging
 from collections import defaultdict
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import delete, func, select, tuple_, update
-from sqlalchemy.orm import Session
+from sqlalchemy import delete, func, select, update, insert, literal, union_all, exists
+from sqlalchemy.orm import Session, load_only
 
 from .config import settings
-from .database import SessionLocal
+from .database import SessionLocal, optimize_database
 from .evaluators import build_evaluator
 from .evaluators.base import (
     BaseEvaluator,
@@ -19,6 +22,7 @@ from .evaluators.base import (
     RetriableEvaluatorError,
     ScoreInput,
     ScoreOutput,
+    validate_score_output,
 )
 from .models import (
     AggregateScore,
@@ -39,6 +43,8 @@ from .schemas import EvaluatorSelection
 
 
 TERMINAL = {"completed", "partial_failed", "partial_cancelled", "failed", "cancelled"}
+ITEM_BATCH_SIZE = 512
+logger = logging.getLogger(__name__)
 
 
 class JobStateConflict(ValueError):
@@ -53,6 +59,8 @@ def create_evaluation_task(
     *,
     commit: bool = True,
 ) -> EvaluationTask:
+    if not selections:
+        raise ValueError("至少选择一个评价器")
     selection_keys = [
         (selection.evaluator_revision_id, selection.prompt_version_id)
         for selection in selections
@@ -91,14 +99,9 @@ def create_evaluation_task(
         )
         session.add(dataset_job)
         session.flush()
-        prediction_ids = list(
-            session.scalars(
-                select(Prediction.id).where(
-                    Prediction.submission_dataset_id == submission_dataset.id
-                )
-            )
-        )
-        dataset_job.total_items = len(prediction_ids) * len(selections)
+        prediction_count = session.scalar(select(func.count(Prediction.id)).where(
+            Prediction.submission_dataset_id == submission_dataset.id)) or 0
+        dataset_job.total_items = prediction_count * len(selections)
         total += dataset_job.total_items
         for selection in selections:
             evaluator_job = EvaluatorJob(
@@ -106,22 +109,16 @@ def create_evaluation_task(
                 evaluator_revision_id=selection.evaluator_revision_id,
                 prompt_version_id=selection.prompt_version_id,
                 status="queued",
-                total_items=len(prediction_ids),
+                total_items=prediction_count,
             )
             session.add(evaluator_job)
             session.flush()
-            for offset in range(0, len(prediction_ids), 1_000):
-                session.add_all(
-                    [
-                        EvaluationItem(
-                            evaluator_job_id=evaluator_job.id,
-                            prediction_id=prediction_id,
-                            status="queued",
-                        )
-                        for prediction_id in prediction_ids[offset : offset + 1_000]
-                    ]
-                )
-                session.flush()
+            session.execute(insert(EvaluationItem).from_select(
+                ["evaluator_job_id", "prediction_id", "status", "cache_hit", "attempts", "created_at"],
+                select(literal(evaluator_job.id), Prediction.id, literal("queued"), literal(False),
+                       literal(0), literal(datetime.now(UTC))).where(
+                           Prediction.submission_dataset_id == submission_dataset.id),
+            ))
     task.total_items = total
     submission.status = "queued"
     if commit:
@@ -145,6 +142,9 @@ def recover_interrupted_jobs(session: Session) -> int:
     task_ids: set[str] = set()
     for job in jobs:
         job.status = "queued"
+        session.execute(update(EvaluationItem).where(
+            EvaluationItem.evaluator_job_id == job.id, EvaluationItem.status == "running",
+        ).values(status="queued", finished_at=None))
         dataset_job_ids.add(job.dataset_job_id)
 
     for dataset_job in session.scalars(
@@ -241,7 +241,8 @@ def retry_failed_job(session: Session, evaluator_job_id: str) -> EvaluatorJob:
     return job
 
 
-def _joined_item_rows(session: Session, evaluator_job: EvaluatorJob) -> list[dict[str, Any]]:
+def _joined_item_rows(session: Session, evaluator_job: EvaluatorJob, *, after_id: int = 0,
+                      limit: int = ITEM_BATCH_SIZE) -> list[dict[str, Any]]:
     submission_dataset = evaluator_job.dataset_job.submission_dataset
     rows = session.execute(
         select(EvaluationItem, Prediction, DatasetSample)
@@ -254,8 +255,10 @@ def _joined_item_rows(session: Session, evaluator_job: EvaluatorJob) -> list[dic
         .where(
             EvaluationItem.evaluator_job_id == evaluator_job.id,
             EvaluationItem.status == "queued",
+            EvaluationItem.id > after_id,
         )
         .order_by(EvaluationItem.id)
+        .limit(limit)
     ).all()
     return [
         {
@@ -286,7 +289,9 @@ def _cache_key(row: dict[str, Any], model_name: str) -> tuple[str, str, str, str
 
 
 def _preload_llm_cache(
-    session: Session, model_name: str, rows: list[dict[str, Any]]
+    session: Session, model_name: str, rows: list[dict[str, Any]], *,
+    evaluator_type: str = "openai_compatible_llm", job: EvaluatorJob | None = None,
+    current_job_only: bool = False,
 ) -> dict[tuple[str, ...], ScoreResult]:
     requested = list(
         {
@@ -295,21 +300,38 @@ def _preload_llm_cache(
         }
     )
     cache: dict[tuple[str, ...], ScoreResult] = {}
-    key_columns = tuple_(
-        ScoreResult.source_language,
-        ScoreResult.source_hash,
-        ScoreResult.reference_hash,
-        ScoreResult.translation_hash,
-    )
-    for offset in range(0, len(requested), 200):
+    maximum, unit = (100, "BLEU") if evaluator_type == "sacrebleu_zh" else (10, "point")
+    for offset in range(0, len(requested), 150):
+        # Correlated equality probes use every cache-index column even before
+        # ANALYZE; fetch one latest valid score per key, never its raw response.
+        keys = union_all(*[
+            select(*(literal(value).label(name) for name, value in zip(
+                ("language", "source", "reference", "translation"), key)))
+            for key in requested[offset:offset + 150]
+        ]).cte("requested_keys")
+        latest = select(ScoreResult.id).where(
+            ScoreResult.evaluator_type == evaluator_type, ScoreResult.evaluator_model == model_name,
+            ScoreResult.source_language == keys.c.language, ScoreResult.source_hash == keys.c.source,
+            ScoreResult.reference_hash == keys.c.reference, ScoreResult.translation_hash == keys.c.translation,
+            ScoreResult.score_min == 0, ScoreResult.score_max == maximum, ScoreResult.unit == unit,
+            ScoreResult.score.between(0, maximum),
+        )
+        if job is not None and job.evaluator_revision.config.get("cache_policy") == "strict_revision":
+            latest = latest.where(ScoreResult.evaluator_revision_id == job.evaluator_revision_id,
+                                  ScoreResult.prompt_version_id == job.prompt_version_id,
+                                  ScoreResult.base_url == job.evaluator_revision.config.get("base_url", ""))
+        if current_job_only:
+            assert job is not None
+            latest = latest.where(exists(select(EvaluationItem.id).where(
+                EvaluationItem.evaluator_job_id == job.id,
+                EvaluationItem.score_result_id == ScoreResult.id,
+            )))
+        latest = latest.order_by(ScoreResult.created_at.desc(), ScoreResult.id.desc()).limit(1).correlate(keys).scalar_subquery()
         results = session.scalars(
-            select(ScoreResult)
-            .where(
-                ScoreResult.evaluator_type == "openai_compatible_llm",
-                ScoreResult.evaluator_model == model_name,
-                key_columns.in_(requested[offset : offset + 200]),
-            )
-            .order_by(ScoreResult.created_at.desc())
+            select(ScoreResult).join(keys, ScoreResult.id == latest).options(load_only(
+                ScoreResult.id, ScoreResult.source_language, ScoreResult.source_hash,
+                ScoreResult.reference_hash, ScoreResult.translation_hash, ScoreResult.evaluator_model,
+            ))
         )
         for result in results:
             key = (
@@ -335,7 +357,8 @@ async def _score_with_retry(
             return None, None, attempts
         attempts += 1
         try:
-            return await evaluator.evaluate_one(score_input), None, attempts
+            output = validate_score_output(await evaluator.evaluate_one(score_input), evaluator.evaluator_type)
+            return output, None, attempts
         except PermanentEvaluatorError as exc:
             return None, str(exc), attempts
         except RetriableEvaluatorError as exc:
@@ -357,9 +380,11 @@ def _persist_score(
     row: dict[str, Any],
     output: ScoreOutput,
 ) -> ScoreResult:
+    output = validate_score_output(output, evaluator.evaluator_type)
     sample: DatasetSample = row["sample"]
     prediction: Prediction = row["prediction"]
     result = ScoreResult(
+        id=str(uuid.uuid4()),
         evaluator_type=evaluator_job.evaluator_revision.profile.evaluator_type,
         evaluator_revision_id=evaluator_job.evaluator_revision_id,
         prompt_version_id=evaluator_job.prompt_version_id,
@@ -377,11 +402,16 @@ def _persist_score(
         raw_response=output.raw_response,
     )
     session.add(result)
-    session.flush()
     return result
 
 
-def _refresh_progress(session: Session, job: EvaluatorJob) -> dict[str, int]:
+def _refresh_progress(session: Session, job: EvaluatorJob, *, delta: dict[str, int] | None = None) -> dict[str, int]:
+    if delta is not None:
+        for target in (job, job.dataset_job, job.dataset_job.task):
+            for counter in ("completed", "failed", "cached"):
+                field = f"{counter}_items"
+                setattr(target, field, getattr(target, field) + delta.get(counter, 0))
+        return {}
     session.flush()
     counts = dict(
         session.execute(
@@ -422,7 +452,7 @@ def _refresh_progress(session: Session, job: EvaluatorJob) -> dict[str, int]:
 
 def _item_status(counts: dict[str, int]) -> str:
     """Derive the job state from all item outcomes, including prior cancellations."""
-    if counts.get("queued"):
+    if counts.get("queued") or counts.get("running"):
         return "queued"
     if counts.get("cancelled"):
         return "partial_cancelled" if counts.get("completed") or counts.get("failed") else "cancelled"
@@ -437,7 +467,7 @@ def _cancel_remaining(session: Session, job: EvaluatorJob) -> None:
         update(EvaluationItem)
         .where(
             EvaluationItem.evaluator_job_id == job.id,
-            EvaluationItem.status == "queued",
+            EvaluationItem.status.in_(["queued", "running"]),
         )
         .values(status="cancelled", finished_at=now)
     )
@@ -445,110 +475,59 @@ def _cancel_remaining(session: Session, job: EvaluatorJob) -> None:
 
 
 def _store_aggregates(session: Session, job: EvaluatorJob, evaluator: BaseEvaluator | None = None) -> None:
+    from .evaluators.bleu import SacreBleuZhEvaluator
+    from .score_validity import comparable_item_score, scored_item_condition
+    from .read_models import refresh_query_summary
+
+    session.flush()
     session.execute(delete(AggregateScore).where(AggregateScore.evaluator_job_id == job.id))
-    submission_dataset = job.dataset_job.submission_dataset
+    dataset = job.dataset_job.submission_dataset
+    kind = job.evaluator_revision.profile.evaluator_type
+    corpus_text = (Prediction.translation_zh, DatasetSample.reference_zh) if kind == "sacrebleu_zh" else (literal(""), literal(""))
     rows = session.execute(
-        select(ScoreResult, DatasetSample, Prediction)
+        select(comparable_item_score(kind), ScoreResult.unit, DatasetSample.source_language,
+               *corpus_text)
         .join(EvaluationItem, EvaluationItem.score_result_id == ScoreResult.id)
         .join(Prediction, EvaluationItem.prediction_id == Prediction.id)
-        .join(
-            DatasetSample,
-            (DatasetSample.dataset_version_id == submission_dataset.dataset_version_id)
-            & (DatasetSample.sample_id == Prediction.sample_id),
-        )
-        .where(
-            EvaluationItem.evaluator_job_id == job.id,
-            EvaluationItem.status == "completed",
-        )
-    ).all()
-    # A cancelled job may never construct its scoring client. BLEU aggregates are
-    # local; LLM means below only need the already persisted numeric scores.
-    if rows and evaluator is None and job.evaluator_revision.profile.evaluator_type == "sacrebleu_zh":
-        evaluator = build_evaluator("sacrebleu_zh", job.evaluator_revision.config)
-    grouped: dict[str, list[tuple[ScoreResult, DatasetSample, Prediction]]] = defaultdict(list)
-    for score, sample, prediction in rows:
-        grouped[sample.source_language].append((score, sample, prediction))
-    if rows:
-        mean_score = sum(score.score for score, _, _ in rows) / len(rows)
-        session.add(
-            AggregateScore(
-                evaluator_job_id=job.id,
-                metric_name="sentence_mean",
-                source_language="",
-                value=mean_score,
-                sample_count=len(rows),
-                unit=rows[0][0].unit,
-            )
-        )
-    language_means: list[float] = []
-    for language, language_rows in grouped.items():
-        mean_score = sum(score.score for score, _, _ in language_rows) / len(language_rows)
-        language_means.append(mean_score)
-        session.add(
-            AggregateScore(
-                evaluator_job_id=job.id,
-                metric_name="sentence_mean",
-                source_language=language,
-                value=mean_score,
-                sample_count=len(language_rows),
-                unit=language_rows[0][0].unit,
-            )
-        )
-        if evaluator is not None and evaluator.evaluator_type == "sacrebleu_zh":
-            inputs = [
-                ScoreInput(
-                    source_language=sample.source_language,
-                    source_text=sample.source_text,
-                    reference_zh=sample.reference_zh,
-                    translation_zh=prediction.translation_zh,
-                )
-                for _, sample, prediction in language_rows
-            ]
-            corpus = evaluator.corpus_aggregates(inputs)
-            session.add(
-                AggregateScore(
-                    evaluator_job_id=job.id,
-                    metric_name="corpus_bleu",
-                    source_language=language,
-                    value=float(corpus["corpus_bleu"]),
-                    sample_count=len(inputs),
-                    unit="BLEU",
-                    details={"signature": corpus["signature"]},
-                )
-            )
-    if language_means:
-        session.add(
-            AggregateScore(
-                evaluator_job_id=job.id,
-                metric_name="macro_sentence_mean",
-                source_language="",
-                value=sum(language_means) / len(language_means),
-                sample_count=len(language_means),
-                unit=rows[0][0].unit,
-            )
-        )
-    if rows and evaluator is not None and evaluator.evaluator_type == "sacrebleu_zh":
-        all_inputs = [
-            ScoreInput(
-                source_language=sample.source_language,
-                source_text=sample.source_text,
-                reference_zh=sample.reference_zh,
-                translation_zh=prediction.translation_zh,
-            )
-            for _, sample, prediction in rows
-        ]
-        corpus = evaluator.corpus_aggregates(all_inputs)
-        session.add(
-            AggregateScore(
-                evaluator_job_id=job.id,
-                metric_name="corpus_bleu",
-                source_language="",
-                value=float(corpus["corpus_bleu"]),
-                sample_count=len(rows),
-                unit="BLEU",
-                details={"signature": corpus["signature"]},
-            )
-        )
+        .join(DatasetSample, (DatasetSample.dataset_version_id == dataset.dataset_version_id)
+              & (DatasetSample.sample_id == Prediction.sample_id))
+        .where(EvaluationItem.evaluator_job_id == job.id, scored_item_condition(kind))
+        .execution_options(yield_per=ITEM_BATCH_SIZE)
+    )
+    # Only numeric sufficient statistics and one small accumulator per language
+    # remain resident. Corpus BLEU is computed from summed n-gram counts, not a
+    # mean of batch or sentence BLEU values.
+    grouped: dict[str, dict[str, Any]] = {}
+    overall = {"sum": 0.0, "count": 0, "statistics": [0] * 10}
+    bleu = evaluator if isinstance(evaluator, SacreBleuZhEvaluator) else None
+    unit = "BLEU" if kind == "sacrebleu_zh" else "point"
+    for score, row_unit, language, translation, reference in rows:
+        if evaluator is None and kind == "sacrebleu_zh" and bleu is None:
+            bleu = SacreBleuZhEvaluator(job.evaluator_revision.config)
+        group = grouped.setdefault(language, {"sum": 0.0, "count": 0, "statistics": [0] * 10})
+        unit = row_unit
+        for accumulator in (group, overall):
+            accumulator["sum"] += score
+            accumulator["count"] += 1
+        if bleu is not None:
+            statistics = bleu.segment_statistics(translation, reference)
+            for accumulator in (group, overall):
+                accumulator["statistics"] = [a + b for a, b in zip(accumulator["statistics"], statistics)]
+    if overall["count"]:
+        for language, accumulator in [("", overall), *grouped.items()]:
+            session.add(AggregateScore(evaluator_job_id=job.id, metric_name="sentence_mean",
+                source_language=language, value=accumulator["sum"] / accumulator["count"],
+                sample_count=accumulator["count"], unit=unit))
+            if bleu is not None:
+                corpus = bleu.corpus_from_statistics(accumulator["statistics"])
+                session.add(AggregateScore(evaluator_job_id=job.id, metric_name="corpus_bleu",
+                    source_language=language, value=corpus["corpus_bleu"], sample_count=accumulator["count"],
+                    unit="BLEU", details={"signature": corpus["signature"]}))
+        session.add(AggregateScore(evaluator_job_id=job.id, metric_name="macro_sentence_mean",
+            source_language="", value=sum(g["sum"] / g["count"] for g in grouped.values()) / len(grouped),
+            sample_count=len(grouped), unit=unit))
+    session.flush()
+    refresh_query_summary(session, job)
 
 
 def _finish_parent_statuses(session: Session, job: EvaluatorJob) -> None:
@@ -588,143 +567,170 @@ def _finish_parent_statuses(session: Session, job: EvaluatorJob) -> None:
 
 async def process_evaluator_job(job_id: str) -> None:
     with SessionLocal() as session:
+        # A conditional claim also protects direct helper callers. Only the
+        # singleton CLI worker may recover another process's interrupted work.
+        claimed = session.execute(update(EvaluatorJob).where(
+            EvaluatorJob.id == job_id, EvaluatorJob.status == "queued",
+        ).values(status="preprocessing"))
+        if claimed.rowcount != 1:
+            session.rollback()
+            return
         job = session.get(EvaluatorJob, job_id)
-        if not job or job.status != "queued":
-            return
         task = job.dataset_job.task
-        if task.cancel_requested or job.dataset_job.cancel_requested:
-            _cancel_remaining(session, job)
-            job.status = _item_status(_refresh_progress(session, job))
-            _store_aggregates(session, job)
-            _finish_parent_statuses(session, job)
-            session.commit()
-            return
-        now = datetime.now(UTC)
-        job.status = "preprocessing"
-        job.dataset_job.status = "running"
-        task.status = "running"
-        if not task.started_at:
-            task.started_at = now
-        session.commit()
-
-        revision = job.evaluator_revision
-        profile = revision.profile
-        prompt = job.prompt_version
         evaluator: BaseEvaluator | None = None
         try:
-            evaluator = build_evaluator(
-                profile.evaluator_type,
-                revision.config,
-                system_template=prompt.system_template if prompt else None,
-                user_template=prompt.user_template if prompt else None,
-            )
-            rows = _joined_item_rows(session, job)
-            cache: dict[tuple[str, ...], ScoreResult] = {}
-            if profile.evaluator_type == "openai_compatible_llm" and not task.force_reevaluate:
-                cache = _preload_llm_cache(session, evaluator.model_name, rows)
-                for row in rows:
-                    cached = cache.get(_cache_key(row, evaluator.model_name))
-                    if cached:
-                        item: EvaluationItem = row["item"]
-                        item.score_result_id = cached.id
-                        item.status = "completed"
-                        item.cache_hit = True
-                        item.finished_at = datetime.now(UTC)
+            if task.cancel_requested or job.dataset_job.cancel_requested:
+                _cancel_remaining(session, job)
+                job.status = _item_status(_refresh_progress(session, job))
+                _store_aggregates(session, job)
+                _finish_parent_statuses(session, job)
                 session.commit()
-                rows = [row for row in rows if row["item"].status == "queued"]
-
+                return
+            now = datetime.now(UTC)
+            job.dataset_job.status = "running"
+            task.status = "running"
+            if not task.started_at:
+                task.started_at = now
+            session.commit()
+            revision = job.evaluator_revision
+            kind = revision.profile.evaluator_type
+            prompt = job.prompt_version
+            evaluator = build_evaluator(kind, revision.config,
+                system_template=prompt.system_template if prompt else None,
+                user_template=prompt.user_template if prompt else None)
+            concurrency = min(int(revision.config.get("concurrency", 32 if kind == "sacrebleu_zh" else 8)),
+                              max(1, settings.worker_global_concurrency))
+            retries = int(revision.config.get("max_retries", 0))
+            # Reconcile once on start/recovery; thereafter each completed batch
+            # contributes a delta. There is no per-response full-table count.
+            _refresh_progress(session, job)
             job.status = "running"
             session.commit()
-            concurrency = min(
-                int(revision.config.get("concurrency", 8)), settings.worker_global_concurrency
-            )
-            retries = int(revision.config.get("max_retries", 0))
-            chunk_size = max(100, concurrency * 8)
-            current_results: dict[tuple[str, ...], ScoreResult] = {}
+            cancellation = {"checked": 0.0, "value": False}
 
-            def should_cancel() -> bool:
-                # Read fresh flags without sharing the writer's ORM state with coroutines.
-                with SessionLocal() as check:
-                    flags = check.execute(
-                        select(EvaluationTask.cancel_requested, DatasetJob.cancel_requested)
-                        .join(DatasetJob, DatasetJob.task_id == EvaluationTask.id)
-                        .where(DatasetJob.id == job.dataset_job_id)
-                    ).one()
-                    return any(flags)
+            def should_cancel(force: bool = False) -> bool:
+                now = time.monotonic()
+                if force or now - cancellation["checked"] >= 0.05:
+                    with SessionLocal() as check:
+                        flags = check.execute(select(EvaluationTask.cancel_requested, DatasetJob.cancel_requested)
+                            .join(DatasetJob, DatasetJob.task_id == EvaluationTask.id)
+                            .where(DatasetJob.id == job.dataset_job_id)).one()
+                    cancellation.update(checked=now, value=any(flags))
+                return cancellation["value"]
 
-            for offset in range(0, len(rows), chunk_size):
-                if should_cancel():
-                    _cancel_remaining(session, job)
+            after_id = 0
+            while not should_cancel(force=True):
+                rows = _joined_item_rows(session, job, after_id=after_id)
+                if not rows:
                     break
-                grouped: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
-                for row in rows[offset : offset + chunk_size]:
-                    grouped[_cache_key(row, evaluator.model_name)].append(row)
-                semaphore = asyncio.Semaphore(concurrency)
-
-                async def run_group(key, group):
-                    if key in current_results:
-                        return key, group, None, None, 0
-                    async with semaphore:
-                        output, error, attempts = await _score_with_retry(
-                            evaluator, group[0]["input"], retries, should_cancel
-                        )
-                        return key, group, output, error, attempts
-
-                pending = [asyncio.create_task(run_group(key, group)) for key, group in grouped.items()]
+                after_id = rows[-1]["item"].id
+                cache = _preload_llm_cache(session, evaluator.model_name, rows,
+                    evaluator_type=kind, job=job,
+                    current_job_only=bool(task.force_reevaluate or kind != "openai_compatible_llm"))
+                delta = {"completed": 0, "cached": 0}
+                groups: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
+                for row in rows:
+                    key = _cache_key(row, evaluator.model_name)
+                    cached = cache.get(key)
+                    if cached is not None:
+                        item = row["item"]
+                        item.score_result_id, item.status, item.cache_hit = cached.id, "completed", True
+                        item.finished_at = datetime.now(UTC)
+                        delta["completed"] += 1
+                        delta["cached"] += 1
+                    else:
+                        groups[key].append(row)
+                if delta["completed"]:
+                    _refresh_progress(session, job, delta=delta)
+                    session.commit()
+                waiting = iter(groups.values())
+                pending: dict[asyncio.Task, list[dict[str, Any]]] = {}
+                exhausted = False
                 try:
-                    # Persist each finished response before waiting for slower requests.
-                    for finished in asyncio.as_completed(pending):
-                        key, group, output, error, attempts = await finished
-                        cancelled = should_cancel()
-                        result = current_results.get(key)
-                        reused = result is not None
-                        if output is not None and result is None:
-                            result = _persist_score(
-                                session, evaluator_job=job, evaluator=evaluator,
-                                row=group[0], output=output,
-                            )
-                            current_results[key] = result
-                        for index, row in enumerate(group):
-                            item = row["item"]
-                            item.score_result_id = result.id if result else None
-                            item.status = "cancelled" if cancelled else "completed" if result else "failed"
-                            item.cache_hit = bool(result) and (reused or index > 0)
-                            item.error = None if cancelled or result else error
-                            item.attempts = attempts
-                            item.finished_at = datetime.now(UTC)
-                        _refresh_progress(session, job)
+                    while pending or not exhausted:
+                        cancelled = should_cancel(force=True)
+                        starting = []
+                        if not cancelled:
+                            for _ in range(concurrency - len(pending)):
+                                group = next(waiting, None)
+                                if group is None:
+                                    exhausted = True
+                                    break
+                                starting.append(group)
+                                for row in group:
+                                    row["item"].status = "running"
+                        else:
+                            exhausted = True
+                        if starting:
+                            # Only dispatched groups are marked running, never
+                            # the rest of the fetched batch waiting for a slot.
+                            session.commit()
+                            for group in starting:
+                                pending[asyncio.create_task(_score_with_retry(
+                                    evaluator, group[0]["input"], retries, should_cancel))] = group
+                        if not pending:
+                            break
+                        done, _ = await asyncio.wait(pending, timeout=0.05,
+                                                     return_when=asyncio.FIRST_COMPLETED)
+                        if not done:
+                            continue
+                        cancelled = should_cancel(force=True)
+                        delta = {"completed": 0, "failed": 0, "cached": 0}
+                        for finished in done:
+                            group = pending.pop(finished)
+                            output, error, attempts = finished.result()
+                            result = (_persist_score(session, evaluator_job=job, evaluator=evaluator,
+                                      row=group[0], output=output) if output is not None else None)
+                            for index, row in enumerate(group):
+                                item = row["item"]
+                                item.score_result_id = result.id if result else None
+                                item.status = "cancelled" if cancelled else "completed" if result else "failed"
+                                item.cache_hit = bool(result) and index > 0
+                                item.error = None if cancelled or result else error
+                                item.attempts = attempts
+                                item.finished_at = datetime.now(UTC)
+                                if item.status in delta:
+                                    delta[item.status] += 1
+                                delta["cached"] += int(item.cache_hit)
+                        _refresh_progress(session, job, delta=delta)
                         session.commit()
                 finally:
                     for pending_task in pending:
                         if not pending_task.done():
                             pending_task.cancel()
                     await asyncio.gather(*pending, return_exceptions=True)
-                if should_cancel():
-                    _cancel_remaining(session, job)
-                    break
-
+                # All large containers above are replaced at the next bounded
+                # fetch. ORM weak references release already committed objects.
+            if should_cancel(force=True):
+                _cancel_remaining(session, job)
             job.status = _item_status(_refresh_progress(session, job))
             if job.status in TERMINAL:
                 _store_aggregates(session, job, evaluator)
             _finish_parent_statuses(session, job)
             session.commit()
         except Exception as exc:
-            job.status = "failed"
-            job.error = str(exc)
-            session.execute(
-                update(EvaluationItem)
-                .where(
-                    EvaluationItem.evaluator_job_id == job.id,
-                    EvaluationItem.status == "queued",
-                )
-                .values(status="failed", error=f"评价器任务异常: {exc}")
-            )
+            session.rollback()
+            job = session.get(EvaluatorJob, job_id)
+            job.status, job.error = "failed", str(exc)
+            session.execute(update(EvaluationItem).where(
+                EvaluationItem.evaluator_job_id == job.id,
+                EvaluationItem.status.in_(["queued", "running"]),
+            ).values(status="failed", error=f"评价器任务异常: {exc}", finished_at=datetime.now(UTC)))
             _refresh_progress(session, job)
+            _store_aggregates(session, job, evaluator)
             _finish_parent_statuses(session, job)
             session.commit()
         finally:
             if evaluator is not None:
                 await evaluator.close()
+    # Planning maintenance is optional and owns a separate short transaction.
+    # Its failure must never turn a committed successful evaluation into failed.
+    try:
+        with SessionLocal() as maintenance:
+            optimize_database(maintenance)
+            maintenance.commit()
+    except Exception:
+        logger.warning("评分已持久化，数据库查询统计维护失败", exc_info=True)
 
 
 async def worker_loop(once: bool = False) -> None:
@@ -754,54 +760,42 @@ def language_detection_summary(session: Session, dataset_job_id: str) -> dict[st
     if not model_run.detects_language:
         return {"applicable": False, "reason": "本次推理已提供源语种"}
     submission_dataset = job.submission_dataset
-    rows = session.execute(
-        select(Prediction, DatasetSample)
-        .join(
-            DatasetSample,
-            (DatasetSample.dataset_version_id == submission_dataset.dataset_version_id)
-            & (DatasetSample.sample_id == Prediction.sample_id),
-        )
+    counts = session.execute(
+        select(DatasetSample.source_language, Prediction.predicted_language, func.count(Prediction.id))
+        .join(DatasetSample, (DatasetSample.dataset_version_id == submission_dataset.dataset_version_id)
+              & (DatasetSample.sample_id == Prediction.sample_id))
         .where(Prediction.submission_dataset_id == submission_dataset.id)
+        .group_by(DatasetSample.source_language, Prediction.predicted_language)
     ).all()
-    total = len(rows)
-    covered = [(prediction, sample) for prediction, sample in rows if prediction.predicted_language]
-    correct = sum(
-        prediction.predicted_language == sample.source_language
-        for prediction, sample in covered
-    )
-    labels = sorted(
-        {sample.source_language for _, sample in rows}
-        | {prediction.predicted_language for prediction, _ in covered if prediction.predicted_language}
-    )
-    confusion: dict[str, dict[str, int]] = {
-        actual: {predicted: 0 for predicted in labels} for actual in labels
-    }
-    for prediction, sample in covered:
-        confusion[sample.source_language][prediction.predicted_language or ""] += 1
+    total = sum(count for _, _, count in counts)
+    covered = sum(count for _, predicted, count in counts if predicted)
+    correct = sum(count for actual, predicted, count in counts if actual == predicted)
+    labels = sorted({actual for actual, _, _ in counts} | {predicted for _, predicted, _ in counts if predicted})
+    confusion = {actual: {predicted: 0 for predicted in labels} for actual in labels}
+    sample_counts: dict[str, int] = defaultdict(int)
+    for actual, predicted, count in counts:
+        sample_counts[actual] += count
+        if predicted:
+            confusion[actual][predicted] += count
     by_language = []
     for language in labels:
-        true_positive = confusion.get(language, {}).get(language, 0)
-        actual_count = sum(confusion.get(language, {}).values())
-        predicted_count = sum(row.get(language, 0) for row in confusion.values())
-        by_language.append(
-            {
-                "source_language": language,
-                "sample_count": sum(sample.source_language == language for _, sample in rows),
-                "covered": actual_count,
-                "precision": true_positive / predicted_count if predicted_count else None,
-                "recall": true_positive / actual_count if actual_count else None,
-            }
-        )
+        true_positive = confusion[language][language]
+        actual_count = sum(confusion[language].values())
+        predicted_count = sum(row[language] for row in confusion.values())
+        sample_count = sample_counts[language]
+        by_language.append({
+            "source_language": language, "sample_count": sample_count, "covered": actual_count,
+            "coverage": actual_count / sample_count if sample_count else None,
+            "precision": true_positive / predicted_count if predicted_count else None,
+            "recall": true_positive / actual_count if actual_count else None,
+            "recall_overall": true_positive / sample_count if sample_count else None,
+        })
     return {
-        "applicable": True,
-        "total": total,
-        "covered": len(covered),
-        "coverage": len(covered) / total if total else 0,
-        "correct": correct,
-        "accuracy": correct / len(covered) if covered else None,
-        "by_language": by_language,
-        "labels": labels,
-        "confusion_matrix": [
-            [confusion[actual][predicted] for predicted in labels] for actual in labels
-        ],
+        "applicable": True, "total": total, "covered": covered,
+        "coverage": covered / total if total else 0, "correct": correct,
+        "accuracy": correct / covered if covered else None,
+        "accuracy_on_covered": correct / covered if covered else None,
+        "accuracy_overall": correct / total if total else None,
+        "by_language": by_language, "labels": labels,
+        "confusion_matrix": [[confusion[actual][predicted] for predicted in labels] for actual in labels],
     }

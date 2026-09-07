@@ -11,6 +11,7 @@ export interface DatasetSampleFilters {
   language?: string
   sampleId?: string
   page: number
+  pageSize?: number
   sort?: string
   direction?: 'asc' | 'desc'
 }
@@ -20,19 +21,21 @@ interface DatasetSamplesProps {
   initialLanguage?: string
   initialSampleId?: string
   initialPage?: number
+  initialPageSize?: number
   initialSort?: string
   initialDirection?: string
   onFiltersChange?: (filters: DatasetSampleFilters) => void
 }
 
-export default function DatasetSamples({ version, onClose, initialLanguage, initialSampleId, initialPage = 1, initialSort, initialDirection, onFiltersChange }: DatasetSamplesProps) {
+export default function DatasetSamples({ version, onClose, initialLanguage, initialSampleId, initialPage = 1, initialPageSize = 20, initialSort, initialDirection, onFiltersChange }: DatasetSamplesProps) {
   const [page, setPage] = useState(initialPage)
+  const [pageSize, setPageSize] = useState(initialPageSize)
   const [language, setLanguage] = useState<string | undefined>(initialLanguage)
   const [sampleId, setSampleId] = useState<string | undefined>(initialSampleId)
   const [sampleDraft, setSampleDraft] = useState(initialSampleId || '')
   const [sort, setSort] = useState<string | undefined>(['sample_id', 'source_language', 'source_text', 'reference_zh'].includes(initialSort || '') ? initialSort : undefined)
   const [direction, setDirection] = useState<'asc' | 'desc'>(initialDirection === 'desc' ? 'desc' : 'asc')
-  const params = new URLSearchParams({ page: String(page), page_size: '20' })
+  const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
   if (language) params.set('language', language)
   if (sampleId) params.set('sample_id', sampleId)
   if (sort) { params.set('sort', sort); params.set('direction', direction) }
@@ -45,7 +48,8 @@ export default function DatasetSamples({ version, onClose, initialLanguage, init
     setLanguage(filters.language)
     setSampleId(filters.sampleId)
     setPage(filters.page)
-    onFiltersChange?.({ ...filters, sort, direction: sort ? direction : undefined })
+    setPageSize(filters.pageSize ?? pageSize)
+    onFiltersChange?.({ ...filters, pageSize: filters.pageSize ?? pageSize, sort, direction: sort ? direction : undefined })
   }
   const sortColumn = (key: string): Pick<ColumnType<Sample>, 'key' | 'sorter' | 'sortOrder'> => ({ key, sorter: true, sortOrder: sort === key ? direction === 'asc' ? 'ascend' : 'descend' : null })
   const clearFilters = () => { setSampleDraft(''); changeFilters({ page: 1 }) }
@@ -67,8 +71,8 @@ export default function DatasetSamples({ version, onClose, initialLanguage, init
       setSort(nextSort)
       setDirection(nextDirection)
       setPage(1)
-      onFiltersChange?.({ language, sampleId, page: 1, sort: nextSort, direction: nextSort ? nextDirection : undefined })
-    }} scroll={{ x: 1040 }} locale={{ emptyText: language || sampleId ? '没有符合当前筛选条件的样本，请调整或清除筛选。' : '此版本暂无样本' }} pagination={{ current: page, pageSize: 20, total: query.data?.total || 0, showSizeChanger: false, showTotal: total => `共 ${total} 条`, onChange: nextPage => changeFilters({ language, sampleId, page: nextPage }) }} columns={[
+      onFiltersChange?.({ language, sampleId, page: 1, pageSize, sort: nextSort, direction: nextSort ? nextDirection : undefined })
+    }} scroll={{ x: 1040, y: '55vh' }} locale={{ emptyText: language || sampleId ? '没有符合当前筛选条件的样本，请调整或清除筛选。' : '此版本暂无样本' }} pagination={{ current: page, pageSize, total: query.data?.total || 0, pageSizeOptions: [20, 50, 100], showSizeChanger: true, showQuickJumper: true, showTotal: total => `共 ${total} 条`, onChange: (nextPage, size) => changeFilters({ language, sampleId, page: size === pageSize ? nextPage : 1, pageSize: size }) }} columns={[
       { ...sortColumn('sample_id'), title: '样本 ID', dataIndex: 'sample_id', width: 160, render: (value: string) => <Typography.Text copyable style={{ overflowWrap: 'anywhere' }}>{value}</Typography.Text> },
       { ...sortColumn('source_language'), title: '语言对', dataIndex: 'source_language', width: 220, render: (value: string) => languagePairLabel(value, pairs.find(pair => pair.source_language === value)?.source_name) },
       { ...sortColumn('source_text'), title: '源文', dataIndex: 'source_text', width: 330, render: (value: string) => <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{value}</div> },

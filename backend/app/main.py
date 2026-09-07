@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -10,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .api import router
 from .import_api import router as import_router
+from .import_jobs import ImportDispatcher
 from .config import settings
 from .database import SessionLocal, init_db
 from .seed import seed_defaults
@@ -38,7 +40,11 @@ async def lifespan(_app: FastAPI):
     init_db()
     with SessionLocal() as session:
         seed_defaults(session)
-    yield
+    dispatcher = ImportDispatcher(SessionLocal).start()
+    try:
+        yield
+    finally:
+        await asyncio.to_thread(dispatcher.stop)
 
 
 app = FastAPI(

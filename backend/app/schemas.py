@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from .validation import validate_prompt_template
+
+
+def normalize_language_code(value: str) -> str:
+    code = value.strip().lower()
+    # ISO-style primary codes, BCP-47 subtags and FLORES-style script labels.
+    # Unknown but well-formed codes remain usable without a registry update.
+    if not re.fullmatch(r"[a-z]{2,8}(?:[-_][a-z0-9]{1,8})*", code):
+        raise ValueError("语种代码格式无效，请使用 de、zh-Hant 或 eng_Latn 等格式")
+    return code
 
 
 class DatasetManifest(BaseModel):
@@ -39,7 +49,7 @@ class DatasetSampleInput(BaseModel):
     @field_validator("source_language", mode="before")
     @classmethod
     def normalize_language(cls, value: str) -> str:
-        return value.strip().lower() if isinstance(value, str) else value
+        return normalize_language_code(value) if isinstance(value, str) else value
 
 
 class InferenceDatasetManifest(BaseModel):
@@ -97,17 +107,17 @@ class PredictionInput(BaseModel):
     translation_zh: str = Field(min_length=1)
     predicted_language: str | None = Field(default=None, max_length=35)
 
-    @field_validator("translation_zh")
+    @field_validator("sample_id", "translation_zh")
     @classmethod
     def reject_blank_translation(cls, value: str) -> str:
         if not value.strip():
-            raise ValueError("translation_zh 不能只包含空白")
+            raise ValueError("字段不能只包含空白")
         return value
 
     @field_validator("predicted_language")
     @classmethod
     def normalize_predicted_language(cls, value: str | None) -> str | None:
-        return value.strip().lower() if value else None
+        return normalize_language_code(value) if value and value.strip() else None
 
 
 class PathImportRequest(BaseModel):

@@ -1,0 +1,961 @@
+[
+  {
+    "case": "items_score",
+    "statement_index": 0,
+    "sql": "SELECT dataset_samples.id \nFROM dataset_samples LEFT OUTER JOIN predictions ON predictions.submission_dataset_id = ? AND predictions.sample_id = dataset_samples.sample_id LEFT OUTER JOIN evaluation_items ON evaluation_items.evaluator_job_id = ? AND evaluation_items.prediction_id = predictions.id LEFT OUTER JOIN score_results ON evaluation_items.score_result_id = score_results.id \nWHERE dataset_samples.dataset_version_id = ? ORDER BY CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = ? AND score_results.score_min = ? AND score_results.score_max = ? AND score_results.unit = ? AND score_results.score BETWEEN ? AND ?, ?) THEN score_results.score END IS NULL, CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = ? AND score_results.score_min = ? AND score_results.score_max = ? AND score_results.unit = ? AND score_results.score BETWEEN ? AND ?, ?) THEN score_results.score END ASC, dataset_samples.id ASC\n LIMIT ? OFFSET ?",
+    "params": [
+      "2923c710a344ac501d1800f0a4d6125b",
+      "958511b61336ea9a0d91cd94722c5382",
+      "ad0f27799def6adc8f0ade2079b5809a",
+      "completed",
+      "openai_compatible_llm",
+      0,
+      10,
+      "point",
+      0,
+      10,
+      0,
+      "completed",
+      "openai_compatible_llm",
+      0,
+      10,
+      "point",
+      0,
+      10,
+      0,
+      50,
+      0
+    ],
+    "plan": [
+      [
+        14,
+        0,
+        0,
+        "SEARCH dataset_samples USING COVERING INDEX sqlite_autoindex_dataset_samples_1 (dataset_version_id=?)"
+      ],
+      [
+        20,
+        0,
+        0,
+        "SEARCH predictions USING COVERING INDEX ix_predictions_dataset_sample (submission_dataset_id=? AND sample_id=?) LEFT-JOIN"
+      ],
+      [
+        29,
+        0,
+        0,
+        "SEARCH evaluation_items USING INDEX sqlite_autoindex_evaluation_items_1 (evaluator_job_id=? AND prediction_id=?) LEFT-JOIN"
+      ],
+      [
+        40,
+        0,
+        0,
+        "SEARCH score_results USING INDEX sqlite_autoindex_score_results_1 (id=?) LEFT-JOIN"
+      ],
+      [
+        168,
+        0,
+        0,
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    ]
+  },
+  {
+    "case": "items_score",
+    "statement_index": 1,
+    "sql": "SELECT evaluation_items.id, evaluation_items.status, evaluation_items.cache_hit, evaluation_items.error, evaluation_items.attempts, predictions.id AS id_1, predictions.translation_zh, predictions.predicted_language, dataset_samples.id AS id_2, dataset_samples.sample_id, dataset_samples.source_language, dataset_samples.source_text, dataset_samples.reference_zh, score_results.id AS id_3, score_results.prompt_version_id, score_results.evaluator_model, score_results.base_url, score_results.score_min, score_results.score_max, score_results.unit, score_results.reason, coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = ? AND score_results.score_min = ? AND score_results.score_max = ? AND score_results.unit = ? AND score_results.score BETWEEN ? AND ?, ?) AS scored, score_results.score AS current_score \nFROM dataset_samples LEFT OUTER JOIN predictions ON predictions.submission_dataset_id = ? AND predictions.sample_id = dataset_samples.sample_id LEFT OUTER JOIN evaluation_items ON evaluation_items.evaluator_job_id = ? AND evaluation_items.prediction_id = predictions.id LEFT OUTER JOIN score_results ON evaluation_items.score_result_id = score_results.id \nWHERE dataset_samples.dataset_version_id = ? AND dataset_samples.id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ORDER BY CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = ? AND score_results.score_min = ? AND score_results.score_max = ? AND score_results.unit = ? AND score_results.score BETWEEN ? AND ?, ?) THEN score_results.score END IS NULL, CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = ? AND score_results.score_min = ? AND score_results.score_max = ? AND score_results.unit = ? AND score_results.score BETWEEN ? AND ?, ?) THEN score_results.score END ASC, dataset_samples.id ASC",
+    "params": [
+      "completed",
+      "openai_compatible_llm",
+      0,
+      10,
+      "point",
+      0,
+      10,
+      0,
+      "2923c710a344ac501d1800f0a4d6125b",
+      "958511b61336ea9a0d91cd94722c5382",
+      "ad0f27799def6adc8f0ade2079b5809a",
+      400011,
+      400022,
+      400033,
+      400044,
+      400055,
+      400066,
+      400077,
+      400088,
+      400099,
+      400110,
+      400121,
+      400132,
+      400143,
+      400154,
+      400165,
+      400176,
+      400187,
+      400198,
+      400209,
+      400220,
+      400231,
+      400242,
+      400253,
+      400264,
+      400275,
+      400286,
+      400297,
+      400308,
+      400319,
+      400330,
+      400341,
+      400352,
+      400363,
+      400374,
+      400385,
+      400396,
+      400407,
+      400418,
+      400429,
+      400440,
+      400451,
+      400462,
+      400473,
+      400484,
+      400495,
+      400506,
+      400517,
+      400528,
+      400539,
+      400550,
+      "completed",
+      "openai_compatible_llm",
+      0,
+      10,
+      "point",
+      0,
+      10,
+      0,
+      "completed",
+      "openai_compatible_llm",
+      0,
+      10,
+      "point",
+      0,
+      10,
+      0
+    ],
+    "plan": [
+      [
+        9,
+        0,
+        0,
+        "SEARCH dataset_samples USING INTEGER PRIMARY KEY (rowid=?)"
+      ],
+      [
+        171,
+        0,
+        0,
+        "SEARCH predictions USING INDEX ix_predictions_dataset_sample (submission_dataset_id=? AND sample_id=?) LEFT-JOIN"
+      ],
+      [
+        181,
+        0,
+        0,
+        "SEARCH evaluation_items USING INDEX sqlite_autoindex_evaluation_items_1 (evaluator_job_id=? AND prediction_id=?) LEFT-JOIN"
+      ],
+      [
+        192,
+        0,
+        0,
+        "SEARCH score_results USING INDEX sqlite_autoindex_score_results_1 (id=?) LEFT-JOIN"
+      ],
+      [
+        383,
+        0,
+        0,
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    ]
+  },
+  {
+    "case": "results_one",
+    "statement_index": 0,
+    "sql": "SELECT aggregate_scores.evaluator_job_id AS id, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS threshold, JSON_EXTRACT(aggregate_scores.details, ?) AS evaluator_type, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS total, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS successful, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS micro_mean, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS passed \nFROM aggregate_scores \nWHERE aggregate_scores.evaluator_job_id IN (?) AND aggregate_scores.metric_name = ? UNION ALL SELECT evaluator_jobs.id, evaluator_revisions.default_threshold AS threshold, evaluator_profiles.evaluator_type, count(dataset_samples.id) AS total, sum(CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) THEN ? ELSE ? END) AS successful, avg(CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) THEN CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END END) AS micro_mean, sum(CASE WHEN (coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) = 1 AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END >= evaluator_revisions.default_threshold) THEN ? ELSE ? END) AS passed \nFROM evaluator_jobs JOIN evaluator_revisions ON evaluator_revisions.id = evaluator_jobs.evaluator_revision_id JOIN evaluator_profiles ON evaluator_profiles.id = evaluator_revisions.profile_id JOIN dataset_jobs ON dataset_jobs.id = evaluator_jobs.dataset_job_id JOIN submission_datasets ON submission_datasets.id = dataset_jobs.submission_dataset_id LEFT OUTER JOIN dataset_samples ON dataset_samples.dataset_version_id = submission_datasets.dataset_version_id LEFT OUTER JOIN predictions ON predictions.submission_dataset_id = submission_datasets.id AND predictions.sample_id = dataset_samples.sample_id LEFT OUTER JOIN evaluation_items ON evaluation_items.prediction_id = predictions.id AND evaluation_items.evaluator_job_id = evaluator_jobs.id LEFT OUTER JOIN score_results ON score_results.id = evaluation_items.score_result_id \nWHERE evaluator_jobs.id IN (?) AND (evaluator_jobs.id NOT IN (SELECT aggregate_scores.evaluator_job_id \nFROM aggregate_scores \nWHERE aggregate_scores.metric_name = ?)) GROUP BY evaluator_jobs.id, evaluator_revisions.default_threshold, evaluator_profiles.evaluator_type",
+    "params": [
+      "$.\"summary\"",
+      "$.\"threshold\"",
+      "$.\"evaluator_type\"",
+      "$.\"summary\"",
+      "$.\"total\"",
+      "$.\"summary\"",
+      "$.\"successful\"",
+      "$.\"summary\"",
+      "$.\"micro_mean\"",
+      "$.\"summary\"",
+      "$.\"passed\"",
+      "fff8ff04c0bbbfdce93b45e3503c2bab",
+      "query_summary_v1",
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      1,
+      0,
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      1,
+      0,
+      "fff8ff04c0bbbfdce93b45e3503c2bab",
+      "query_summary_v1"
+    ],
+    "plan": [
+      [
+        1,
+        0,
+        0,
+        "COMPOUND QUERY"
+      ],
+      [
+        2,
+        1,
+        0,
+        "LEFT-MOST SUBQUERY"
+      ],
+      [
+        4,
+        2,
+        0,
+        "SCAN aggregate_scores"
+      ],
+      [
+        35,
+        1,
+        0,
+        "UNION ALL"
+      ],
+      [
+        55,
+        35,
+        0,
+        "SEARCH evaluator_jobs USING INDEX sqlite_autoindex_evaluator_jobs_1 (id=?)"
+      ],
+      [
+        65,
+        35,
+        0,
+        "LIST SUBQUERY 2"
+      ],
+      [
+        67,
+        65,
+        0,
+        "SCAN aggregate_scores USING COVERING INDEX sqlite_autoindex_aggregate_scores_1"
+      ],
+      [
+        86,
+        35,
+        0,
+        "SEARCH dataset_jobs USING INDEX sqlite_autoindex_dataset_jobs_1 (id=?)"
+      ],
+      [
+        91,
+        35,
+        0,
+        "SEARCH submission_datasets USING INDEX sqlite_autoindex_submission_datasets_1 (id=?)"
+      ],
+      [
+        96,
+        35,
+        0,
+        "SCAN evaluator_revisions"
+      ],
+      [
+        101,
+        35,
+        0,
+        "SEARCH evaluator_profiles USING INDEX sqlite_autoindex_evaluator_profiles_1 (id=?)"
+      ],
+      [
+        106,
+        35,
+        0,
+        "SEARCH dataset_samples USING COVERING INDEX sqlite_autoindex_dataset_samples_1 (dataset_version_id=?) LEFT-JOIN"
+      ],
+      [
+        112,
+        35,
+        0,
+        "SEARCH predictions USING COVERING INDEX ix_predictions_dataset_sample (submission_dataset_id=? AND sample_id=?) LEFT-JOIN"
+      ],
+      [
+        120,
+        35,
+        0,
+        "SEARCH evaluation_items USING INDEX sqlite_autoindex_evaluation_items_1 (evaluator_job_id=? AND prediction_id=?) LEFT-JOIN"
+      ],
+      [
+        129,
+        35,
+        0,
+        "SEARCH score_results USING INDEX sqlite_autoindex_score_results_1 (id=?) LEFT-JOIN"
+      ],
+      [
+        137,
+        35,
+        0,
+        "USE TEMP B-TREE FOR GROUP BY"
+      ]
+    ]
+  },
+  {
+    "case": "results_mean_one",
+    "statement_index": 0,
+    "sql": "SELECT evaluator_jobs.id, evaluator_jobs.dataset_job_id, evaluator_jobs.evaluator_revision_id, evaluator_jobs.prompt_version_id, evaluator_jobs.status, evaluator_jobs.total_items, evaluator_jobs.completed_items, evaluator_jobs.cached_items, evaluator_jobs.failed_items, evaluator_jobs.error, evaluator_jobs.created_at, evaluator_jobs.updated_at \nFROM evaluator_jobs JOIN dataset_jobs ON dataset_jobs.id = evaluator_jobs.dataset_job_id JOIN evaluation_tasks ON evaluation_tasks.id = dataset_jobs.task_id JOIN inference_submissions ON inference_submissions.id = evaluation_tasks.submission_id JOIN model_runs ON model_runs.id = inference_submissions.model_run_id JOIN submission_datasets ON submission_datasets.id = dataset_jobs.submission_dataset_id JOIN dataset_versions ON dataset_versions.id = submission_datasets.dataset_version_id JOIN datasets ON datasets.id = dataset_versions.dataset_id JOIN (SELECT aggregate_scores.evaluator_job_id AS id, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS threshold, JSON_EXTRACT(aggregate_scores.details, ?) AS evaluator_type, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS total, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS successful, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS micro_mean, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS passed \nFROM aggregate_scores \nWHERE aggregate_scores.evaluator_job_id IN (SELECT evaluator_jobs.id \nFROM evaluator_jobs JOIN dataset_jobs ON dataset_jobs.id = evaluator_jobs.dataset_job_id JOIN evaluation_tasks ON evaluation_tasks.id = dataset_jobs.task_id JOIN inference_submissions ON inference_submissions.id = evaluation_tasks.submission_id JOIN model_runs ON model_runs.id = inference_submissions.model_run_id JOIN submission_datasets ON submission_datasets.id = dataset_jobs.submission_dataset_id JOIN dataset_versions ON dataset_versions.id = submission_datasets.dataset_version_id JOIN datasets ON datasets.id = dataset_versions.dataset_id) AND aggregate_scores.metric_name = ? UNION ALL SELECT evaluator_jobs.id AS id, evaluator_revisions.default_threshold AS threshold, evaluator_profiles.evaluator_type AS evaluator_type, count(dataset_samples.id) AS total, sum(CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) THEN ? ELSE ? END) AS successful, avg(CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) THEN CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END END) AS micro_mean, sum(CASE WHEN (coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) = 1 AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END >= evaluator_revisions.default_threshold) THEN ? ELSE ? END) AS passed \nFROM evaluator_jobs JOIN evaluator_revisions ON evaluator_revisions.id = evaluator_jobs.evaluator_revision_id JOIN evaluator_profiles ON evaluator_profiles.id = evaluator_revisions.profile_id JOIN dataset_jobs ON dataset_jobs.id = evaluator_jobs.dataset_job_id JOIN submission_datasets ON submission_datasets.id = dataset_jobs.submission_dataset_id LEFT OUTER JOIN dataset_samples ON dataset_samples.dataset_version_id = submission_datasets.dataset_version_id LEFT OUTER JOIN predictions ON predictions.submission_dataset_id = submission_datasets.id AND predictions.sample_id = dataset_samples.sample_id LEFT OUTER JOIN evaluation_items ON evaluation_items.prediction_id = predictions.id AND evaluation_items.evaluator_job_id = evaluator_jobs.id LEFT OUTER JOIN score_results ON score_results.id = evaluation_items.score_result_id \nWHERE evaluator_jobs.id IN (SELECT evaluator_jobs.id \nFROM evaluator_jobs JOIN dataset_jobs ON dataset_jobs.id = evaluator_jobs.dataset_job_id JOIN evaluation_tasks ON evaluation_tasks.id = dataset_jobs.task_id JOIN inference_submissions ON inference_submissions.id = evaluation_tasks.submission_id JOIN model_runs ON model_runs.id = inference_submissions.model_run_id JOIN submission_datasets ON submission_datasets.id = dataset_jobs.submission_dataset_id JOIN dataset_versions ON dataset_versions.id = submission_datasets.dataset_version_id JOIN datasets ON datasets.id = dataset_versions.dataset_id) AND (evaluator_jobs.id NOT IN (SELECT aggregate_scores.evaluator_job_id \nFROM aggregate_scores \nWHERE aggregate_scores.metric_name = ?)) GROUP BY evaluator_jobs.id, evaluator_revisions.default_threshold, evaluator_profiles.evaluator_type) AS anon_1 ON anon_1.id = evaluator_jobs.id ORDER BY anon_1.micro_mean IS NULL, anon_1.micro_mean DESC, evaluator_jobs.id ASC\n LIMIT ? OFFSET ?",
+    "params": [
+      "$.\"summary\"",
+      "$.\"threshold\"",
+      "$.\"evaluator_type\"",
+      "$.\"summary\"",
+      "$.\"total\"",
+      "$.\"summary\"",
+      "$.\"successful\"",
+      "$.\"summary\"",
+      "$.\"micro_mean\"",
+      "$.\"summary\"",
+      "$.\"passed\"",
+      "query_summary_v1",
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      1,
+      0,
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      1,
+      0,
+      "query_summary_v1",
+      1,
+      0
+    ],
+    "plan": [
+      [
+        2,
+        0,
+        0,
+        "CO-ROUTINE anon_1"
+      ],
+      [
+        3,
+        2,
+        0,
+        "COMPOUND QUERY"
+      ],
+      [
+        4,
+        3,
+        0,
+        "LEFT-MOST SUBQUERY"
+      ],
+      [
+        6,
+        4,
+        0,
+        "SCAN aggregate_scores"
+      ],
+      [
+        11,
+        4,
+        0,
+        "LIST SUBQUERY 1"
+      ],
+      [
+        24,
+        11,
+        0,
+        "SCAN datasets USING COVERING INDEX sqlite_autoindex_datasets_1"
+      ],
+      [
+        26,
+        11,
+        0,
+        "SCAN dataset_jobs"
+      ],
+      [
+        28,
+        11,
+        0,
+        "SEARCH evaluator_jobs USING INDEX ix_evaluator_jobs_dataset_job_id (dataset_job_id=?)"
+      ],
+      [
+        33,
+        11,
+        0,
+        "SEARCH submission_datasets USING INDEX sqlite_autoindex_submission_datasets_1 (id=?)"
+      ],
+      [
+        38,
+        11,
+        0,
+        "SCAN inference_submissions"
+      ],
+      [
+        40,
+        11,
+        0,
+        "SEARCH model_runs USING COVERING INDEX sqlite_autoindex_model_runs_1 (id=?)"
+      ],
+      [
+        44,
+        11,
+        0,
+        "SEARCH dataset_versions USING INDEX sqlite_autoindex_dataset_versions_1 (id=?)"
+      ],
+      [
+        52,
+        11,
+        0,
+        "SEARCH evaluation_tasks USING INDEX ix_evaluation_tasks_submission_id (submission_id=?)"
+      ],
+      [
+        100,
+        3,
+        0,
+        "UNION ALL"
+      ],
+      [
+        120,
+        100,
+        0,
+        "SEARCH evaluator_jobs USING INDEX sqlite_autoindex_evaluator_jobs_1 (id=?)"
+      ],
+      [
+        124,
+        100,
+        0,
+        "LIST SUBQUERY 3"
+      ],
+      [
+        137,
+        124,
+        0,
+        "SCAN datasets USING COVERING INDEX sqlite_autoindex_datasets_1"
+      ],
+      [
+        139,
+        124,
+        0,
+        "SCAN dataset_jobs"
+      ],
+      [
+        141,
+        124,
+        0,
+        "SEARCH evaluator_jobs USING INDEX ix_evaluator_jobs_dataset_job_id (dataset_job_id=?)"
+      ],
+      [
+        146,
+        124,
+        0,
+        "SEARCH submission_datasets USING INDEX sqlite_autoindex_submission_datasets_1 (id=?)"
+      ],
+      [
+        151,
+        124,
+        0,
+        "SEARCH dataset_versions USING INDEX sqlite_autoindex_dataset_versions_1 (id=?)"
+      ],
+      [
+        159,
+        124,
+        0,
+        "SCAN evaluation_tasks"
+      ],
+      [
+        164,
+        124,
+        0,
+        "SEARCH inference_submissions USING INDEX sqlite_autoindex_inference_submissions_1 (id=?)"
+      ],
+      [
+        169,
+        124,
+        0,
+        "SEARCH model_runs USING COVERING INDEX sqlite_autoindex_model_runs_1 (id=?)"
+      ],
+      [
+        191,
+        100,
+        0,
+        "LIST SUBQUERY 4"
+      ],
+      [
+        193,
+        191,
+        0,
+        "SCAN aggregate_scores USING COVERING INDEX sqlite_autoindex_aggregate_scores_1"
+      ],
+      [
+        211,
+        100,
+        0,
+        "SEARCH dataset_jobs USING INDEX sqlite_autoindex_dataset_jobs_1 (id=?)"
+      ],
+      [
+        216,
+        100,
+        0,
+        "SCAN evaluator_revisions"
+      ],
+      [
+        221,
+        100,
+        0,
+        "SEARCH evaluator_profiles USING INDEX sqlite_autoindex_evaluator_profiles_1 (id=?)"
+      ],
+      [
+        226,
+        100,
+        0,
+        "SEARCH submission_datasets USING INDEX sqlite_autoindex_submission_datasets_1 (id=?)"
+      ],
+      [
+        231,
+        100,
+        0,
+        "SEARCH dataset_samples USING COVERING INDEX sqlite_autoindex_dataset_samples_1 (dataset_version_id=?) LEFT-JOIN"
+      ],
+      [
+        237,
+        100,
+        0,
+        "SEARCH predictions USING COVERING INDEX ix_predictions_dataset_sample (submission_dataset_id=? AND sample_id=?) LEFT-JOIN"
+      ],
+      [
+        245,
+        100,
+        0,
+        "SEARCH evaluation_items USING INDEX sqlite_autoindex_evaluation_items_1 (evaluator_job_id=? AND prediction_id=?) LEFT-JOIN"
+      ],
+      [
+        254,
+        100,
+        0,
+        "SEARCH score_results USING INDEX sqlite_autoindex_score_results_1 (id=?) LEFT-JOIN"
+      ],
+      [
+        262,
+        100,
+        0,
+        "USE TEMP B-TREE FOR GROUP BY"
+      ],
+      [
+        636,
+        0,
+        0,
+        "SCAN datasets USING COVERING INDEX sqlite_autoindex_datasets_1"
+      ],
+      [
+        638,
+        0,
+        0,
+        "SCAN dataset_jobs"
+      ],
+      [
+        640,
+        0,
+        0,
+        "SEARCH submission_datasets USING INDEX sqlite_autoindex_submission_datasets_1 (id=?)"
+      ],
+      [
+        645,
+        0,
+        0,
+        "SEARCH evaluation_tasks USING INDEX sqlite_autoindex_evaluation_tasks_1 (id=?)"
+      ],
+      [
+        650,
+        0,
+        0,
+        "SEARCH evaluator_jobs USING INDEX ix_evaluator_jobs_dataset_job_id (dataset_job_id=?)"
+      ],
+      [
+        655,
+        0,
+        0,
+        "SEARCH inference_submissions USING INDEX sqlite_autoindex_inference_submissions_1 (id=?)"
+      ],
+      [
+        660,
+        0,
+        0,
+        "SEARCH model_runs USING COVERING INDEX sqlite_autoindex_model_runs_1 (id=?)"
+      ],
+      [
+        664,
+        0,
+        0,
+        "SEARCH dataset_versions USING INDEX sqlite_autoindex_dataset_versions_1 (id=?)"
+      ],
+      [
+        683,
+        0,
+        0,
+        "SEARCH anon_1 USING AUTOMATIC COVERING INDEX (id=?)"
+      ],
+      [
+        715,
+        0,
+        0,
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    ]
+  },
+  {
+    "case": "results_mean_one",
+    "statement_index": 1,
+    "sql": "SELECT aggregate_scores.evaluator_job_id AS id, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS threshold, JSON_EXTRACT(aggregate_scores.details, ?) AS evaluator_type, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS total, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS successful, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS micro_mean, JSON_EXTRACT(JSON_QUOTE(JSON_EXTRACT(aggregate_scores.details, ?)), ?) AS passed \nFROM aggregate_scores \nWHERE aggregate_scores.evaluator_job_id IN (?) AND aggregate_scores.metric_name = ? UNION ALL SELECT evaluator_jobs.id, evaluator_revisions.default_threshold AS threshold, evaluator_profiles.evaluator_type, count(dataset_samples.id) AS total, sum(CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) THEN ? ELSE ? END) AS successful, avg(CASE WHEN coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) THEN CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END END) AS micro_mean, sum(CASE WHEN (coalesce(evaluation_items.status = ? AND score_results.id IS NOT NULL AND score_results.evaluator_type = evaluator_profiles.evaluator_type AND score_results.score_min = ? AND score_results.score_max = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND score_results.unit = CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END BETWEEN ? AND CASE WHEN (evaluator_profiles.evaluator_type = ?) THEN ? ELSE ? END, ?) = 1 AND CASE WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? WHEN (score_results.score BETWEEN ? AND ? AND evaluator_profiles.evaluator_type = ?) THEN ? ELSE score_results.score END >= evaluator_revisions.default_threshold) THEN ? ELSE ? END) AS passed \nFROM evaluator_jobs JOIN evaluator_revisions ON evaluator_revisions.id = evaluator_jobs.evaluator_revision_id JOIN evaluator_profiles ON evaluator_profiles.id = evaluator_revisions.profile_id JOIN dataset_jobs ON dataset_jobs.id = evaluator_jobs.dataset_job_id JOIN submission_datasets ON submission_datasets.id = dataset_jobs.submission_dataset_id LEFT OUTER JOIN dataset_samples ON dataset_samples.dataset_version_id = submission_datasets.dataset_version_id LEFT OUTER JOIN predictions ON predictions.submission_dataset_id = submission_datasets.id AND predictions.sample_id = dataset_samples.sample_id LEFT OUTER JOIN evaluation_items ON evaluation_items.prediction_id = predictions.id AND evaluation_items.evaluator_job_id = evaluator_jobs.id LEFT OUTER JOIN score_results ON score_results.id = evaluation_items.score_result_id \nWHERE evaluator_jobs.id IN (?) AND (evaluator_jobs.id NOT IN (SELECT aggregate_scores.evaluator_job_id \nFROM aggregate_scores \nWHERE aggregate_scores.metric_name = ?)) GROUP BY evaluator_jobs.id, evaluator_revisions.default_threshold, evaluator_profiles.evaluator_type",
+    "params": [
+      "$.\"summary\"",
+      "$.\"threshold\"",
+      "$.\"evaluator_type\"",
+      "$.\"summary\"",
+      "$.\"total\"",
+      "$.\"summary\"",
+      "$.\"successful\"",
+      "$.\"summary\"",
+      "$.\"micro_mean\"",
+      "$.\"summary\"",
+      "$.\"passed\"",
+      "23f0d32c27598dd4f9ad6b85848f56cb",
+      "query_summary_v1",
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      1,
+      0,
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      "completed",
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      "sacrebleu_zh",
+      "BLEU",
+      "point",
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      0,
+      "sacrebleu_zh",
+      100,
+      10,
+      0,
+      99.999999999,
+      100.000000001,
+      "sacrebleu_zh",
+      100.0,
+      -1e-09,
+      1e-09,
+      "sacrebleu_zh",
+      0.0,
+      1,
+      0,
+      "23f0d32c27598dd4f9ad6b85848f56cb",
+      "query_summary_v1"
+    ],
+    "plan": [
+      [
+        1,
+        0,
+        0,
+        "COMPOUND QUERY"
+      ],
+      [
+        2,
+        1,
+        0,
+        "LEFT-MOST SUBQUERY"
+      ],
+      [
+        4,
+        2,
+        0,
+        "SCAN aggregate_scores"
+      ],
+      [
+        35,
+        1,
+        0,
+        "UNION ALL"
+      ],
+      [
+        55,
+        35,
+        0,
+        "SEARCH evaluator_jobs USING INDEX sqlite_autoindex_evaluator_jobs_1 (id=?)"
+      ],
+      [
+        65,
+        35,
+        0,
+        "LIST SUBQUERY 2"
+      ],
+      [
+        67,
+        65,
+        0,
+        "SCAN aggregate_scores USING COVERING INDEX sqlite_autoindex_aggregate_scores_1"
+      ],
+      [
+        86,
+        35,
+        0,
+        "SEARCH dataset_jobs USING INDEX sqlite_autoindex_dataset_jobs_1 (id=?)"
+      ],
+      [
+        91,
+        35,
+        0,
+        "SEARCH submission_datasets USING INDEX sqlite_autoindex_submission_datasets_1 (id=?)"
+      ],
+      [
+        96,
+        35,
+        0,
+        "SCAN evaluator_revisions"
+      ],
+      [
+        101,
+        35,
+        0,
+        "SEARCH evaluator_profiles USING INDEX sqlite_autoindex_evaluator_profiles_1 (id=?)"
+      ],
+      [
+        106,
+        35,
+        0,
+        "SEARCH dataset_samples USING COVERING INDEX sqlite_autoindex_dataset_samples_1 (dataset_version_id=?) LEFT-JOIN"
+      ],
+      [
+        112,
+        35,
+        0,
+        "SEARCH predictions USING COVERING INDEX ix_predictions_dataset_sample (submission_dataset_id=? AND sample_id=?) LEFT-JOIN"
+      ],
+      [
+        120,
+        35,
+        0,
+        "SEARCH evaluation_items USING INDEX sqlite_autoindex_evaluation_items_1 (evaluator_job_id=? AND prediction_id=?) LEFT-JOIN"
+      ],
+      [
+        129,
+        35,
+        0,
+        "SEARCH score_results USING INDEX sqlite_autoindex_score_results_1 (id=?) LEFT-JOIN"
+      ],
+      [
+        137,
+        35,
+        0,
+        "USE TEMP B-TREE FOR GROUP BY"
+      ]
+    ]
+  }
+]

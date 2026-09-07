@@ -1,0 +1,6 @@
+{
+  "command": ".venv/bin/pytest backend/tests/test_query_read_models.py backend/tests/test_result_inspection.py backend/tests/test_table_sorting.py backend/tests/test_result_navigation.py --maxfail=2",
+  "result": "78 passed",
+  "seconds": 36.48,
+  "git_diff_check": "passed"
+}

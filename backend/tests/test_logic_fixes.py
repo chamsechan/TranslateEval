@@ -51,13 +51,13 @@ def test_retry_preserves_cancelled_items_and_api_counts(client, session_factory,
                     queue.cancel_task(session, task_id)
             return await super().evaluate_one(item)
 
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: Judge({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: Judge({"_evaluator_type": kind}))
     asyncio.run(queue.process_evaluator_job(job_id))
     assert client.post(f"/api/evaluator-jobs/{job_id}/retry-failed").status_code == 200
     # Cancellation counts must remain accurate while the failed item is queued.
     pending = client.get(f"/api/tasks/{task_id}").json()
     assert pending["cancelled_items"] == 5
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: FakeEvaluator({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: FakeEvaluator({"_evaluator_type": kind}))
     asyncio.run(queue.process_evaluator_job(job_id))
     task = client.get(f"/api/tasks/{task_id}").json()
     detail = client.get(f"/api/evaluator-jobs/{job_id}").json()["evaluator"]

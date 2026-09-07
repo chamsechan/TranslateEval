@@ -37,6 +37,10 @@ def client(session_factory, monkeypatch, tmp_path):
 class FakeEvaluator(BaseEvaluator):
     evaluator_type = "openai_compatible_llm"
 
+    def __init__(self, config):
+        super().__init__(config)
+        self.evaluator_type = config.get("_evaluator_type", self.evaluator_type)
+
     @classmethod
     def validate_config(cls, config):
         return config
@@ -46,7 +50,8 @@ class FakeEvaluator(BaseEvaluator):
         return "audit-judge"
 
     async def evaluate_one(self, item):
-        return ScoreOutput(9, 0, 10, "point")
+        maximum, unit = (100, "BLEU") if self.evaluator_type == "sacrebleu_zh" else (10, "point")
+        return ScoreOutput(9, 0, maximum, unit)
 
 
 def task_job(session_factory):
@@ -81,7 +86,7 @@ def test_running_retry_is_rejected_without_resetting_failed_items(session_factor
                     pytest.fail("first failed response was not persisted")
             return await super().evaluate_one(item)
 
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: Judge({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: Judge({"_evaluator_type": kind}))
     asyncio.run(queue.process_evaluator_job(job_id))
     with session_factory() as session:
         job = session.get(EvaluatorJob, job_id)
@@ -89,7 +94,7 @@ def test_running_retry_is_rejected_without_resetting_failed_items(session_factor
         assert job.completed_items == 5 and job.failed_items == 1
         assert session.scalar(select(func.count()).select_from(EvaluationItem).where(EvaluationItem.status == "queued")) == 0
         queue.retry_failed_job(session, job_id)
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: FakeEvaluator({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: FakeEvaluator({"_evaluator_type": kind}))
     asyncio.run(queue.process_evaluator_job(job_id))
     with session_factory() as session:
         assert session.get(EvaluationTask, task_id).status == "completed"
@@ -112,7 +117,7 @@ def test_cancel_stops_waiting_requests_and_preserves_inflight_score(session_fact
                     queue.cancel_task(session, task_id)
             return await super().evaluate_one(item)
 
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: Judge({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: Judge({"_evaluator_type": kind}))
     asyncio.run(queue.process_evaluator_job(job_id))
     assert len(calls) == 1
     with session_factory() as session:
@@ -156,14 +161,14 @@ def test_fast_score_is_committed_while_slow_score_is_running(session_factory, mo
                     pytest.fail("completed responses were not persisted while another request was pending")
             return await super().evaluate_one(item)
 
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: Judge({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: Judge({"_evaluator_type": kind}))
     asyncio.run(queue.process_evaluator_job(job_id))
 
 
 def test_compare_checks_actual_cached_prompt_and_coverage(session_factory, monkeypatch):
     task_id, _ = task_job(session_factory)
     monkeypatch.setattr(queue, "SessionLocal", session_factory)
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: FakeEvaluator({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: FakeEvaluator({"_evaluator_type": kind}))
     with session_factory() as session:
         profile = EvaluatorProfile(name="Judge", evaluator_type="openai_compatible_llm", enabled=True)
         session.add(profile); session.flush()
@@ -286,7 +291,7 @@ def test_language_with_no_successes_remains_in_summary(session_factory, monkeypa
                 raise PermanentEvaluatorError("German samples failed")
             return await super().evaluate_one(item)
 
-    monkeypatch.setattr(queue, "build_evaluator", lambda *a, **kw: Judge({}))
+    monkeypatch.setattr(queue, "build_evaluator", lambda kind, config, **kw: Judge({"_evaluator_type": kind}))
     asyncio.run(queue.process_evaluator_job(job_id))
     with session_factory() as session:
         summary = queue.threshold_summary(session, job_id, 8)

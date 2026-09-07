@@ -1,0 +1,26 @@
+{
+  "alembic_head": "0007",
+  "version_counts": [
+    {
+      "label": "v1",
+      "declared": 400000,
+      "counted": 400000
+    },
+    {
+      "label": "v2",
+      "declared": 400000,
+      "counted": 400000
+    }
+  ],
+  "read_indexes": [
+    "ix_evaluation_items_status",
+    "ix_evaluation_items_prediction_id",
+    "ix_items_score_result",
+    "ix_evaluation_items_evaluator_job_id",
+    "ix_items_job_status_id",
+    "sqlite_autoindex_evaluation_items_1"
+  ],
+  "background_import_table": true,
+  "invalidation_triggers": 17,
+  "summary_rows": 2
+}

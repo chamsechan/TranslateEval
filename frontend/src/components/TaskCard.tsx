@@ -1,5 +1,6 @@
 import { CloseOutlined, DatabaseOutlined, ExperimentOutlined } from '@ant-design/icons'
-import { App, Button, Card, Progress, Space, Tooltip, Typography } from 'antd'
+import { App, Button, Card, Collapse, Empty, Input, Pagination, Progress, Space, Switch, Tooltip, Typography } from 'antd'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, formatDate } from '../api'
 import type { EvaluationTask } from '../types'
@@ -10,20 +11,32 @@ const active = new Set(['queued', 'preprocessing', 'running', 'cancelling'])
 export default function TaskCard({ task, onChange }: { task: EvaluationTask; onChange?: () => void }) {
   const { modal, message } = App.useApp()
   const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  const [exceptionsOnly, setExceptionsOnly] = useState(false)
+  const [jobPage, setJobPage] = useState(1)
+  const filteredJobs = task.dataset_jobs.filter(job => `${job.dataset_key} ${job.version_label}`.toLowerCase().includes(query.trim().toLowerCase()) && (!exceptionsOnly || job.failed_items > 0 || job.cancelled_items > 0 || ['failed', 'partial_failed', 'cancelled', 'partial_cancelled'].includes(job.status)))
+  const currentJobPage = Math.min(jobPage, Math.max(1, Math.ceil(filteredJobs.length / 5)))
+  const visibleJobs = filteredJobs.slice((currentJobPage - 1) * 5, currentJobPage * 5)
+  const evaluatorCount = task.dataset_jobs.reduce((count, job) => count + job.evaluator_jobs.length, 0)
   const progress = task.total_items ? Math.round(((task.completed_items + task.failed_items + task.cancelled_items) / task.total_items) * 100) : 0
 
-  const cancelTask = () => modal.confirm({
+  const cancelTask = async () => { await modal.confirm({
     title: '取消整个评测任务？',
     content: '未开始的评分项会被取消，已经发出的 LLM 请求可能仍会进入全局缓存。',
     okText: '确认取消',
     okButtonProps: { danger: true },
     cancelText: '继续评分',
     onOk: async () => {
-      await api(`/tasks/${task.id}/cancel`, { method: 'POST' })
-      message.success('已提交取消请求')
-      onChange?.()
+      try {
+        await api(`/tasks/${task.id}/cancel`, { method: 'POST' })
+        message.success('已提交取消请求')
+        onChange?.()
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : '取消任务失败，请重试')
+        throw error
+      }
     },
-  })
+  }) }
 
   const cancelDataset = async (jobId: string) => {
     try {
@@ -47,7 +60,7 @@ export default function TaskCard({ task, onChange }: { task: EvaluationTask; onC
     <Card
       className={`task-card ${task.status}`}
       title={<Space><Typography.Text strong>{task.run_name}</Typography.Text><StatusTag status={task.status} /></Space>}
-      extra={<Space><Button size="small" onClick={() => navigate(`/submit?submission=${task.submission_id}`)}>再次评测</Button>{active.has(task.status) && <Tooltip title="取消任务"><Button danger type="text" icon={<CloseOutlined />} onClick={cancelTask} /></Tooltip>}</Space>}
+      extra={<Space><Button size="small" onClick={() => navigate(`/submit?submission=${task.submission_id}`)}>再次评测</Button>{active.has(task.status) && <Tooltip title="取消任务"><Button aria-label={`取消任务 ${task.run_name}`} danger type="text" icon={<CloseOutlined />} onClick={cancelTask} /></Tooltip>}</Space>}
     >
       <div className="task-meta">
         <span><ExperimentOutlined /> {task.model_family}</span>
@@ -58,7 +71,10 @@ export default function TaskCard({ task, onChange }: { task: EvaluationTask; onC
         <span>取消 {task.cancelled_items.toLocaleString()}</span>
       </div>
       <Progress percent={progress} status={['failed', 'partial_failed'].includes(task.status) ? 'exception' : task.status === 'completed' ? 'success' : active.has(task.status) ? 'active' : 'normal'} style={{ marginTop: 17 }} />
-      {task.dataset_jobs.map((job) => (
+      <Typography.Paragraph type="secondary" style={{ marginBottom: 10 }}>已评分 {task.completed_items.toLocaleString()} / {task.total_items.toLocaleString()} 项 · {task.dataset_jobs.length} 个数据集 · {evaluatorCount} 个评价任务</Typography.Paragraph>
+      <Collapse size="small" defaultActiveKey={task.dataset_jobs.length === 1 ? ['datasets'] : []} items={[{ key: 'datasets', label: `数据集与评价任务（${task.dataset_jobs.length}）`, children: <>
+        {task.dataset_jobs.length > 1 && <Space wrap style={{ marginBottom: 8 }}><Input.Search aria-label={`搜索任务 ${task.run_name} 的数据集`} allowClear placeholder="搜索数据集或版本" value={query} onChange={event => { setQuery(event.target.value); setJobPage(1) }} style={{ width: 270 }} /><Space><Switch size="small" checked={exceptionsOnly} onChange={value => { setExceptionsOnly(value); setJobPage(1) }} />仅显示失败或取消</Space></Space>}
+      {visibleJobs.map((job) => (
         <div className="job-row" key={job.id}>
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>
             <Space><DatabaseOutlined /><Typography.Text strong>{job.dataset_key}</Typography.Text><Typography.Text type="secondary">{job.version_label}</Typography.Text><StatusTag status={job.status} /></Space>
@@ -80,6 +96,9 @@ export default function TaskCard({ task, onChange }: { task: EvaluationTask; onC
           ))}
         </div>
       ))}
+      {!filteredJobs.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="没有匹配的数据集任务" />}
+      {filteredJobs.length > 5 && <Pagination size="small" current={currentJobPage} pageSize={5} total={filteredJobs.length} showSizeChanger={false} showQuickJumper onChange={setJobPage} style={{ marginTop: 12 }} />}
+      </> }]} />
     </Card>
   )
 }

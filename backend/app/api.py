@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, load_only, selectinload
 
 from .config import settings
 from .database import SessionLocal, get_session
@@ -46,6 +46,7 @@ from .models import (
     SubmissionDataset,
 )
 from .validation import validate_threshold
+from .read_models import ensure_query_summaries
 from .queries import TASK_GROUPS, cancelled_item_counts, comparable_item_score, comparison_checks, dataset_language_pairs, model_search, page_tasks, result_summaries, result_summary_statement, scored_item_condition, status_sort_value, table_order, task_change_version, task_load_options, threshold_summary
 from .queue import (
     JobStateConflict,
@@ -506,6 +507,13 @@ def commit_submission(
                 }
 
         submission = commit_submission_import(session, report_id, commit=False)
+        # The atomic import claim may have waited for another request. Its
+        # refreshed report is authoritative even if this Session read it earlier.
+        report = session.get(ImportValidationReport, report_id)
+        if report and report.report.get("task_id"):
+            existing_task_id = report.report["task_id"]
+            if session.get(EvaluationTask, existing_task_id):
+                return {"submission_id": submission.id, "task_id": existing_task_id}
         task = create_evaluation_task(
             session,
             submission,
@@ -593,10 +601,10 @@ def paginated_tasks(
 
 
 @router.get("/tasks/changes")
-async def task_changes() -> StreamingResponse:
+async def task_changes(evaluator_job_id: str | None = None) -> StreamingResponse:
     def read_version():
         with SessionLocal() as session:
-            return task_change_version(session)
+            return task_change_version(session, evaluator_job_id)
 
     async def stream():
         previous = None
@@ -614,20 +622,16 @@ async def task_changes() -> StreamingResponse:
 
 @router.get("/tasks/events")
 async def task_events() -> StreamingResponse:
+    def read_payload():
+        with SessionLocal() as session:
+            tasks = list(session.scalars(select(EvaluationTask).options(*task_load_options())
+                .order_by(EvaluationTask.created_at.desc()).limit(50)))
+            return json.dumps(task_dicts(session, tasks), ensure_ascii=False)
+
     async def stream():
         previous = ""
         while True:
-            with SessionLocal() as session:
-                tasks = list(
-                    session.scalars(
-                        select(EvaluationTask).options(*task_load_options())
-                        .order_by(EvaluationTask.created_at.desc())
-                        .limit(50)
-                    )
-                )
-                payload = json.dumps(
-                    task_dicts(session, tasks), ensure_ascii=False
-                )
+            payload = await asyncio.to_thread(read_payload)
             if payload != previous:
                 yield f"event: tasks\ndata: {payload}\n\n"
                 previous = payload
@@ -769,6 +773,7 @@ def paginated_results(
     order = (EvaluationTask.created_at.desc(), EvaluatorJob.id.desc())
     if sort != "default":
         if sort in {"micro_accuracy", "micro_mean"}:
+            ensure_query_summaries(session, statement.with_only_columns(EvaluatorJob.id))
             summary = result_summary_statement(statement.with_only_columns(EvaluatorJob.id)).subquery()
             statement = statement.join(summary, summary.c.id == EvaluatorJob.id)
             sort_column = (summary.c.passed * 1.0 / func.nullif(summary.c.total, 0)
@@ -779,7 +784,7 @@ def paginated_results(
                            "created_at": EvaluationTask.created_at}[sort]
         order = table_order(sort_column, direction, EvaluatorJob.id)
         if sort == "dataset":
-            order = (*table_order(Dataset.key, direction, EvaluatorJob.id)[:2],
+            order = (*table_order(Dataset.key, direction, EvaluatorJob.id)[:-1],
                      *table_order(DatasetVersion.version_label, direction, EvaluatorJob.id))
     jobs = session.scalars(statement.order_by(*order).offset((page - 1) * page_size).limit(page_size)).all()
     # Fetch all parent relationships in batches, shared by the detail serializers below.
@@ -902,7 +907,16 @@ def evaluator_job_items(
         .outerjoin(ScoreResult, EvaluationItem.score_result_id == ScoreResult.id)
         .where(*filters)
     )
-    count_query = select(func.count()).select_from(base.subquery())
+    # Most browsing does not depend on scoring state. Count/index-page immutable
+    # sample IDs first, then load only the visible rows' text and scoring fields.
+    sample_filters = [DatasetSample.dataset_version_id == submission_dataset.dataset_version_id]
+    if language:
+        sample_filters.append(DatasetSample.source_language == language)
+    if sample_id is not None:
+        sample_filters.append(DatasetSample.sample_id == sample_id)
+    sample_only = item_status is None and score_operator is None
+    count_query = (select(func.count()).select_from(DatasetSample).where(*sample_filters)
+                   if sample_only else select(func.count()).select_from(base.with_only_columns(DatasetSample.id).subquery()))
     verdict_threshold = threshold if threshold is not None else job.evaluator_revision.default_threshold
     visible_reason = case((scored, func.nullif(ScoreResult.reason, "")), else_=None)
     sort_columns = {
@@ -916,9 +930,17 @@ def evaluator_job_items(
         "reason": func.coalesce(visible_reason, func.nullif(EvaluationItem.error, "")),
     }
     order = table_order(sort_columns[sort], direction, DatasetSample.id)
-    rows = session.execute(
-        base.order_by(*order).offset((page - 1) * page_size).limit(page_size)
-    ).all()
+    ids_query = (select(DatasetSample.id).where(*sample_filters)
+                 if sample_only and sort in {"id", "sample_id", "source_language"}
+                 else base.with_only_columns(DatasetSample.id))
+    visible_ids = list(session.scalars(ids_query.order_by(*order).offset((page - 1) * page_size).limit(page_size)))
+    rows = session.execute(base.where(DatasetSample.id.in_(visible_ids)).order_by(*order).options(
+        load_only(DatasetSample.sample_id, DatasetSample.source_language, DatasetSample.source_text, DatasetSample.reference_zh),
+        load_only(Prediction.translation_zh, Prediction.predicted_language),
+        load_only(EvaluationItem.status, EvaluationItem.cache_hit, EvaluationItem.attempts, EvaluationItem.error),
+        load_only(ScoreResult.score_min, ScoreResult.score_max, ScoreResult.unit, ScoreResult.reason,
+                  ScoreResult.prompt_version_id, ScoreResult.evaluator_model, ScoreResult.base_url),
+    )).all() if visible_ids else []
     return {
         "total": session.scalar(count_query) or 0,
         "page": page,
