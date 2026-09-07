@@ -1,0 +1,15 @@
+{
+  "originalManifestValid": false,
+  "originalErrors": [
+    {
+      "dataset_key": "wrong-key",
+      "message": "数据集不存在"
+    },
+    {
+      "file": "predictions.jsonl",
+      "message": "文件不存在",
+      "dataset_key": "wrong-key"
+    }
+  ],
+  "metadataOnlyCorrectedValid": true
+}

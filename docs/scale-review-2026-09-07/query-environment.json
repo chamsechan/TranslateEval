@@ -1,0 +1,14 @@
+{
+  "python": "3.12.3",
+  "sqlalchemy": "2.0.52",
+  "fastapi": "0.141.1",
+  "sqlite": "3.45.1",
+  "cpu_count": 4,
+  "platform": "Linux-6.17.0-1020-oracle-aarch64-with-glibc2.39",
+  "meminfo": [
+    "MemTotal:       24550352 kB",
+    "MemFree:        10184940 kB",
+    "MemAvailable:   20286908 kB"
+  ],
+  "fixture_notes": "Each benchmark has one dataset, two full versions, 40 languages, two submissions, 2 independent full synthetic score jobs; extra history jobs reuse scores. Per-query isolated process; no cold cache flush and no concurrent-user/load/real LLM benchmark."
+}

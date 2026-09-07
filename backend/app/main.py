@@ -42,7 +42,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="译研评测台 API",
+    title="TranslateEval API",
     version="0.1.0",
     lifespan=lifespan,
 )

@@ -8,9 +8,9 @@ import {
   SettingOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-import { Button, Layout, Menu, Space, Spin, Tag, Typography } from 'antd'
+import { Button, Layout, Menu, Space, Spin, Typography } from 'antd'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { api } from './api'
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
@@ -65,12 +65,15 @@ export default function App() {
   return (
     <Layout className="app-shell">
       <Sider breakpoint="xl" onBreakpoint={setCollapsed} width={236} collapsedWidth={76} collapsed={collapsed} className="app-sider">
-        <div className={`brand ${collapsed ? 'brand-collapsed' : ''}`}>
-          <div className="brand-mark">译</div>
-          {!collapsed && <div><strong>译研评测台</strong><small>TRANSLATION LAB</small></div>}
-        </div>
+        <Link to="/" className={`brand ${collapsed ? 'brand-collapsed' : ''}`} aria-label="TranslateEval · ARI-NLP 首页">
+          <img className="brand-mark" src="./translate-eval-mark.svg" alt="" width={42} height={42} />
+          {!collapsed && <div className="brand-copy"><strong>Translate<span>Eval</span></strong><small>ARI-NLP</small></div>}
+        </Link>
         <Menu theme="dark" mode="inline" selectedKeys={[active]} items={menuItems} onClick={({ key }) => navigate(key)} />
-        {!collapsed && <div className="sider-foot"><Tag color="blue">LOCAL</Tag><span>SQLite · 内网模式</span></div>}
+        {!collapsed && <div className="sider-foot">
+          <div className="sider-credit"><span>AUTHOR</span><strong>chen_qc</strong></div>
+          <span className="sider-date">2026.09</span>
+        </div>}
       </Sider>
       <Layout>
         <Header className="app-header">

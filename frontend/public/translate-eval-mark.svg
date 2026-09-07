@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <title>TranslateEval</title>
+  <desc>Overlapping source and translation cards with an evaluation check.</desc>
+  <defs>
+    <linearGradient id="tile" x1="7" y1="2" x2="57" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#428BFF"/>
+      <stop offset="1" stop-color="#214FC5"/>
+    </linearGradient>
+    <linearGradient id="translation" x1="28" y1="25" x2="53" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A7F7E5"/>
+      <stop offset="1" stop-color="#48DCC4"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#tile)"/>
+  <rect x=".75" y=".75" width="62.5" height="62.5" rx="17.25" stroke="white" stroke-opacity=".16" stroke-width="1.5"/>
+  <rect x="11" y="12" width="29" height="32" rx="7" fill="white" fill-opacity=".14" stroke="#E7F1FF" stroke-width="2"/>
+  <path d="M18 22H32M18 29H27" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <rect x="25" y="25" width="29" height="28" rx="7" fill="#153D99" fill-opacity=".22" transform="translate(0 2)"/>
+  <rect x="25" y="25" width="29" height="28" rx="7" fill="url(#translation)"/>
+  <path d="M32.5 39L37.5 44L47 34" stroke="#123A69" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

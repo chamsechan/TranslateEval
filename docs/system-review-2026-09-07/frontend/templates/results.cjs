@@ -1,0 +1,11 @@
+const {chromium}=require('__PLAYWRIGHT_MODULE__');const fs=require('fs');
+(async()=>{const browser=await chromium.launch({executablePath:'__CHROMIUM_EXE__',headless:true,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1080}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+const tasks=await(await fetch('__API_BASE__/api/tasks')).json();const job=tasks[0].dataset_jobs[0].evaluator_jobs[0].id;
+await page.goto(`__API_BASE__/#/results/${job}?threshold=70&language=de&score_operator=gte&score_value=50&sample_id=de-000001`);
+await page.getByLabel('准确阈值').waitFor();await page.getByText('当前匹配 1 条。',{exact:false}).waitFor();
+await page.reload();await page.getByLabel('准确阈值').waitFor();
+const reloadFilters={threshold:await page.getByLabel('准确阈值').inputValue(),score:await page.getByLabel('筛选分数').inputValue(),sampleId:await page.getByLabel('查找评分样本 ID').inputValue(),url:page.url()};
+await page.getByRole('button',{name:'查看评测数据集',exact:true}).click();await page.getByLabel('查找样本 ID').waitFor();
+const preview=await page.getByRole('dialog').innerText();await page.locator('.ant-modal-close').click();
+await page.getByRole('button',{name:'再次评测',exact:true}).click();await page.getByRole('button',{name:'提交并进入工作队列',exact:true}).click();await page.waitForURL(/tasks\?task=/);await page.getByText('正在显示本次提交的任务',{exact:true}).waitFor();
+const result={jobId:job,reloadFilters,previewVersionIsActual:preview.includes('ui-review-v1'),newEvaluationTaskUrl:page.url(),pageErrors:errors};fs.writeFileSync('__REVIEW_ROOT__/evidence-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));await browser.close()})().catch(e=>{console.error(e);process.exit(1)});

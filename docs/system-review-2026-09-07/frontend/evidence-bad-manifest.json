@@ -1,0 +1,56 @@
+{
+  "comboboxes": [
+    {
+      "id": "model_family",
+      "disabled": false,
+      "value": ""
+    },
+    {
+      "id": "inference_platform",
+      "disabled": false,
+      "value": ""
+    },
+    {
+      "id": "inference_device",
+      "disabled": false,
+      "value": ""
+    },
+    {
+      "id": "inference_sdk",
+      "disabled": false,
+      "value": ""
+    },
+    {
+      "id": "inference_precision",
+      "disabled": false,
+      "value": ""
+    },
+    {
+      "id": "inference_mode",
+      "disabled": false,
+      "value": ""
+    },
+    {
+      "id": "datasets_0_dataset_key",
+      "disabled": true,
+      "value": ""
+    },
+    {
+      "id": "datasets_0_dataset_content_sha256",
+      "disabled": true,
+      "value": ""
+    },
+    {
+      "id": "datasets_1_dataset_key",
+      "disabled": true,
+      "value": ""
+    },
+    {
+      "id": "datasets_1_dataset_content_sha256",
+      "disabled": false,
+      "value": ""
+    }
+  ],
+  "body": "译\n译研评测台\nTRANSLATION LAB\n总览\n数据集\n提交评测\n任务队列\n评测结果\n模型记录\n模型与评价设置\nLOCAL\nSQLite · 内网模式\nAPI 在线 · Worker 未连接\n提交评测\n核验标准结果目录，选择数据集版本与一个或多个评价器。\n导入与核验\n选择评价方式\n进入评分队列\n1. 导入与编辑推理结果信息\n确认模型与推理信息\nJSON 中的信息已预填，可以修改。下拉框的新导入值将在成功提交后加入选项库。\n维护下拉选项\n刷新选项与数据集\n运行名称\n模型\nqwen3-0.6b\n检查点\n模型版本\n平台\nnvidia-1080ti\n设备\nGPU\nSDK\n选择或输入该平台的 SDK\n可选择当前平台已有的 SDK，或输入实际使用的 SDK。\nSDK 版本\n精度 / 量化位宽\nfp16\n推理模式\n默认\n模型备注\n推理时间\n代码版本\n解码参数（JSON，可选）\n预测对应的数据集版本\n数据集\nwrong-key（尚未导入）\n数据集版本\n未匹配哈希：24fbe06801b1…\n请先在数据集页面导入对应语料，再刷新数据集列表。\n内容哈希：24fbe06801b12540f1bc455c1b570520db96d467b7886649563257a169d6fb3a\n数据集\nFLORES 多语种演示集 · flores-demo\n数据集版本\n请选择版本，自动填写内容哈希\n更换文件\n核验模型信息、数据集版本和预测 ID",
+  "pageErrors": []
+}

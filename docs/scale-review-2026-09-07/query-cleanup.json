@@ -1,0 +1,22 @@
+{
+  "removed_fixtures": [
+    {
+      "path": "/tmp/te-scale-24000.db",
+      "bytes": 167858176
+    },
+    {
+      "path": "/tmp/te-scale-400000.db",
+      "bytes": 3254620160
+    },
+    {
+      "path": "/tmp/te-scale-400000.db-wal",
+      "bytes": 0
+    },
+    {
+      "path": "/tmp/te-scale-400000.db-shm",
+      "bytes": 32768
+    }
+  ],
+  "sql_trace_archive": "query-sql-traces.zip",
+  "archived_traces": 12
+}

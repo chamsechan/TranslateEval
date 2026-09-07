@@ -1,0 +1,154 @@
+[
+  {
+    "history_rows": 24000,
+    "added_rows": 24000,
+    "insertion_seconds": 0.781,
+    "database_mib": 17.91,
+    "query_plan": [
+      [
+        4,
+        0,
+        0,
+        "SEARCH score_results USING INDEX ix_score_results_evaluator_type (evaluator_type=?)"
+      ],
+      [
+        14,
+        0,
+        0,
+        "LIST SUBQUERY 200"
+      ],
+      [
+        15,
+        14,
+        0,
+        "SCAN 200 CONSTANT ROWS"
+      ],
+      [
+        1247,
+        0,
+        0,
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    ],
+    "measurements": {
+      "hit_200": [
+        {
+          "seconds": 0.026,
+          "hits": 200
+        },
+        {
+          "seconds": 0.0232,
+          "hits": 200
+        }
+      ],
+      "miss_200": [
+        {
+          "seconds": 0.0202,
+          "hits": 0
+        },
+        {
+          "seconds": 0.0196,
+          "hits": 0
+        }
+      ]
+    },
+    "condition": "One model; 40 synthetic labels; one score per distinct key; 200-key batches; short reason/raw response."
+  },
+  {
+    "history_rows": 400000,
+    "added_rows": 376000,
+    "insertion_seconds": 18.137,
+    "database_mib": 292.39,
+    "query_plan": [
+      [
+        4,
+        0,
+        0,
+        "SEARCH score_results USING INDEX ix_score_results_evaluator_type (evaluator_type=?)"
+      ],
+      [
+        14,
+        0,
+        0,
+        "LIST SUBQUERY 200"
+      ],
+      [
+        15,
+        14,
+        0,
+        "SCAN 200 CONSTANT ROWS"
+      ],
+      [
+        1247,
+        0,
+        0,
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    ],
+    "measurements": {
+      "hit_200": [
+        {
+          "seconds": 0.3399,
+          "hits": 200
+        },
+        {
+          "seconds": 0.2777,
+          "hits": 200
+        }
+      ],
+      "miss_200": [
+        {
+          "seconds": 0.2904,
+          "hits": 0
+        },
+        {
+          "seconds": 0.2791,
+          "hits": 0
+        }
+      ]
+    },
+    "condition": "One model; 40 synthetic labels; one score per distinct key; 200-key batches; short reason/raw response.",
+    "post_analyze_plan": [
+      [
+        4,
+        0,
+        0,
+        "SEARCH score_results USING INDEX ix_score_cache_lookup (evaluator_model=? AND source_language=? AND source_hash=?)"
+      ],
+      [
+        9,
+        0,
+        0,
+        "LIST SUBQUERY 200"
+      ],
+      [
+        10,
+        9,
+        0,
+        "SCAN 200 CONSTANT ROWS"
+      ],
+      [
+        826,
+        0,
+        0,
+        "LIST SUBQUERY 200"
+      ],
+      [
+        827,
+        826,
+        0,
+        "SCAN 200 CONSTANT ROWS"
+      ],
+      [
+        2063,
+        0,
+        0,
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    ],
+    "post_analyze_hit_200": {
+      "seconds": 0.0087,
+      "hits": 200
+    }
+  }
+]

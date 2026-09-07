@@ -1,0 +1,8 @@
+{
+  "action": "BEGIN IMMEDIATE then ROLLBACK; no committed change",
+  "stage": "400k dataset_diff_commit",
+  "database_is_isolated": true,
+  "configured_timeout_seconds": 30,
+  "result": "database is locked",
+  "seconds": 30.19119577099991
+}

@@ -1,0 +1,12 @@
+{
+  "jobId": "6ea96e5b-1926-47c3-8fc9-d2d5ec893a81",
+  "reloadFilters": {
+    "threshold": "70.0",
+    "score": "50.0",
+    "sampleId": "de-000001",
+    "url": "http://127.0.0.1:18763/#/results/6ea96e5b-1926-47c3-8fc9-d2d5ec893a81?threshold=70&language=de&score_operator=gte&score_value=50&sample_id=de-000001"
+  },
+  "previewVersionIsActual": true,
+  "newEvaluationTaskUrl": "http://127.0.0.1:18763/#/tasks?task=cb17e3fe-4e78-4280-b239-b62b772eeef4",
+  "pageErrors": []
+}

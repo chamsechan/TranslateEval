@@ -1,0 +1,2295 @@
+{
+  "description": "Real helper calls; independent child per stage; no judge/API calls; no scoring loop.",
+  "measurements": [
+    {
+      "stage": "generate",
+      "count": 24000,
+      "seconds": 0.6750403519999963,
+      "peak_rss_mib": 65.31640625,
+      "baseline_rss_mib": 62.19140625,
+      "sql": {
+        "statements": 128,
+        "selects": 17
+      },
+      "disk": {
+        "db_bytes": 360448,
+        "wal_bytes": 0,
+        "total_bytes": 28417010
+      },
+      "languages": 40,
+      "samples_per_language": 600,
+      "source_mean_bytes": 161.53708333333333,
+      "reference_mean_bytes": 193.53708333333333,
+      "samples_jsonl_bytes": 10753780,
+      "predictions_jsonl_bytes": 6540890
+    },
+    {
+      "stage": "dataset_validate",
+      "count": 24000,
+      "seconds": 0.5245898600005603,
+      "peak_rss_mib": 95.0546875,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 3,
+        "selects": 2
+      },
+      "disk": {
+        "db_bytes": 360448,
+        "wal_bytes": 0,
+        "total_bytes": 39170936
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v1",
+          "sample_count": 24000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "6c896dd59debcdbc48324ce6e945670a8e824364f37078187b4adeba8eda12ba",
+          "is_new_dataset": true
+        },
+        "diff": {
+          "base_version_id": null,
+          "base_version_label": null,
+          "added": 24000,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 0,
+          "unchanged": 0,
+          "details": []
+        }
+      }
+    },
+    {
+      "stage": "dataset_commit",
+      "count": 24000,
+      "seconds": 3.1613582919999317,
+      "peak_rss_mib": 103.73828125,
+      "baseline_rss_mib": 62.20703125,
+      "sql": {
+        "statements": 24047,
+        "selects": 43
+      },
+      "disk": {
+        "db_bytes": 20840448,
+        "wal_bytes": 0,
+        "total_bytes": 59650990
+      },
+      "sample_count": 24000
+    },
+    {
+      "stage": "dataset_diff_validate",
+      "count": 24000,
+      "seconds": 1.1051823790003255,
+      "peak_rss_mib": 154.13671875,
+      "baseline_rss_mib": 62.140625,
+      "sql": {
+        "statements": 7,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 20852736,
+        "wal_bytes": 0,
+        "total_bytes": 70425126
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v2",
+          "sample_count": 24000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "13fced3384670e4c34375271d04149b8f4b92d5ea91ceb35360746acde49a7cc",
+          "is_new_dataset": false
+        },
+        "diff": {
+          "base_version_id": "c42488a8-99fa-41cc-9b60-b29c5b1ce766",
+          "base_version_label": "v1",
+          "added": 0,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 240,
+          "unchanged": 23760,
+          "details": [
+            {
+              "sample_id": "af-00000000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00000900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00001900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00002900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00003900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00004900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00005900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00006900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00007900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00008900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00009900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00010900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00011900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00012900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00013900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00014900",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015100",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015300",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015500",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015700",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "fr-00015900",
+              "change": "reference_changed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "stage": "dataset_diff_commit",
+      "count": 24000,
+      "seconds": 3.2234618040001806,
+      "peak_rss_mib": 103.88671875,
+      "baseline_rss_mib": 62.23046875,
+      "sql": {
+        "statements": 24045,
+        "selects": 43
+      },
+      "disk": {
+        "db_bytes": 41431040,
+        "wal_bytes": 0,
+        "total_bytes": 91003484
+      },
+      "sample_count": 24000
+    },
+    {
+      "stage": "submission_validate",
+      "count": 24000,
+      "seconds": 0.41258201799973904,
+      "peak_rss_mib": 109.1953125,
+      "baseline_rss_mib": 62.1953125,
+      "sql": {
+        "statements": 6,
+        "selects": 5
+      },
+      "disk": {
+        "db_bytes": 41431040,
+        "wal_bytes": 0,
+        "total_bytes": 97545119
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "run_name": "scale-predictions",
+          "model_family": "synthetic",
+          "checkpoint_name": "synthetic-v1",
+          "model_version": "",
+          "platform": "synthetic",
+          "device": "",
+          "sdk": "",
+          "sdk_version": "",
+          "precision": "",
+          "mode": "default",
+          "detects_language": true,
+          "dataset_count": 1,
+          "prediction_count": 24000
+        },
+        "datasets": [
+          {
+            "dataset_key": "scale-test",
+            "dataset_version_id": "c42488a8-99fa-41cc-9b60-b29c5b1ce766",
+            "version_label": "v1",
+            "prediction_count": 24000,
+            "predictions_sha256": "78a81f72741c2d857e09559524d9b78700c736c228b9800ba2d266df26cf8bee",
+            "missing_count": 0,
+            "unknown_count": 0,
+            "content_sha256": "6c896dd59debcdbc48324ce6e945670a8e824364f37078187b4adeba8eda12ba"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "submission_commit",
+      "count": 24000,
+      "seconds": 2.793340290998458,
+      "peak_rss_mib": 101.0703125,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 24012,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 55828480,
+        "wal_bytes": 0,
+        "total_bytes": 111942613
+      },
+      "submission_id": "1331e28e-d8aa-4cf1-aef8-dee7ffddd707"
+    },
+    {
+      "stage": "create_job",
+      "count": 24000,
+      "seconds": 2.106671108998853,
+      "peak_rss_mib": 71.5078125,
+      "baseline_rss_mib": 62.20703125,
+      "sql": {
+        "statements": 24013,
+        "selects": 7
+      },
+      "disk": {
+        "db_bytes": 61112320,
+        "wal_bytes": 0,
+        "total_bytes": 117226500
+      },
+      "total_items": 24000
+    },
+    {
+      "stage": "joined_rows_empty_cache",
+      "count": 24000,
+      "seconds": 1.8250208320005186,
+      "peak_rss_mib": 187.671875,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 124,
+        "selects": 124
+      },
+      "disk": {
+        "db_bytes": 61112320,
+        "wal_bytes": 0,
+        "total_bytes": 117226500
+      },
+      "joined_rows_seconds": 1.4698112879996188,
+      "row_count": 24000,
+      "joined_rows_peak_rss_mib": 185.046875,
+      "empty_cache_seconds": 0.2997178890000214,
+      "cache_input_rows": 24000,
+      "cache_entries": 0,
+      "identity_map_size": 72003
+    },
+    {
+      "stage": "refresh_progress",
+      "count": 24000,
+      "seconds": 0.10031924699978845,
+      "peak_rss_mib": 67.203125,
+      "baseline_rss_mib": 62.20703125,
+      "sql": {
+        "statements": 15,
+        "selects": 15
+      },
+      "disk": {
+        "db_bytes": 61112320,
+        "wal_bytes": 0,
+        "total_bytes": 117226500
+      },
+      "refresh_and_commit_seconds": [
+        0.027209421999941696,
+        0.01838637699984247,
+        0.017632130000492907
+      ],
+      "counts": {
+        "queued": 24000
+      }
+    },
+    {
+      "stage": "generate",
+      "count": 400000,
+      "seconds": 7.703617116001624,
+      "peak_rss_mib": 65.32421875,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 128,
+        "selects": 17
+      },
+      "disk": {
+        "db_bytes": 360448,
+        "wal_bytes": 0,
+        "total_bytes": 470337090
+      },
+      "languages": 40,
+      "samples_per_language": 10000,
+      "source_mean_bytes": 162.722225,
+      "reference_mean_bytes": 194.722225,
+      "samples_jsonl_bytes": 180177780,
+      "predictions_jsonl_bytes": 109488890
+    },
+    {
+      "stage": "dataset_validate",
+      "count": 400000,
+      "seconds": 8.129271952000636,
+      "peak_rss_mib": 563.2890625,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 3,
+        "selects": 2
+      },
+      "disk": {
+        "db_bytes": 360448,
+        "wal_bytes": 0,
+        "total_bytes": 650515016
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v1",
+          "sample_count": 400000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "7b9ab7c00ba6ed5c40cf9ed7bb07147001ac16d951c5874d1cc7487e56dd16c1",
+          "is_new_dataset": true
+        },
+        "diff": {
+          "base_version_id": null,
+          "base_version_label": null,
+          "added": 400000,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 0,
+          "unchanged": 0,
+          "details": []
+        }
+      }
+    },
+    {
+      "stage": "dataset_commit",
+      "count": 400000,
+      "seconds": 59.68696155900034,
+      "peak_rss_mib": 625.14453125,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 400047,
+        "selects": 43
+      },
+      "disk": {
+        "db_bytes": 341630976,
+        "wal_bytes": 0,
+        "total_bytes": 991785598
+      },
+      "sample_count": 400000
+    },
+    {
+      "stage": "dataset_diff_validate",
+      "count": 400000,
+      "seconds": 19.30349945299895,
+      "peak_rss_mib": 1483.79296875,
+      "baseline_rss_mib": 62.0859375,
+      "sql": {
+        "statements": 7,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 341643264,
+        "wal_bytes": 0,
+        "total_bytes": 1172107814
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "dataset_key": "scale-test",
+          "name": "Scale test",
+          "version_label": "v2",
+          "sample_count": 400000,
+          "languages": [
+            "af",
+            "am",
+            "ar",
+            "az",
+            "be",
+            "bg",
+            "bn",
+            "bs",
+            "ca",
+            "cs",
+            "cy",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "ga",
+            "gl",
+            "gu",
+            "he",
+            "hi",
+            "hr",
+            "hu",
+            "hy",
+            "id",
+            "is",
+            "it",
+            "ja",
+            "ka",
+            "kk",
+            "km",
+            "kn",
+            "ko",
+            "lo",
+            "lt"
+          ],
+          "content_sha256": "4c68dc87a4a5e1ffe0bbc9bee2aff0e904a8fc729fdc37bd42fe3e139f1cbe93",
+          "is_new_dataset": false
+        },
+        "diff": {
+          "base_version_id": "7a36aab7-b5c3-402a-add8-97ec0ee3365a",
+          "base_version_label": "v1",
+          "added": 0,
+          "removed": 0,
+          "source_changed": 0,
+          "reference_changed": 4000,
+          "unchanged": 396000,
+          "details": [
+            {
+              "sample_id": "af-00000000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00000800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00001800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00002800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00003800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00004800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00005800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00006800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00007800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00008800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00009800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00010800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00011800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00012800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00013800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00014800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00015800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00016800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00017800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00018800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00019800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00020800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00021800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00022800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00023800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00024800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00025800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00026800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00027800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00028800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00029800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00030800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00031800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00032800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00033800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00034800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00035800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00036800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00037800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00038800",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039000",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039200",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039400",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039600",
+              "change": "reference_changed"
+            },
+            {
+              "sample_id": "af-00039800",
+              "change": "reference_changed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "stage": "dataset_diff_commit",
+      "count": 400000,
+      "seconds": 61.827910203999636,
+      "peak_rss_mib": 625.6484375,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 400045,
+        "selects": 43
+      },
+      "disk": {
+        "db_bytes": 682721280,
+        "wal_bytes": 0,
+        "total_bytes": 1513185884
+      },
+      "sample_count": 400000
+    },
+    {
+      "stage": "submission_validate",
+      "count": 400000,
+      "seconds": 6.914101305999793,
+      "peak_rss_mib": 749.6875,
+      "baseline_rss_mib": 62.1953125,
+      "sql": {
+        "statements": 6,
+        "selects": 5
+      },
+      "disk": {
+        "db_bytes": 682721280,
+        "wal_bytes": 0,
+        "total_bytes": 1622675519
+      },
+      "report": {
+        "valid": true,
+        "errors": [],
+        "summary": {
+          "run_name": "scale-predictions",
+          "model_family": "synthetic",
+          "checkpoint_name": "synthetic-v1",
+          "model_version": "",
+          "platform": "synthetic",
+          "device": "",
+          "sdk": "",
+          "sdk_version": "",
+          "precision": "",
+          "mode": "default",
+          "detects_language": true,
+          "dataset_count": 1,
+          "prediction_count": 400000
+        },
+        "datasets": [
+          {
+            "dataset_key": "scale-test",
+            "dataset_version_id": "7a36aab7-b5c3-402a-add8-97ec0ee3365a",
+            "version_label": "v1",
+            "prediction_count": 400000,
+            "predictions_sha256": "1e773379fc87f485924b1c24568104a7fcebf3adafdd1ba88691877346f55654",
+            "missing_count": 0,
+            "unknown_count": 0,
+            "content_sha256": "7b9ab7c00ba6ed5c40cf9ed7bb07147001ac16d951c5874d1cc7487e56dd16c1"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "submission_commit",
+      "count": 400000,
+      "seconds": 57.27033798800039,
+      "peak_rss_mib": 672.75,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 400012,
+        "selects": 6
+      },
+      "disk": {
+        "db_bytes": 924368896,
+        "wal_bytes": 0,
+        "total_bytes": 1864323189
+      },
+      "submission_id": "09712dab-9caf-4cbe-ae08-13b7d87d019f"
+    },
+    {
+      "stage": "create_job",
+      "count": 400000,
+      "seconds": 38.06799369500004,
+      "peak_rss_mib": 149.4921875,
+      "baseline_rss_mib": 62.19921875,
+      "sql": {
+        "statements": 400013,
+        "selects": 7
+      },
+      "disk": {
+        "db_bytes": 1015431168,
+        "wal_bytes": 0,
+        "total_bytes": 1955385508
+      },
+      "total_items": 400000
+    },
+    {
+      "stage": "joined_rows_empty_cache",
+      "count": 400000,
+      "seconds": 23.83600533599929,
+      "peak_rss_mib": 2060.515625,
+      "baseline_rss_mib": 62.04296875,
+      "sql": {
+        "statements": 5,
+        "selects": 5
+      },
+      "disk": {
+        "db_bytes": 1015431168,
+        "wal_bytes": 0,
+        "total_bytes": 1955385508
+      },
+      "joined_rows_seconds": 23.483346087001337,
+      "row_count": 400000,
+      "joined_rows_peak_rss_mib": 2042.515625,
+      "empty_cache_seconds": 0.005933057000220288,
+      "cache_input_rows": 200,
+      "cache_entries": 0,
+      "identity_map_size": 1200003
+    },
+    {
+      "stage": "refresh_progress",
+      "count": 400000,
+      "seconds": 0.9067697820009926,
+      "peak_rss_mib": 68.3515625,
+      "baseline_rss_mib": 62.203125,
+      "sql": {
+        "statements": 15,
+        "selects": 15
+      },
+      "disk": {
+        "db_bytes": 1015431168,
+        "wal_bytes": 0,
+        "total_bytes": 1955385508
+      },
+      "refresh_and_commit_seconds": [
+        0.2939647679995687,
+        0.29074745800062374,
+        0.2841520740003034
+      ],
+      "counts": {
+        "queued": 400000
+      }
+    }
+  ]
+}

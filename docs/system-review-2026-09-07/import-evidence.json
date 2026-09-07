@@ -1,0 +1,41 @@
+{
+  "invalid_language_codes": {
+    "valid": true,
+    "committed": 4,
+    "registered_codes": [
+      "!!!",
+      "123",
+      "en zh",
+      "中文"
+    ]
+  },
+  "simultaneous_source_reference_change": {
+    "base_version_id": "e1b83633-20e0-48d7-b2c3-746c8e8931fc",
+    "base_version_label": "v1",
+    "added": 0,
+    "removed": 0,
+    "source_changed": 1,
+    "reference_changed": 0,
+    "unchanged": 3,
+    "details": [
+      {
+        "sample_id": "0",
+        "change": "source_changed"
+      }
+    ]
+  },
+  "overlapping_commit_reads": {
+    "same_report_id": "545d5b39-2cb5-4d8f-badc-39a4834ebff5",
+    "first": {
+      "submission_id": "91aa554c-3ae3-4001-8b6d-0ed5ec18fec8",
+      "task_id": "e9732fbd-40f4-4490-bcc7-7a7a6be5a10b"
+    },
+    "second": {
+      "submission_id": "317da542-0fae-4dd5-abbf-36de3712df99",
+      "task_id": "95251199-3188-4fae-b680-9a689213687a"
+    },
+    "task_count": 2,
+    "distinct_submissions": true,
+    "interleaving": "Both sessions read validated report; request 1 commits, then request 2 commits its previously read report."
+  }
+}

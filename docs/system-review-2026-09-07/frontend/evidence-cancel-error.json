@@ -1,0 +1,9 @@
+{
+  "intercepted": true,
+  "cancellationErrorDisplayed": false,
+  "modalStillOpen": true,
+  "pageErrors": [
+    "audit cancellation backend unavailable"
+  ],
+  "body": "译\n译研评测台\nTRANSLATION LAB\n总览\n数据集\n提交评测\n任务队列\n评测结果\n模型记录\n模型与评价设置\nLOCAL\nSQLite · 内网模式\nAPI 在线 · Worker 未连接\n任务队列\n查看全部历史或活动任务，关闭页面后任务会继续执行。\n活动\n全部\n已完成\n异常\n刷新\n实时进度已连接\nreview-modified-run\n等待中\n再次评测\n qwen3-0.6b\n平台 nvidia-1080ti\n创建 2026年9月7日 21:16\n缓存 0\n失败 0\n取消 0\n0%\nflores-demo\nui-review-v1\n等待中\n0/6\n取消数据集\nSacreBLEU 中文 · r1\n等待中\n命中缓存 0\n0/6\n查看结果\n共 1 个任务\n1\n取消整个评测任务？\n未开始的评分项会被取消，已经发出的 LLM 请求可能仍会进入全局缓存。\n继续评分\n确认取消"
+}

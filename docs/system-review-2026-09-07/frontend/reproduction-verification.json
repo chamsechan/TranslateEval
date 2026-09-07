@@ -1,0 +1,14 @@
+{
+  "date": "2026-09-07",
+  "command": ".venv/bin/python docs/system-review-2026-09-07/frontend/reproduce.py",
+  "exit_code": 0,
+  "isolated_full_browser_workflow": "passed",
+  "bleu_completed_items": 6,
+  "llm_completed_items": 6,
+  "mock_llm_requests": 6,
+  "new_evaluation_force_reevaluate": true,
+  "cache_hits": 0,
+  "known_fault_injection": "Parent-task cancel response 500 produces no visible error and one pageerror",
+  "services_stopped": true,
+  "temporary_databases_removed": true
+}

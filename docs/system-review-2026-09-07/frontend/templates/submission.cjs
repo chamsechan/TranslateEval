@@ -1,0 +1,22 @@
+const {chromium} = require('__PLAYWRIGHT_MODULE__');
+const fs=require('fs');
+(async()=>{
+ const browser=await chromium.launch({executablePath:'__CHROMIUM_EXE__',headless:true,args:['--no-sandbox']});
+ const page=await browser.newPage({viewport:{width:1440,height:1080}});
+ const errors=[]; const validated=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',async r=>{if(/import-reports.*validate/.test(r.url()))validated.push((await r.json()).id)});
+ await page.goto('__API_BASE__/#/submit');
+ await page.getByLabel('服务器目录、ZIP 或 JSONL 路径').fill('__REVIEW_ROOT__/valid-results');
+ await page.getByRole('button',{name:'读取并填写导入信息',exact:true}).click();
+ await page.getByRole('button',{name:'核验模型信息、数据集版本和预测 ID',exact:true}).click();
+ await page.getByRole('button',{name:'修改导入信息',exact:true}).click();
+ await page.getByLabel('运行名称',{exact:true}).fill('review-modified-run');
+ const staleSubmit=await page.getByRole('button',{name:'提交并进入工作队列',exact:true}).count();
+ await page.getByRole('button',{name:'核验模型信息、数据集版本和预测 ID',exact:true}).click();
+ await page.getByRole('button',{name:'提交并进入工作队列',exact:true}).click();
+ await page.waitForURL(/tasks\?task=/);
+ const tasks=await (await fetch('__API_BASE__/api/tasks')).json();
+ fs.writeFileSync('__REVIEW_ROOT__/tasks.json',JSON.stringify(tasks,null,2));
+ const result={staleSubmissionCommitVisible:staleSubmit,validationReportIds:validated,taskRunName:tasks[0].run_name,taskId:tasks[0].id,pageErrors:errors};
+ fs.writeFileSync('__REVIEW_ROOT__/evidence-2.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+ await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -1,0 +1,379 @@
+{
+  "fixture": {
+    "api": "fully mocked; total fields do not insert real rows",
+    "datasets": 20,
+    "versionsPerDataset": 20,
+    "languages": 40,
+    "samplesPerLanguage": 10000,
+    "versionSamples": 400000,
+    "queuePageTasks": 20,
+    "datasetsPerTask": 12,
+    "evaluatorsPerDataset": 2,
+    "viewport": [
+      1440,
+      1000
+    ]
+  },
+  "datasets20": {
+    "height": 3440,
+    "width": 1440,
+    "viewportHeight": 1000,
+    "viewportWidth": 1440,
+    "cards": 20,
+    "searchInputs": 0
+  },
+  "datasets12": {
+    "height": 2054,
+    "width": 1440,
+    "viewportHeight": 1000,
+    "viewportWidth": 1440,
+    "cards": 12
+  },
+  "datasetExpanded": {
+    "height": 590,
+    "languageLinks": 40,
+    "scrollContainers": [
+      {
+        "height": 230,
+        "scrollHeight": 1233
+      }
+    ]
+  },
+  "versions": {
+    "height": 6915.42529296875,
+    "versions": 20,
+    "searchFields": 0,
+    "lastVersionY": 6666.63671875
+  },
+  "samples": {
+    "rows": 20,
+    "lastPage": "20000",
+    "hasPageSizeControl": 0,
+    "hasJumpInput": 0
+  },
+  "samplesFiltered": {
+    "rows": 20,
+    "lastPage": "500",
+    "url": "http://localhost:4177/#/datasets?version=version-1-20&language=tl"
+  },
+  "result": {
+    "height": 5504,
+    "width": 1440,
+    "viewportHeight": 1000,
+    "viewportWidth": 1440,
+    "languageRows": 10,
+    "languageLastPage": "4",
+    "detailRows": 50,
+    "detailLastPage": "8000",
+    "detailTop": 1180.453125,
+    "chartInitiallyMounted": 0
+  },
+  "languagePage4": {
+    "rows": 10,
+    "text": [
+      "乌尔都语（ur） → 中文（zh）7000 / 1000070.0%10000 / 10000100.0%7.200查看明细",
+      "印度尼西亚语（id） → 中文（zh）7200 / 1000072.0%10000 / 10000100.0%7.400查看明细",
+      "马来语（ms） → 中文（zh）7400 / 1000074.0%10000 / 10000100.0%7.600查看明细",
+      "越南语（vi） → 中文（zh）7600 / 1000076.0%10000 / 10000100.0%7.800查看明细",
+      "泰语（th） → 中文（zh）7800 / 1000078.0%10000 / 10000100.0%8.000查看明细",
+      "高棉语（km） → 中文（zh）8000 / 1000080.0%10000 / 10000100.0%8.200查看明细",
+      "老挝语（lo） → 中文（zh）8200 / 1000082.0%10000 / 10000100.0%8.400查看明细",
+      "缅甸语（my） → 中文（zh）8400 / 1000084.0%10000 / 10000100.0%8.600查看明细",
+      "斯瓦希里语（sw） → 中文（zh）8600 / 1000086.0%10000 / 10000100.0%8.800查看明细",
+      "菲律宾语（tl） → 中文（zh）8800 / 1000088.0%10000 / 10000100.0%9.000查看明细"
+    ],
+    "url": "http://localhost:4177/#/results/eval-1?language_page=4"
+  },
+  "languageDrilldown": {
+    "url": "http://localhost:4177/#/results/eval-1?language_page=4&language=tl",
+    "detailTopInViewport": 88.453125,
+    "focusedSection": true,
+    "totalText": "当前匹配 10000 条。分数条件仅匹配已评分句子，等于按原始分数精确匹配；展开可查看原始分数及异常详情。点击列标题：升序 → 降序 → 默认，排序应用于全部匹配句子；源语种按语种代码排序。"
+  },
+  "chart1440": {
+    "width": 1106,
+    "height": 320,
+    "visibleLanguageLabels": [
+      "en",
+      "ja",
+      "ko",
+      "fr",
+      "de",
+      "es",
+      "ru",
+      "ar",
+      "pt",
+      "it",
+      "nl",
+      "sv",
+      "da",
+      "no",
+      "fi",
+      "pl",
+      "cs",
+      "sk",
+      "hu",
+      "ro",
+      "bg",
+      "uk",
+      "el",
+      "tr",
+      "he",
+      "fa",
+      "hi",
+      "bn",
+      "ta",
+      "te",
+      "ur",
+      "id",
+      "ms",
+      "vi",
+      "th",
+      "km",
+      "lo",
+      "my",
+      "sw",
+      "tl"
+    ]
+  },
+  "chart1024": {
+    "width": 870,
+    "visibleLanguageLabels": [
+      "en",
+      "ko",
+      "de",
+      "ru",
+      "pt",
+      "nl",
+      "da",
+      "fi",
+      "cs",
+      "hu",
+      "bg",
+      "el",
+      "he",
+      "hi",
+      "ta",
+      "ur",
+      "ms",
+      "th",
+      "lo",
+      "sw"
+    ]
+  },
+  "queue": {
+    "height": 33564,
+    "width": 1440,
+    "viewportHeight": 1000,
+    "viewportWidth": 1440,
+    "cards": 20,
+    "datasetBlocks": 240,
+    "evaluatorBlocks": 480,
+    "firstCardHeight": 1644.84375,
+    "paginationTop": 33484.03125,
+    "collapsibleControls": 0
+  },
+  "resultsList": {
+    "height": 2694,
+    "width": 1440,
+    "viewportHeight": 1000,
+    "viewportWidth": 1440,
+    "rows": 20,
+    "lastPage": "60"
+  },
+  "compare12": {
+    "height": 1145.1243896484375,
+    "rows": 12,
+    "tableWidth": 1356,
+    "tableViewportWidth": 1132,
+    "tableHeaders": [
+      "模型运行",
+      "数据集 / 评价器",
+      "状态",
+      "加权平均准确率",
+      "未评分 / 覆盖率",
+      "分值范围",
+      "已评分平均分",
+      "宏平均分",
+      "宏平均准确率",
+      "结果详情"
+    ]
+  },
+  "compare13": {
+    "buttonDisabled": true
+  },
+  "versionSelect": {
+    "filteredOptions": [
+      "v01-2026.09 · 400000 条 · 0101aaaaaa"
+    ],
+    "selectedHashText": "内容哈希：0101aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "errors": [],
+  "requests": [
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/datasets/dataset-1/versions",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-20",
+      "query": {}
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "1",
+        "page_size": "20"
+      }
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/dataset-versions/version-1-20/samples",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/summary",
+      "query": {
+        "threshold": "8"
+      }
+    },
+    {
+      "path": "/dataset-jobs/job-1-1/language-detection-summary",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc",
+        "language": "tl"
+      }
+    },
+    {
+      "path": "/evaluator-jobs/eval-1/items",
+      "query": {
+        "page": "1",
+        "page_size": "50",
+        "sort": "id",
+        "direction": "asc"
+      }
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/tasks/page",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "group": "active",
+        "q": ""
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/results/page",
+      "query": {
+        "page": "1",
+        "page_size": "20",
+        "q": "",
+        "status_group": "all"
+      }
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/results/compare",
+      "query": {}
+    },
+    {
+      "path": "/health",
+      "query": {}
+    },
+    {
+      "path": "/tasks/changes",
+      "query": {}
+    },
+    {
+      "path": "/evaluator-profiles",
+      "query": {
+        "enabled_only": "true"
+      }
+    },
+    {
+      "path": "/prompt-profiles",
+      "query": {}
+    },
+    {
+      "path": "/submission-imports/prepare",
+      "query": {}
+    },
+    {
+      "path": "/import-options",
+      "query": {}
+    },
+    {
+      "path": "/datasets",
+      "query": {}
+    },
+    {
+      "path": "/datasets/dataset-1/versions",
+      "query": {}
+    }
+  ]
+}

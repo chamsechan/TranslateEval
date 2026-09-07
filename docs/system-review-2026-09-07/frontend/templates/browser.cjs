@@ -1,0 +1,24 @@
+const {chromium} = require('__PLAYWRIGHT_MODULE__');
+const fs=require('fs');
+(async()=>{
+ const browser=await chromium.launch({executablePath:'__CHROMIUM_EXE__',headless:true,args:['--no-sandbox']});
+ const page=await browser.newPage({viewport:{width:1440,height:1080}});
+ const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('__API_BASE__/#/datasets');
+ await page.getByRole('button',{name:/导入数据集/}).click();
+ await page.getByLabel('服务器目录、ZIP 或 JSONL 路径').fill('__REPO_ROOT__/examples/dataset/flores-demo');
+ await page.getByRole('button',{name:'读取并填写导入信息',exact:true}).click();
+ await page.getByRole('button',{name:'核验数据集与版本变化',exact:true}).click();
+ await page.getByRole('button',{name:'修改并重新核验',exact:true}).click();
+ await page.getByLabel('版本标签',{exact:true}).fill('ui-review-v1');
+ const staleCommit=await page.getByRole('button',{name:'确认写入不可变版本',exact:true}).count();
+ await page.getByRole('button',{name:'核验数据集与版本变化',exact:true}).click();
+ await page.getByRole('button',{name:'确认写入不可变版本',exact:true}).click();
+ await page.getByRole('button',{name:'查看样本',exact:true}).waitFor();
+ const data=await (await fetch('__API_BASE__/api/datasets')).json();
+ fs.writeFileSync('__REVIEW_ROOT__/dataset.json',JSON.stringify(data,null,2));
+ const result={staleDatasetCommitVisible:staleCommit,datasetCount:data.length,versionLabel:data[0].latest_version.version_label,pageErrors:errors};
+ fs.writeFileSync('__REVIEW_ROOT__/evidence-1.json',JSON.stringify(result,null,2));
+ console.log(JSON.stringify(result));
+ await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

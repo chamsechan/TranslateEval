@@ -1,0 +1,23 @@
+{
+  "task_status": "completed",
+  "force_reevaluate": true,
+  "evaluators": [
+    {
+      "name": "SacreBLEU 中文",
+      "status": "completed",
+      "completed_items": 6,
+      "cached_items": 0,
+      "micro_mean": 50.22608397865719,
+      "coverage": 1.0
+    },
+    {
+      "name": "UI Audit Judge",
+      "status": "completed",
+      "completed_items": 6,
+      "cached_items": 0,
+      "micro_mean": 9.0,
+      "coverage": 1.0
+    }
+  ],
+  "mock_judge_requests": 6
+}

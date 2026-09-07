@@ -28,15 +28,15 @@ export default function DashboardPage() {
       <Card className="hero-panel" style={{ marginBottom: 20 }}>
         <div className="hero-grid">
           <div>
-            <div className="hero-badge">TRANSLATION EVALUATION STUDIO</div>
+            <div className="hero-badge">ARI-NLP · TRANSLATION EVALUATION</div>
             <Typography.Title level={2} style={{ margin: '10px 0 8px' }}>让每一次模型迭代都可复现、可解释</Typography.Title>
-            <div className="muted-light">统一记录 33 个及更多小语种的语料版本、模型推理信息和逐句原始得分。阈值可随时调整，历史结果始终保留。</div>
+            <div className="muted-light">统一记录多语种语料版本、模型推理信息和逐句原始得分。阈值可随时调整，历史结果始终保留。</div>
             <Space style={{ marginTop: 22 }}>
               <Button type="primary" size="large" onClick={() => navigate('/submit')}>开始评测 <ArrowRightOutlined /></Button>
               <Button ghost size="large" onClick={() => navigate('/datasets')}>管理数据集</Button>
             </Space>
           </div>
-          <div className="hero-orbit"><strong>33+</strong></div>
+          <div className="hero-orbit" aria-hidden="true"><img src="./translate-eval-mark.svg" alt="" width={82} height={82} /></div>
         </div>
       </Card>
       {!data ? (dashboardQuery.loading ? <Skeleton active /> : null) : (
@@ -75,4 +75,3 @@ export default function DashboardPage() {
     </>
   )
 }
-

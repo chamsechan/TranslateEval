@@ -1,0 +1,87 @@
+{
+  "createdProfile": "UI Audit Judge",
+  "revisions": [
+    {
+      "revision": 2,
+      "concurrency": 2,
+      "apiKey": "••••••••lder"
+    },
+    {
+      "revision": 1,
+      "concurrency": 8,
+      "apiKey": "••••••••lder"
+    }
+  ],
+  "promptLabel": "20260907.1",
+  "task": {
+    "id": "4dcf721d-f2d7-41c7-8d4b-da468ccf0b6b",
+    "submission_id": "8c3c4385-0c48-4434-891d-b225a785f3f3",
+    "run_name": "review-modified-run",
+    "model_family": "qwen3-0.6b",
+    "checkpoint_name": "qwen3-0.6b-demo-step-8000",
+    "platform": "nvidia-1080ti",
+    "status": "queued",
+    "force_reevaluate": true,
+    "total_items": 12,
+    "completed_items": 0,
+    "cached_items": 0,
+    "failed_items": 0,
+    "cancel_requested": false,
+    "cancelled_items": 0,
+    "created_at": "2026-09-07T13:20:54.046874Z",
+    "started_at": null,
+    "finished_at": null,
+    "dataset_jobs": [
+      {
+        "id": "6ee2e7c6-cd44-4618-b7ae-39c0335eba5f",
+        "dataset_key": "flores-demo",
+        "dataset_id": "16077c75-9847-4b6b-aaf3-c25084a57000",
+        "dataset_version_id": "20a66455-7ae7-4bc2-8379-8ff90c8c4445",
+        "dataset_name": "FLORES 多语种演示集",
+        "version_label": "ui-review-v1",
+        "status": "queued",
+        "total_items": 12,
+        "completed_items": 0,
+        "cached_items": 0,
+        "failed_items": 0,
+        "cancelled_items": 0,
+        "cancel_requested": false,
+        "evaluator_jobs": [
+          {
+            "id": "204e67bd-004e-4610-ae94-f96ad446a7d5",
+            "name": "SacreBLEU 中文",
+            "evaluator_type": "sacrebleu_zh",
+            "revision": 1,
+            "prompt_version_id": null,
+            "prompt_version_label": null,
+            "status": "queued",
+            "total_items": 6,
+            "completed_items": 0,
+            "cached_items": 0,
+            "failed_items": 0,
+            "cancelled_items": 0,
+            "default_threshold": 20,
+            "error": null
+          },
+          {
+            "id": "099e0f39-0602-437c-ac1b-20b8d6213a46",
+            "name": "UI Audit Judge",
+            "evaluator_type": "openai_compatible_llm",
+            "revision": 2,
+            "prompt_version_id": "6f536330-7357-4651-b7ed-99b97b391701",
+            "prompt_version_label": "20260907.1",
+            "status": "queued",
+            "total_items": 6,
+            "completed_items": 0,
+            "cached_items": 0,
+            "failed_items": 0,
+            "cancelled_items": 0,
+            "default_threshold": 8,
+            "error": null
+          }
+        ]
+      }
+    ]
+  },
+  "pageErrors": []
+}

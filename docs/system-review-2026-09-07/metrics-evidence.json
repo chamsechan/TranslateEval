@@ -1,0 +1,151 @@
+{
+  "bleu_profile_create_status": 200,
+  "invalid_smoothing_type_create_status": 200,
+  "nonfinite_llm_config_create_status": 200,
+  "blank_llm_fields": {
+    "concurrency": {
+      "status": 400,
+      "body": {
+        "detail": "评价器配置字段类型或数值无效"
+      }
+    },
+    "timeout_seconds": {
+      "status": 400,
+      "body": {
+        "detail": "评价器配置字段类型或数值无效"
+      }
+    },
+    "max_retries": {
+      "status": 400,
+      "body": {
+        "detail": "评价器配置字段类型或数值无效"
+      }
+    }
+  },
+  "bleu_worker_jobs": [
+    {
+      "status": "completed",
+      "completed_items": 6,
+      "summary_successful": 4,
+      "summary_unscored": 2,
+      "summary_coverage": 0.6666666666666666,
+      "summary_aggregates": [],
+      "stored_scores": [
+        100.00000000000004,
+        59.694917920196445,
+        41.11336169005198,
+        160.68568378893033,
+        561.222232430573,
+        51.54486831107658
+      ]
+    },
+    {
+      "status": "completed",
+      "completed_items": 6,
+      "summary_successful": 4,
+      "summary_unscored": 2,
+      "summary_coverage": 0.6666666666666666,
+      "summary_aggregates": [],
+      "stored_scores": [
+        100.00000000000004,
+        59.694917920196445,
+        41.11336169005198,
+        160.68568378893033,
+        561.222232430573,
+        51.54486831107658
+      ]
+    }
+  ],
+  "incomplete_valid_score_comparison": {
+    "requested_config_consistent": true,
+    "actual_sources_consistent": true,
+    "actual_sources_match_requested": true,
+    "successful_sample_sets_match": true,
+    "strictly_comparable": true,
+    "warning": null
+  },
+  "stored_temperature_repr": "nan",
+  "one_language_prediction_of_six": {
+    "applicable": true,
+    "total": 6,
+    "covered": 1,
+    "coverage": 0.16666666666666666,
+    "correct": 1,
+    "accuracy": 1.0,
+    "by_language": [
+      {
+        "source_language": "de",
+        "sample_count": 2,
+        "covered": 1,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      {
+        "source_language": "th",
+        "sample_count": 2,
+        "covered": 0,
+        "precision": null,
+        "recall": null
+      },
+      {
+        "source_language": "vi",
+        "sample_count": 2,
+        "covered": 0,
+        "precision": null,
+        "recall": null
+      }
+    ],
+    "labels": [
+      "de",
+      "th",
+      "vi"
+    ],
+    "confusion_matrix": [
+      [
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "bleu_summary_api": {
+    "http_status": 200,
+    "successful": 4,
+    "unscored": 2,
+    "aggregates": []
+  },
+  "nonfinite_temperature_scoring": {
+    "score": null,
+    "error": "未预期的评价器错误: Out of range float values are not JSON compliant: nan",
+    "attempts": 1,
+    "mock_requests_sent": 0
+  },
+  "default_bleu_semantic_examples": [
+    {
+      "reference": "我支持这个决定。",
+      "translation": "我不支持这个决定。",
+      "score": 75.06238537503395,
+      "passes_default_20": true
+    },
+    {
+      "reference": "请关闭窗户。",
+      "translation": "请把窗关上。",
+      "score": 11.478744233307168,
+      "passes_default_20": false
+    }
+  ],
+  "invalid_smoothing_scoring": {
+    "exception": "PermanentEvaluatorError",
+    "error": "can't multiply sequence by non-int of type 'float'"
+  }
+}
