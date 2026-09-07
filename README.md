@@ -4,20 +4,16 @@
 
 ## 功能
 
-- 数据集不可变版本、内容哈希、版本差异和严格导入报告。
-- `result_info.json` 自动登记模型族、检查点、备注、推理平台、模式与解码参数。
+- 数据集不可变版本、内容哈希、版本差异和严格导入报告；历史样本支持分页预览与语种筛选。
+- 自动登记模型、检查点和推理参数；模型详情展示设备、精度、代码版本及解码参数。
 - 同一提交可选择 BLEU 和多个 LLM 评价配置；评价器任务依次执行，单个 LLM 评价器内部并发评分。
-- OpenAI 兼容评分支持 Prompt 历史、配置修订、1–64 并发、超时和重试。
-- 已有推理结果可直接再次评测，选择新的评分配置或 Prompt；模型详情展示设备、精度、代码版本和解码参数。
-- 数据集历史版本支持样本分页预览、语种筛选和完整内容哈希复制；Prompt 支持复制任意历史版本。
-- 按“源语种 + 源文 + GT + 候选译文 + 评分模型名”复用 LLM 历史评分，可强制重评。
-- 永久保存逐句原始分数；前端任意选择 `score ≥ threshold`，即时计算宏/微平均分与准确率。
+- LLM 配置和 Prompt 保留历史版本，Prompt 可复制任意历史版本；支持评分缓存、超时和重试。
+- 持久化保存逐句原始分数；调整阈值即可查看宏/微平均分、阈值通过率与覆盖率。
 - 父任务和数据集子任务均可取消；Worker 重启后继续执行队列。
-- 为未来自动语种识别保留 `predicted_language`，支持准确率、覆盖率和混淆矩阵统计。
 
 ## 快速开始
 
-要求 Python 3.11+、Node.js 20+。
+要求 Python 3.11+、Node.js 20.x（至少 20.19）或 22.12+。以下命令均在项目根目录执行，启动脚本使用 Bash。
 
 ```bash
 ./scripts/setup.sh
@@ -50,11 +46,17 @@
 - `examples/dataset/flores-demo`
 - `examples/results/demo-run`
 
-可以用独立临时数据库验证完整 BLEU 闭环：
+以下命令每次创建独立的临时数据库和导入目录，验证 BLEU 流程后自动清理，可重复运行：
 
 ```bash
-TRANSLATION_EVAL_DATABASE_URL=sqlite:////tmp/translation-eval-smoke.db \
-  .venv/bin/python scripts/smoke_demo.py
+(
+  set -e
+  smoke_dir="$(mktemp -d)"
+  trap 'rm -rf "$smoke_dir"' EXIT
+  TRANSLATION_EVAL_DATABASE_URL="sqlite:///$smoke_dir/eval.db" \
+  TRANSLATION_EVAL_IMPORT_DIR="$smoke_dir/imports" \
+    .venv/bin/python scripts/smoke_demo.py
+)
 ```
 
 ## 数据集协议
@@ -85,7 +87,7 @@ dataset-root/
 {"sample_id":"de-000001","source_language":"de","source_text":"Guten Morgen","reference_zh":"早上好"}
 ```
 
-`sample_id` 在同一数据集的不同版本间应保持稳定。导入采用 UTF-8 严格模式；重复 ID、未声明语种和空字段会阻止整批写入。
+`sample_id` 在同一数据集的不同版本间应保持稳定。导入采用 UTF-8 严格模式；重复 ID、未声明语种、空 ID、空源文或空参考译文会阻止整批写入。同一数据集不能重复导入已有版本标签或相同样本内容。
 
 ## 推理结果协议
 
@@ -96,7 +98,7 @@ result-root/
     └── predictions.jsonl
 ```
 
-`result_info.json` 的完整示例见 `examples/results/demo-run/result_info.json`。关键字段：
+`result_info.json` 的必填字段如下，模型版本、备注和完整推理参数见 [演示清单](examples/results/demo-run/result_info.json)：
 
 ```json
 {
@@ -104,16 +106,9 @@ result-root/
   "run_name": "qwen3-exp-042",
   "model_family": "qwen3-0.6b",
   "checkpoint_name": "qwen3-0.6b-lora-step-8000",
-  "model_version": "step-8000",
-  "model_notes": "33语种混合微调",
   "inference": {
     "platform": "nvidia-1080ti",
-    "device": "GPU",
-    "precision": "fp16",
-    "mode": "source_language_provided",
-    "generated_at": "2026-08-30T12:00:00Z",
-    "code_revision": "optional-git-sha",
-    "decoding": {"temperature": 0, "top_p": 1, "max_new_tokens": 512}
+    "mode": "source_language_provided"
   },
   "datasets": [{
     "dataset_key": "flores-devtest",
@@ -122,46 +117,67 @@ result-root/
 }
 ```
 
+将 `dataset_content_sha256` 的占位文字替换为已导入数据集版本的 64 位十六进制内容哈希，可在“数据集”的版本列表复制。该值由系统对样本内容规范化后计算，不是对 JSONL 文件直接执行 SHA-256；`dataset_key` 和内容哈希必须共同匹配已导入版本。
+
 `predictions.jsonl` 每行：
 
 ```json
 {"sample_id":"de-000001","translation_zh":"早上好","predicted_language":"de"}
 ```
 
-`predicted_language` 可省略。只有 `inference.mode=auto_detect` 时才统计语种识别能力；否则页面明确显示 N/A。
+预测必须完整覆盖对应数据集版本的全部 `sample_id`，每个 ID 恰好一条；缺失、重复、未知 ID 或空白译文会阻止整批导入。
+
+`predicted_language` 可省略。只有 `inference.mode=auto_detect` 时才根据导入的语种预测计算识别准确率、覆盖率和混淆矩阵；否则页面显示 N/A。页面展示准确率与覆盖率，混淆矩阵通过 API 获取。
 
 ## 评分口径
 
 - LLM 保存 0–10 数值原始分及简短理由；score 必须是有限 JSON 数值，布尔值和数字字符串均不接受。非法 JSON、空响应、非数值或越界分数按配置重试；明确的拒绝评分响应直接记为失败。
 - BLEU 保存 0–100 逐句分，并额外记录整体和逐语种 corpus BLEU、SacreBLEU signature。任务结束（包括部分失败或取消）时按当前成功样本更新聚合并显示样本数；重试进行中不展示上一轮聚合。
-- 微平均按所有成功样本等权；宏平均先按语种计算，再对语种等权。
-- 阈值准确率分母是成功评分数；失败和取消不进入分母，但页面始终显示覆盖率。
-- 缓存按已确认的宽松口径忽略 Base URL 和 Prompt 版本。每条缓存分仍显示实际模型、Base URL 和 Prompt 来源。
+- 微平均按所有成功样本等权；宏平均先按语种计算，再对有成功评分的语种等权。
+- 阈值通过率（页面称“准确率”）为 `score ≥ threshold` 的成功样本数除以成功评分数；失败和取消不进入分母。评分覆盖率为成功评分数除以总样本数。
+- LLM 缓存按“源语种 + 源文 + GT + 候选译文 + 评分模型名”复用最近的历史评分，忽略 Base URL、Prompt 版本及其他评分参数；每条缓存分仍显示实际模型、Base URL 和 Prompt 来源。验证新配置效果时应开启“强制重新评分”。
 
 ## 配置和运维
 
-编辑评价器配置时保留未修改参数，API 创建修订也支持仅提供需修改的 config 字段。API Key 留空沿用；配置或阈值发生变化时创建新修订，已有任务继续引用原修订。
+LLM 评价器可配置 1–64 并发，实际并发取该值与 Worker 全局上限的较小值，默认全局上限为 32。
 
-本轮优化无需数据库迁移；更新后重新构建前端并重启 API 与 Worker。历史异常评分不会自动改写，可通过“再次评测”并开启“强制重新评分”生成新的有效结果。变更及验证见 [优化记录](docs/optimization-2026-09-07.md)。
+编辑评价器配置时保留未修改参数；API 创建修订时，`config` 可仅包含需修改的字段，但仍须提供 `default_threshold`。编辑时 API Key 留空沿用；配置或默认阈值变化会创建新修订，已有任务继续引用原修订。
 
 可用环境变量：
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `TRANSLATION_EVAL_DATABASE_URL` | `sqlite:///var/translation_eval.db` | SQLAlchemy 数据库地址 |
-| `TRANSLATION_EVAL_IMPORT_DIR` | `var/imports` | 导入暂存目录 |
+| `TRANSLATION_EVAL_DATABASE_URL` | 项目根目录下的 `var/translation_eval.db` | SQLAlchemy 数据库地址，默认使用 SQLite |
+| `TRANSLATION_EVAL_IMPORT_DIR` | 项目根目录下的 `var/imports` | 导入暂存目录 |
 | `TRANSLATION_EVAL_WORKER_CONCURRENCY` | `32` | Worker 全局 LLM 并发上限 |
 | `TRANSLATION_EVAL_WORKER_POLL_SECONDS` | `0.5` | 空队列检查间隔 |
-| `TRANSLATION_EVAL_WORKER_HEARTBEAT_FILE` | `var/worker-heartbeat` | Worker 健康心跳文件路径 |
+| `TRANSLATION_EVAL_WORKER_HEARTBEAT_FILE` | 项目根目录下的 `var/worker-heartbeat` | Worker 健康心跳文件路径 |
 | `TRANSLATION_EVAL_PORT` | `8000` | `start.sh` 服务端口 |
 
-API Key 按需求明文保存在 SQLite；页面只回显掩码，但数据库备份仍包含密钥。备份时复制 SQLite 文件及其 `-wal`/`-shm` 文件，或停服后只复制主数据库文件。
+API Key 明文保存在数据库；页面只回显掩码，数据库备份仍包含密钥。
 
-数据库升级：
+运行中的 SQLite 数据库应使用 [在线备份](https://sqlite.org/backup.html)，不能直接逐个复制数据库和 `-wal`/`-shm` 文件。以下命令使用 Python 内置 SQLite 备份默认数据库；自定义数据库地址时需替换源文件路径，并为备份选择新的目标文件名：
+
+```bash
+.venv/bin/python - <<'PY'
+import sqlite3
+from contextlib import closing
+
+with closing(sqlite3.connect("file:var/translation_eval.db?mode=ro", uri=True)) as source:
+    with closing(sqlite3.connect("var/translation_eval-backup.db")) as target:
+        source.backup(target)
+PY
+```
+
+也可正常关闭 API、Worker 和其他数据库连接，确认 `-wal` 已消失后，仅复制主数据库文件；异常退出后不要删除或遗漏 WAL。
+
+更新已有安装时，先备份数据库并停止 API、Worker，再执行迁移、重新构建前端并重启服务。`start.sh` 会执行迁移和构建；使用 `dev.sh` 时需先手动执行迁移：
 
 ```bash
 .venv/bin/alembic upgrade head
 ```
+
+历史结果不会随代码或配置更新自动改写；修正异常评分可从原提交开启“强制重新评分”再次评测。具体变更及验证见 [优化记录](docs/optimization-2026-09-07.md)。
 
 测试和构建：
 
