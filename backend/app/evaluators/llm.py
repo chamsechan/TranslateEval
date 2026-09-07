@@ -190,8 +190,12 @@ class OpenAICompatibleEvaluator(BaseEvaluator):
         payload = {
             "model": self.model_name,
             "messages": [
-                {"role": "system", "content": render_template(self.system_template, item)},
-                {"role": "user", "content": render_template(self.user_template, item)},
+                {"role": role, "content": render_template(template, item)}
+                for role, template in (
+                    ("system", self.system_template),
+                    ("user", self.user_template),
+                )
+                if template.strip()
             ],
             "temperature": self.config["temperature"],
             "max_tokens": self.config["max_tokens"],

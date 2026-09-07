@@ -1,4 +1,4 @@
-import { ApiOutlined, CopyOutlined, KeyOutlined, PlusOutlined, ReloadOutlined, SafetyOutlined } from '@ant-design/icons'
+import { ApiOutlined, CopyOutlined, DeleteOutlined, KeyOutlined, PlusOutlined, ReloadOutlined, SafetyOutlined } from '@ant-design/icons'
 import { Alert, App, Badge, Button, Card, Col, Collapse, Form, Input, InputNumber, Modal, Row, Select, Skeleton, Space, Switch, Tabs, Tag, Tooltip, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { api, formatDate } from '../api'
@@ -9,8 +9,17 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorConnection, EvaluatorProfile, PromptProfile } from '../types'
 
 type EvaluatorForm = { name: string; evaluator_type: 'openai_compatible_llm' | 'sacrebleu_zh'; base_url?: string; model?: string; api_key?: string; concurrency?: number; timeout_seconds?: number; max_retries?: number; default_threshold: number; tokenize?: string; smooth_method?: string }
-type PromptForm = { name?: string; description?: string; system_template: string; user_template: string; published: boolean }
+type PromptForm = { name?: string; description?: string; version_label?: string; system_template: string; user_template: string; published: boolean }
 type ConnectionState = EvaluatorConnection | { status: 'checking'; detail: string; latency_ms: null; model_available: null }
+
+function nextPromptLabel(profile: PromptProfile | null) {
+  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).replaceAll('-', '')
+  const sequence = Math.max(0, ...(profile?.versions || []).map((version) => {
+    const [day, number] = (version.version_label || '').split('.')
+    return day === date && /^\d+$/.test(number || '') ? Number(number) : 0
+  })) + 1
+  return `${date}.${sequence}`
+}
 
 export default function SettingsPage() {
   const { message } = App.useApp()
@@ -21,6 +30,7 @@ export default function SettingsPage() {
   const prompts = promptQuery.data || []
   const [savingEvaluator, setSavingEvaluator] = useState(false)
   const [savingPrompt, setSavingPrompt] = useState(false)
+  const [deletingPrompt, setDeletingPrompt] = useState<string | null>(null)
   const [evaluatorOpen, setEvaluatorOpen] = useState(false)
   const [revisionProfile, setRevisionProfile] = useState<EvaluatorProfile | null>(null)
   const [promptOpen, setPromptOpen] = useState(false)
@@ -79,21 +89,30 @@ export default function SettingsPage() {
     try { await api(`/evaluator-profiles/${profile.id}`, { method: 'PATCH', body: JSON.stringify({ enabled }) }); await load() }
     catch (error) { message.error((error as Error).message) }
   }
-  const openNewPrompt = () => { setVersionProfile(null); promptForm.resetFields(); promptForm.setFieldsValue({ published: true }); setPromptOpen(true) }
+  const openNewPrompt = () => { setVersionProfile(null); promptForm.resetFields(); promptForm.setFieldsValue({ system_template: '', user_template: '', published: true }); setPromptOpen(true) }
   const openPromptVersion = (profile: PromptProfile, version = profile.versions[0]) => {
     setVersionProfile(profile)
     promptForm.resetFields()
-    promptForm.setFieldsValue({ system_template: version.system_template, user_template: version.user_template, published: true })
+    promptForm.setFieldsValue({ system_template: version?.system_template || '', user_template: version?.user_template || '', published: true })
     setPromptOpen(true)
   }
   const savePrompt = async () => {
     try {
       const value = await promptForm.validateFields()
       setSavingPrompt(true)
-      if (versionProfile) await api(`/prompt-profiles/${versionProfile.id}/versions`, { method: 'POST', body: JSON.stringify(value) })
-      else await api('/prompt-profiles', { method: 'POST', body: JSON.stringify(value) })
+      const body = JSON.stringify({ ...value, system_template: value.system_template || '', user_template: value.user_template || '' })
+      if (versionProfile) await api(`/prompt-profiles/${versionProfile.id}/versions`, { method: 'POST', body })
+      else await api('/prompt-profiles', { method: 'POST', body })
       message.success(versionProfile ? '新 Prompt 版本已创建' : 'Prompt 配置已创建'); setPromptOpen(false); promptForm.resetFields(); await load()
     } catch (error) { if (error instanceof Error) message.error(error.message) } finally { setSavingPrompt(false) }
+  }
+  const deletePrompt = async (id: string, kind: 'profile' | 'version') => {
+    setDeletingPrompt(id)
+    try {
+      await api(`/${kind === 'profile' ? 'prompt-profiles' : 'prompt-versions'}/${id}`, { method: 'DELETE' })
+      message.success(kind === 'profile' ? 'Prompt 配置已删除' : 'Prompt 版本已删除')
+    } catch (error) { message.error((error as Error).message) }
+    finally { setDeletingPrompt(null); promptQuery.refresh() }
   }
 
   return (
@@ -121,8 +140,25 @@ export default function SettingsPage() {
           })}</Row>
         </> },
         { key: 'prompts', label: <Space><CopyOutlined />Prompt 版本</Space>, children: <>
-          <div className="section-title"><Typography.Title level={4}>Prompt 配置</Typography.Title><Button type="primary" icon={<PlusOutlined />} onClick={openNewPrompt}>新建 Prompt</Button></div>
-          <Collapse items={prompts.map((profile) => ({ key: profile.id, label: <Space><Typography.Text strong>{profile.name}</Typography.Text><Tag>{profile.versions.length} 版本</Tag></Space>, extra: <Button size="small" onClick={(event) => { event.stopPropagation(); openPromptVersion(profile) }}>复制最新版本</Button>, children: <div>{profile.versions.map((version) => <Card key={version.id} size="small" title={<Space>v{version.version}<Tag color={version.published ? 'success' : 'default'}>{version.published ? '已发布' : '草稿'}</Tag></Space>} extra={<Button size="small" onClick={() => openPromptVersion(profile, version)}>复制此版本</Button>} style={{ marginBottom: 12 }}><Typography.Text type="secondary">System</Typography.Text><div className="code-template">{version.system_template}</div><Typography.Text type="secondary" style={{ display: 'block', marginTop: 12 }}>User</Typography.Text><div className="code-template">{version.user_template}</div><Typography.Text type="secondary">创建于 {formatDate(version.created_at)} · ID {version.id}</Typography.Text></Card>)}</div> }))} />
+          <div className="section-title prompt-section-title"><Typography.Title level={4}>Prompt 配置</Typography.Title><Button type="primary" icon={<PlusOutlined />} onClick={openNewPrompt}>新建 Prompt</Button></div>
+          <Typography.Paragraph type="secondary">版本标签默认按日期递增；已有评测结果或被任务引用的 Prompt 不允许删除。</Typography.Paragraph>
+          <Collapse className="prompt-profiles" items={prompts.map((profile) => ({
+            key: profile.id,
+            label: <Space wrap><Typography.Text strong>{profile.name}</Typography.Text><Tag>{profile.versions.length} 版本</Tag></Space>,
+            extra: <Space onClick={(event) => event.stopPropagation()}>
+              <Button size="small" onClick={() => openPromptVersion(profile)}>{profile.versions.length ? '复制最新版本' : '创建新版本'}</Button>
+              <Tooltip title={profile.delete_block_reason}><span><Button danger size="small" icon={<DeleteOutlined />} disabled={!profile.can_delete || !!deletingPrompt} loading={deletingPrompt === profile.id} onClick={() => void deletePrompt(profile.id, 'profile')}>删除配置</Button></span></Tooltip>
+            </Space>,
+            children: <div>{profile.versions.map((version) => <Card key={version.id} size="small"
+              title={<Space wrap><Tag color="blue">{version.version_label}</Tag><Typography.Text type="secondary">v{version.version}</Typography.Text><Tag color={version.published ? 'success' : 'default'}>{version.published ? '已发布' : '草稿'}</Tag></Space>}
+              extra={<Space><Button size="small" onClick={() => openPromptVersion(profile, version)}>复制此版本</Button><Tooltip title={version.delete_block_reason}><span><Button danger size="small" icon={<DeleteOutlined />} disabled={!version.can_delete || !!deletingPrompt} loading={deletingPrompt === version.id} onClick={() => void deletePrompt(version.id, 'version')}>删除版本</Button></span></Tooltip></Space>}
+              style={{ marginBottom: 12 }}>
+              <Typography.Text type="secondary">System</Typography.Text><div className="code-template" style={{ minHeight: 42 }}>{version.system_template}</div>
+              <Typography.Text type="secondary" style={{ display: 'block', marginTop: 12 }}>User</Typography.Text><div className="code-template" style={{ minHeight: 42 }}>{version.user_template}</div>
+              <Typography.Text type="secondary">创建于 {formatDate(version.created_at)} · ID {version.id}</Typography.Text>
+              {version.delete_block_reason && <Typography.Text type="secondary" style={{ display: 'block', marginTop: 8 }}>{version.delete_block_reason}</Typography.Text>}
+            </Card>)}</div>,
+          }))} />
         </> },
       ]} />
 
@@ -141,8 +177,9 @@ export default function SettingsPage() {
       <Modal title={versionProfile ? `创建 ${versionProfile.name} 的新版本` : '新建 Prompt 配置'} width={760} confirmLoading={savingPrompt} open={promptOpen} onCancel={() => setPromptOpen(false)} onOk={savePrompt} okText="保存不可变版本">
         <Form form={promptForm} layout="vertical">
           {!versionProfile && <Row gutter={14}><Col span={12}><Form.Item name="name" label="Prompt 名称" rules={[{ required: true }]}><Input /></Form.Item></Col><Col span={12}><Form.Item name="description" label="说明"><Input /></Form.Item></Col></Row>}
-          <Form.Item name="system_template" label="System Prompt" rules={[{ required: true }]}><Input.TextArea rows={5} /></Form.Item>
-          <Form.Item name="user_template" label="User Prompt" extra={'可用变量：{source_language}、{source_text}、{reference_zh}、{translation_zh}。JSON 示例中的花括号请写成双花括号，如 {{"score": 8}}。'} rules={[{ required: true }]}><Input.TextArea rows={9} /></Form.Item>
+          <Form.Item name="version_label" label="版本标签" extra="留空自动生成日期标签，同一天的版本按序号递增。"><Input maxLength={120} placeholder={nextPromptLabel(versionProfile)} /></Form.Item>
+          <Form.Item name="system_template" label="System Prompt" extra="可留空，留空时消息中不包含 system 项。"><Input.TextArea rows={5} /></Form.Item>
+          <Form.Item name="user_template" label="User Prompt" extra={'可留空，留空时消息中不包含 user 项。可用变量：{source_language}、{source_text}、{reference_zh}、{translation_zh}。JSON 示例中的花括号请写成双花括号，如 {{"score": 8}}。'}><Input.TextArea rows={9} /></Form.Item>
           <Form.Item name="published" label="状态"><Select options={[{ label: '发布，可用于新任务', value: true }, { label: '草稿', value: false }]} /></Form.Item>
         </Form>
       </Modal>

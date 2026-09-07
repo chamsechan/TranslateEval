@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from .api import report_dict
 from .config import settings
 from .database import get_session
+from .import_options import has_results_expression, option_has_results, remember_option
 from .importers import (
     ImportValidationError, _load_jsonl, _report_record, stage_source,
     validate_dataset_staged, validate_submission_staged,
@@ -44,7 +45,7 @@ def check_prefill_structure(manifest: dict[str, Any], kind: ImportKind) -> None:
         if inference is not None:
             if not isinstance(inference, dict):
                 raise ImportValidationError("inference 必须是 JSON 对象")
-            text_fields(inference, ("platform", "device", "precision", "mode", "generated_at", "code_revision"), "inference.")
+            text_fields(inference, ("platform", "device", "sdk", "sdk_version", "precision", "mode", "generated_at", "code_revision"), "inference.")
         list_key, fields = "datasets", ("dataset_key", "dataset_content_sha256")
     if list_key in manifest:
         entries = manifest[list_key]
@@ -54,45 +55,96 @@ def check_prefill_structure(manifest: dict[str, Any], kind: ImportKind) -> None:
             text_fields(entry, fields, list_key + ".")
 
 
-def option_dict(option: ImportOption) -> dict[str, Any]:
-    return {key: getattr(option, key) for key in (
+def option_dict(option: ImportOption, has_results: bool = False) -> dict[str, Any]:
+    return {**{key: getattr(option, key) for key in (
         "id", "category", "value", "label", "enabled", "detects_language",
-    )}
+        "platform", "sdk", "sdk_version",
+    )}, "has_results": has_results}
+
+
+def validate_device_fields(option: ImportOption) -> None:
+    if option.category != "device" and (option.platform or option.sdk or option.sdk_version):
+        raise HTTPException(422, "只有设备可以设置平台和 SDK 信息")
+    if (option.sdk or option.sdk_version) and not option.platform:
+        raise HTTPException(422, "设置 SDK 信息时必须指定所属平台")
 
 
 @router.get("/import-options")
 def list_options(category: ImportOptionCategory | None = None,
                  session: Session = Depends(get_session)) -> list[dict[str, Any]]:
-    query = select(ImportOption).order_by(ImportOption.category, ImportOption.label)
+    query = select(ImportOption, has_results_expression()).where(
+        ImportOption.deleted.is_(False),
+    ).order_by(ImportOption.category, ImportOption.label)
     if category:
         query = query.where(ImportOption.category == category)
-    return [option_dict(option) for option in session.scalars(query)]
+    return [option_dict(option, has_results) for option, has_results in session.execute(query)]
 
 
 @router.post("/import-options", status_code=201)
 def create_option(body: ImportOptionCreate, session: Session = Depends(get_session)) -> dict[str, Any]:
-    option = ImportOption(**body.model_dump())
-    session.add(option)
+    option = session.scalar(select(ImportOption).where(
+        ImportOption.category == body.category, ImportOption.value == body.value,
+    ))
+    if option and not option.deleted:
+        raise HTTPException(409, "该分类中已存在相同选项值")
+    if option:
+        for key, value in body.model_dump().items():
+            setattr(option, key, value)
+        option.deleted = False
+    else:
+        option = ImportOption(**body.model_dump())
+        session.add(option)
     try:
+        if option.category == "device":
+            remember_option(session, "platform", option.platform)
         session.commit()
     except IntegrityError as exc:
         session.rollback()
         raise HTTPException(409, "该分类中已存在相同选项值") from exc
-    return option_dict(option)
+    return option_dict(option, option_has_results(session, option))
 
 
 @router.patch("/import-options/{option_id}")
 def update_option(option_id: str, body: ImportOptionUpdate,
                   session: Session = Depends(get_session)) -> dict[str, Any]:
     option = session.get(ImportOption, option_id)
-    if not option:
+    if not option or option.deleted:
         raise HTTPException(404, "选项不存在")
     if option.category != "inference_mode" and body.detects_language:
         raise HTTPException(422, "只有推理模式可以设置语种识别统计")
-    for key, value in body.model_dump(exclude_unset=True).items():
+    updates = body.model_dump(exclude_unset=True)
+    if option.category == "device":
+        if "platform" in updates and updates["platform"] != option.platform:
+            updates.setdefault("sdk", "")
+            updates.setdefault("sdk_version", "")
+        if "sdk" in updates and updates["sdk"] != option.sdk:
+            updates.setdefault("sdk_version", "")
+    for key, value in updates.items():
         setattr(option, key, value)
+    validate_device_fields(option)
+    if option.category == "device":
+        remember_option(session, "platform", option.platform)
     session.commit()
-    return option_dict(option)
+    return option_dict(option, option_has_results(session, option))
+
+
+@router.delete("/import-options/{option_id}")
+def delete_option(option_id: str, confirm: bool = False,
+                  session: Session = Depends(get_session)) -> dict[str, bool]:
+    option = session.get(ImportOption, option_id)
+    if not option or option.deleted:
+        raise HTTPException(404, "选项不存在")
+    if option_has_results(session, option) and not confirm:
+        raise HTTPException(409, {
+            "code": "confirmation_required",
+            "message": "该选项已有导入结果，确认删除？历史结果将保留。",
+        })
+    # Tombstones stop startup seeding and future imports from restoring deleted
+    # choices. Result snapshots reference values, so history remains intact.
+    option.deleted = True
+    option.enabled = False
+    session.commit()
+    return {"deleted": True}
 
 
 def prepare_import(session: Session, source: str | Path, kind: ImportKind) -> ImportValidationReport:

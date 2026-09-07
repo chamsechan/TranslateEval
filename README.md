@@ -7,7 +7,7 @@
 - 数据集不可变版本、内容哈希、版本差异和严格导入报告；历史样本支持分页预览与语种筛选。
 - 自动登记模型、检查点和推理参数；模型详情展示设备、精度、代码版本及解码参数。
 - 同一提交可选择 BLEU 和多个 LLM 评价配置；评价器任务依次执行，单个 LLM 评价器内部并发评分。
-- LLM 配置和 Prompt 保留历史版本，Prompt 可复制任意历史版本；支持评分缓存、超时和重试。
+- LLM 配置和 Prompt 保留历史版本，Prompt 可复制任意历史版本，默认使用日期标签（如 `20260907.1`）；无评测结果或任务引用的 Prompt 可删除。支持评分缓存、超时和重试。
 - 持久化保存逐句原始分数；调整阈值即可查看宏/微平均分、阈值通过率与覆盖率。
 - 父任务和数据集子任务均可取消；Worker 重启后继续执行队列。
 
@@ -95,7 +95,9 @@ dataset-root/
 
 界面导入时，`result_info.json` 可选。单个数据集可以直接上传 `predictions.jsonl`，在表单中选择对应数据集及版本；多个数据集使用下面的子目录结构，子目录名对应 `dataset_key`。选择版本后自动填写其内容哈希，无需手工复制。JSON 中已有哈希若未匹配，需明确选择正确版本后重新核验。
 
-模型、设备、平台、精度 / 量化位宽、推理模式使用可搜索下拉框；检查点为文本输入。选项支持新增、修改显示名称和启用 / 停用，选项值创建后固定。导入 JSON 中尚未维护的值会预填为临时选项，成功提交后加入选项库；已停用的导入原值可以保留。维护界面可从导入表单直接打开。
+模型、设备、平台、精度 / 量化位宽、推理模式使用可搜索下拉框；检查点为文本输入。选项支持新增、修改显示名称、启用 / 停用，以及编辑窗口内的红色删除按钮，选项值创建后固定。有导入结果的选项删除前需要确认，删除保留历史结果，重启后也不会自动恢复。导入 JSON 中尚未维护的值会预填为临时选项，成功提交后加入选项库；已停用的导入原值可以保留。维护界面可从导入表单直接打开。
+
+设备包含选项值、设备名称（如英伟达1080Ti、英伟达2080Ti、爱芯650）、所属平台、SDK 和 SDK 版本。SDK 选项按平台区分；导入时可从设备配置带出信息，并将 `inference.sdk`、`inference.sdk_version` 保存到本次运行快照。推理模式默认提供 `default`（默认）、`thinking`（思考）、`non_thinking`（不思考）。
 
 所有修改都要重新核验。提交保存最终元信息快照，选项名称或推理模式统计设置的后续变更不改写历史导入。源 JSON 文件不会被修改。
 
@@ -116,7 +118,7 @@ result-root/
   "checkpoint_name": "qwen3-0.6b-lora-step-8000",
   "inference": {
     "platform": "nvidia-1080ti",
-    "mode": "source_language_provided"
+    "mode": "default"
   },
   "datasets": [{
     "dataset_key": "flores-devtest",
@@ -135,7 +137,7 @@ result-root/
 
 预测必须完整覆盖对应数据集版本的全部 `sample_id`，每个 ID 恰好一条；缺失、重复、未知 ID 或空白译文会阻止整批导入。
 
-`predicted_language` 可省略。推理模式选项可配置是否统计语种识别；内置 `auto_detect` 默认统计，`source_language_provided` 默认不统计。核验时将该设置保存为 `inference.detects_language`，自定义模式也可以启用统计；旧记录未保存该字段时仍按 `mode=auto_detect` 判断。页面展示准确率与覆盖率，混淆矩阵通过 API 获取。
+`predicted_language` 可省略。思考模式与语种识别统计分别记录，新模式可通过 `inference.detects_language` 指定是否统计语种识别，默认不统计。历史 `auto_detect`、`source_language_provided` 及自定义模式继续兼容原有统计设置；旧记录未保存该字段时仍按 `mode=auto_detect` 判断。页面展示准确率与覆盖率，混淆矩阵通过 API 获取。
 
 API 的可编辑流程：`POST /api/{dataset|submission}-imports/prepare`（服务器路径）或 `prepare-upload`（ZIP / JSONL）读取草稿，再调用 `POST /api/import-reports/{id}/validate`，请求体为 `{"manifest": {最终元信息}}`，核验通过后使用返回的新报告 ID 调用原有 commit 接口。草稿不可直接提交。原有 `validate` / `validate-upload` 接口继续支持完整清单的一步核验。
 
@@ -152,6 +154,8 @@ API 的可编辑流程：`POST /api/{dataset|submission}-imports/prepare`（服�
 LLM 评价器可配置 1–64 并发，实际并发取该值与 Worker 全局上限的较小值，默认全局上限为 32。
 
 编辑评价器配置时保留未修改参数；API 创建修订时，`config` 可仅包含需修改的字段，但仍须提供 `default_threshold`。编辑时 API Key 留空沿用；配置或默认阈值变化会创建新修订，已有任务继续引用原修订。
+
+Prompt 版本标签留空时按北京时间生成 `YYYYMMDD.N`，同一配置当天的序号递增，也可填写自定义标签。System Prompt 和 User Prompt 均可留空，对应角色不会出现在发送给评分服务的 `messages` 中。已有评测结果、评分缓存或任务引用的版本及其配置不能删除。
 
 可用环境变量：
 
@@ -181,7 +185,7 @@ PY
 
 也可正常关闭 API、Worker 和其他数据库连接，确认 `-wal` 已消失后，仅复制主数据库文件；异常退出后不要删除或遗漏 WAL。
 
-更新已有安装时，先备份数据库并停止 API、Worker，再执行迁移、重新构建前端并重启服务。`start.sh` 会执行迁移和构建；使用 `dev.sh` 时需先手动执行迁移：
+更新已有安装时，先备份数据库并停止 API、Worker，再执行迁移、重新构建前端并重启服务。`start.sh` 会执行迁移和构建，`dev.sh` 也会在启动前执行迁移；需要单独迁移时运行：
 
 ```bash
 .venv/bin/alembic upgrade head

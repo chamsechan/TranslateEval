@@ -50,6 +50,8 @@ class InferenceDatasetManifest(BaseModel):
 class InferenceDetails(BaseModel):
     platform: str = Field(min_length=1, max_length=160)
     device: str = Field(default="", max_length=200)
+    sdk: str = Field(default="", max_length=200)
+    sdk_version: str = Field(default="", max_length=200)
     precision: str = Field(default="", max_length=200)
     mode: str = Field(min_length=1, max_length=40)
     detects_language: bool | None = None
@@ -124,8 +126,11 @@ class ImportOptionUpdate(BaseModel):
     label: str = Field(min_length=1, max_length=200)
     enabled: bool = True
     detects_language: bool = False
+    platform: str = Field(default="", max_length=160)
+    sdk: str = Field(default="", max_length=200)
+    sdk_version: str = Field(default="", max_length=200)
 
-    @field_validator("label", mode="before")
+    @field_validator("label", "platform", "sdk", "sdk_version", mode="before")
     @classmethod
     def trim_label(cls, value: str) -> str:
         return value.strip() if isinstance(value, str) else value
@@ -147,6 +152,10 @@ class ImportOptionCreate(ImportOptionUpdate):
             raise ValueError(f"选项值不能超过 {limit} 个字符")
         if self.category != "inference_mode" and self.detects_language:
             raise ValueError("只有推理模式可以设置语种识别统计")
+        if self.category != "device" and (self.platform or self.sdk or self.sdk_version):
+            raise ValueError("只有设备可以设置平台和 SDK 信息")
+        if (self.sdk or self.sdk_version) and not self.platform:
+            raise ValueError("设置 SDK 信息时必须指定所属平台")
         return self
 
 
@@ -163,16 +172,18 @@ class CommitSubmissionRequest(BaseModel):
 class PromptProfileCreate(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     description: str = ""
-    system_template: str = Field(min_length=1)
-    user_template: str = Field(min_length=1)
+    version_label: str = Field(default="", max_length=160)
+    system_template: str = ""
+    user_template: str = ""
     published: bool = True
 
     _validate_templates = field_validator("system_template", "user_template")(validate_prompt_template)
 
 
 class PromptVersionCreate(BaseModel):
-    system_template: str = Field(min_length=1)
-    user_template: str = Field(min_length=1)
+    version_label: str = Field(default="", max_length=160)
+    system_template: str = ""
+    user_template: str = ""
     published: bool = True
 
     _validate_templates = field_validator("system_template", "user_template")(validate_prompt_template)

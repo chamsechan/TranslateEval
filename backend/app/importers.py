@@ -492,6 +492,8 @@ def validate_submission_staged(
             "model_version": manifest.model_version,
             "platform": manifest.inference.platform,
             "device": manifest.inference.device,
+            "sdk": manifest.inference.sdk,
+            "sdk_version": manifest.inference.sdk_version,
             "precision": manifest.inference.precision,
             "mode": manifest.inference.mode,
             "detects_language": manifest.inference.detects_language,

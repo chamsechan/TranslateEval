@@ -18,8 +18,9 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+.venv/bin/alembic upgrade head
+
 .venv/bin/uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 --reload &
 .venv/bin/python -m app.worker &
 npm --prefix frontend run dev &
 wait
-
