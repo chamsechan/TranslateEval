@@ -18,7 +18,7 @@ from app.importers import (
     ImportValidationError, commit_dataset_import, commit_submission_import,
     validate_dataset_import,
 )
-from app.models import DatasetVersion, EvaluatorProfile, ImportOption, ModelRun
+from app.models import DatasetVersion, EvaluatorProfile, ImportOption, Language, ModelRun
 from app.queue import create_evaluation_task, language_detection_summary
 from app.schemas import EvaluatorSelection, ImportManifestRequest
 
@@ -51,7 +51,8 @@ def test_dataset_without_manifest_can_be_completed_and_committed(session_factory
         draft = import_api.prepare_import(session, DATASET / "samples.jsonl", "dataset")
         assert draft.status == "draft"
         assert not draft.report["has_manifest"]
-        assert {item["code"] for item in draft.manifest["source_languages"]} == {"de", "th", "vi"}
+        assert "source_languages" not in draft.manifest
+        assert draft.report["detected_languages"] == ["de", "th", "vi"]
         with pytest.raises(ImportValidationError, match="校验未通过"):
             commit_dataset_import(session, draft.id)
         edited = {**draft.manifest, "dataset_key": "manual", "name": "界面填写", "version_label": "v1"}
@@ -59,6 +60,46 @@ def test_dataset_without_manifest_can_be_completed_and_committed(session_factory
         assert result["report"]["valid"]
         version = commit_dataset_import(session, result["id"])
         assert version.dataset.name == "界面填写" and version.sample_count == 6
+
+
+@pytest.mark.parametrize("editable", [False, True], ids=["direct", "editable"])
+@pytest.mark.parametrize("legacy_languages", [False, True], ids=["no-languages", "legacy-languages"])
+def test_dataset_languages_are_inferred_from_samples(session_factory, tmp_path, editable, legacy_languages):
+    source = tmp_path / "inferred-languages"
+    source.mkdir()
+    manifest = {"schema_version": 1, "dataset_key": "inferred", "name": "自动识别语种", "version_label": "v1"}
+    if legacy_languages:
+        manifest["source_languages"] = [
+            {"code": "de", "name_zh": "过时名称"},
+            {"code": "unused", "name_zh": "未使用语种"},
+        ]
+    (source / "dataset_info.json").write_text(json.dumps(manifest))
+    samples = [
+        {"sample_id": f"s{i}", "source_language": language, "source_text": "hello", "reference_zh": "你好"}
+        for i, language in enumerate([" ZZ ", " DE ", "zz"])
+    ]
+    (source / "samples.jsonl").write_text("\n".join(json.dumps(row) for row in samples))
+    with session_factory() as session:
+        session.add(Language(code="de", name_zh="已维护的德语名称"))
+        session.commit()
+        if editable:
+            draft = import_api.prepare_import(session, source, "dataset")
+            assert "source_languages" not in draft.manifest
+            assert draft.report["detected_languages"] == ["de", "zz"]
+            validated = import_api.validate_draft(draft.id, ImportManifestRequest(manifest=draft.manifest), session)
+            report_id, report, saved_manifest = validated["id"], validated["report"], validated["manifest"]
+        else:
+            validated = validate_dataset_import(session, source)
+            report_id, report, saved_manifest = validated.id, validated.report, validated.manifest
+        assert report["valid"], report["errors"]
+        assert report["summary"]["languages"] == ["de", "zz"]
+        assert "source_languages" not in saved_manifest
+        version = commit_dataset_import(session, report_id)
+        assert version.source_languages == ["de", "zz"]
+        assert sorted(sample.source_language for sample in version.samples) == ["de", "zz", "zz"]
+        assert session.get(Language, "de").name_zh == "已维护的德语名称"
+        assert session.get(Language, "zz").name_zh == "zz"
+        assert session.get(Language, "unused") is None
 
 
 def test_manifest_prefill_edits_are_saved_without_modifying_source(session_factory, tmp_path):

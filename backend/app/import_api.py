@@ -18,7 +18,7 @@ from .importers import (
     ImportValidationError, _load_jsonl, _report_record, stage_source,
     validate_dataset_staged, validate_submission_staged,
 )
-from .models import ImportOption, ImportValidationReport, Language
+from .models import ImportOption, ImportValidationReport
 from .schemas import (
     DatasetSampleInput, ImportManifestRequest, ImportOptionCategory,
     ImportOptionCreate, ImportOptionUpdate, PathImportRequest,
@@ -37,7 +37,7 @@ def check_prefill_structure(manifest: dict[str, Any], kind: ImportKind) -> None:
 
     if kind == "dataset":
         text_fields(manifest, ("dataset_key", "name", "version_label", "change_note", "description"))
-        list_key, fields = "source_languages", ("code", "name_zh")
+        return
     else:
         text_fields(manifest, ("run_name", "model_family", "checkpoint_name", "model_version", "model_notes"))
         inference = manifest.get("inference")
@@ -110,13 +110,10 @@ def prepare_import(session: Session, source: str | Path, kind: ImportKind) -> Im
     check_prefill_structure(manifest, kind)
     report: dict[str, Any] = {"valid": False, "errors": [], "has_manifest": manifest_path.is_file()}
     if kind == "dataset":
+        manifest.pop("source_languages", None)
         samples, errors = _load_jsonl(staged / "samples.jsonl", DatasetSampleInput)
         report["errors"] = errors
         languages = {item.source_language for item in samples}
-        names = {item.code: item.name_zh for item in session.scalars(select(Language))}
-        # Preserve explicit declarations so undeclared languages still require review.
-        if "source_languages" not in manifest:
-            manifest["source_languages"] = [{"code": code, "name_zh": names.get(code, code)} for code in sorted(languages)]
         report["detected_languages"] = sorted(languages)
         report["sample_count"] = len(samples)
     else:

@@ -168,23 +168,15 @@ def validate_dataset_staged(session: Session, staged: Path,
     sample_models, row_errors = _load_jsonl(staged / "samples.jsonl", DatasetSampleInput)
     errors.extend(row_errors)
     rows = [item.model_dump() for item in sample_models]
-    declared_languages = {item.code for item in manifest.source_languages}
     seen: set[str] = set()
     duplicate_ids: list[str] = []
-    undeclared_languages: set[str] = set()
     for row in rows:
         if row["sample_id"] in seen:
             duplicate_ids.append(row["sample_id"])
         seen.add(row["sample_id"])
-        if row["source_language"] not in declared_languages:
-            undeclared_languages.add(row["source_language"])
     if duplicate_ids:
         errors.append(
             {"message": "存在重复 sample_id", "sample_ids": sorted(set(duplicate_ids))[:100]}
-        )
-    if undeclared_languages:
-        errors.append(
-            {"message": "样本使用了未在清单声明的语种", "languages": sorted(undeclared_languages)}
         )
     if not rows:
         errors.append({"message": "数据集必须至少包含一个样本"})
@@ -316,9 +308,10 @@ def commit_dataset_import(session: Session, report_id: str) -> DatasetVersion:
         )
         session.add(dataset)
         session.flush()
-    for language in manifest.source_languages:
-        if not session.get(Language, language.code):
-            session.add(Language(code=language.code, name_zh=language.name_zh))
+    source_languages = sorted({row["source_language"] for row in rows})
+    for code in source_languages:
+        if not session.get(Language, code):
+            session.add(Language(code=code, name_zh=code))
     session.flush()
     version = DatasetVersion(
         dataset_id=dataset.id,
@@ -326,7 +319,7 @@ def commit_dataset_import(session: Session, report_id: str) -> DatasetVersion:
         change_note=manifest.change_note,
         content_sha256=current_hash,
         sample_count=len(rows),
-        source_languages=sorted({row["source_language"] for row in rows}),
+        source_languages=source_languages,
     )
     session.add(version)
     session.flush()

@@ -62,7 +62,7 @@
 
 ## 数据集协议
 
-界面导入时，`dataset_info.json` 可选：提供时将内容预填到可编辑表单，未提供时从零填写。`source_languages` 未提供时从样本的 `source_language` 汇总，中文名称优先使用平台已有语种名称，也可在表单修改。可以直接上传 `samples.jsonl`，或导入下列目录 / ZIP。新版本沿用已有数据集名称和说明，版本标签和变更备注独立填写。
+界面导入时，`dataset_info.json` 可选：提供时将内容预填到可编辑表单，未提供时从零填写。源语种始终从样本的 `source_language` 自动汇总，无需在 JSON 中维护 `source_languages`，导入表单只读展示检测到的语种代码。中文名称沿用平台已有语种名称，新语种默认使用代码。可以直接上传 `samples.jsonl`，或导入下列目录 / ZIP。新版本沿用已有数据集名称和说明，版本标签和变更备注独立填写。
 
 ```text
 dataset-root/
@@ -79,8 +79,7 @@ dataset-root/
   "name": "FLORES DevTest",
   "version_label": "2026-08-30",
   "change_note": "刷新中文 GT",
-  "description": "可选说明",
-  "source_languages": [{"code": "de", "name_zh": "德语"}]
+  "description": "可选说明"
 }
 ```
 
@@ -90,7 +89,7 @@ dataset-root/
 {"sample_id":"de-000001","source_language":"de","source_text":"Guten Morgen","reference_zh":"早上好"}
 ```
 
-`sample_id` 在同一数据集的不同版本间应保持稳定。导入采用 UTF-8 严格模式；重复 ID、未声明语种、空 ID、空源文或空参考译文会阻止整批写入。同一数据集不能重复导入已有版本标签或相同样本内容。
+`sample_id` 在同一数据集的不同版本间应保持稳定。导入采用 UTF-8 严格模式；重复 ID、无效语种代码、空 ID、空源文或空参考译文会阻止整批写入。同一数据集不能重复导入已有版本标签或相同样本内容。
 
 ## 推理结果协议
 

@@ -178,11 +178,12 @@ async def test_explicit_refusal_is_not_retried():
 def test_blank_language_is_rejected_during_validation(client, session_factory, tmp_path):
     source = tmp_path / "blank-language"
     source.mkdir()
-    manifest = {"schema_version": 1, "dataset_key": "blank", "name": "Blank", "version_label": "v1", "source_languages": [{"code": "   ", "name_zh": "无效"}]}
+    manifest = {"schema_version": 1, "dataset_key": "blank", "name": "Blank", "version_label": "v1"}
     (source / "dataset_info.json").write_text(json.dumps(manifest))
     (source / "samples.jsonl").write_text(json.dumps({"sample_id": "s1", "source_language": "   ", "source_text": "hello", "reference_zh": "你好"}))
     report = client.post("/api/dataset-imports/validate", json={"path": str(source)}).json()
     assert not report["report"]["valid"]
+    assert any(error.get("file") == "samples.jsonl" and "source_language" in error["message"] for error in report["report"]["errors"])
     # Legacy reports created before the fix also receive a readable 400.
     with session_factory() as session:
         legacy = session.get(ImportValidationReport, report["id"])
@@ -190,10 +191,6 @@ def test_blank_language_is_rejected_during_validation(client, session_factory, t
         legacy.manifest = {**manifest, "source_languages": [{"code": "", "name_zh": "无效"}]}
         session.commit()
     assert client.post(f"/api/dataset-imports/{report['id']}/commit").status_code == 400
-    manifest["source_languages"] = [{"code": "de", "name_zh": "德语"}]
-    (source / "dataset_info.json").write_text(json.dumps(manifest))
-    sample_report = client.post("/api/dataset-imports/validate", json={"path": str(source)}).json()
-    assert not sample_report["report"]["valid"]
 
 
 def test_dataset_duplicates_check_all_versions(session_factory, tmp_path):

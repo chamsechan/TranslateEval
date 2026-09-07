@@ -7,16 +7,6 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from .validation import validate_prompt_template
 
 
-class LanguageManifest(BaseModel):
-    code: str = Field(min_length=1, max_length=35)
-    name_zh: str = Field(min_length=1, max_length=80)
-
-    @field_validator("code", mode="before")
-    @classmethod
-    def normalize_code(cls, value: str) -> str:
-        return value.strip().lower() if isinstance(value, str) else value
-
-
 class DatasetManifest(BaseModel):
     schema_version: Literal[1]
     dataset_key: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$")
@@ -24,7 +14,6 @@ class DatasetManifest(BaseModel):
     version_label: str = Field(min_length=1, max_length=120)
     change_note: str = ""
     description: str = ""
-    source_languages: list[LanguageManifest] = Field(min_length=1)
 
     @field_validator("name", "version_label")
     @classmethod
@@ -32,13 +21,6 @@ class DatasetManifest(BaseModel):
         if not value.strip():
             raise ValueError("字段不能只包含空白")
         return value
-
-    @model_validator(mode="after")
-    def unique_languages(self) -> "DatasetManifest":
-        codes = [item.code for item in self.source_languages]
-        if len(codes) != len(set(codes)):
-            raise ValueError("source_languages 中存在重复语种代码")
-        return self
 
 
 class DatasetSampleInput(BaseModel):

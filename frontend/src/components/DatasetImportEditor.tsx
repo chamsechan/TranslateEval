@@ -1,4 +1,4 @@
-import { Alert, App, AutoComplete, Button, Col, Form, Input, Row, Space, Typography } from 'antd'
+import { Alert, App, AutoComplete, Button, Col, Form, Input, Row, Space, Tag, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import type { Dataset, ImportReport } from '../types'
@@ -35,15 +35,11 @@ export default function DatasetImportEditor({ draft, datasets, onValidated, onBa
       <Form.Item name="version_label" label="版本标签" rules={[{ required: true, whitespace: true }]}><Input maxLength={120} placeholder="例如 v1 或 2026-09-07" /></Form.Item>
       <Form.Item name="description" label="数据集说明"><Input.TextArea disabled={loading || !!existing} rows={2} /></Form.Item>
       <Form.Item name="change_note" label="版本变更备注"><Input.TextArea rows={2} /></Form.Item>
-      <Typography.Paragraph>源语种 <Typography.Text type="secondary">代码需覆盖样本中的语种，可编辑中文名称。</Typography.Text></Typography.Paragraph>
-      <Form.List name="source_languages">{(fields, { add, remove }) => <>
-        {fields.map((field) => <Row gutter={12} key={field.key}>
-          <Col span={8}><Form.Item name={[field.name, 'code']} label="语种代码" rules={[{ required: true, whitespace: true }]}><Input maxLength={35} /></Form.Item></Col>
-          <Col span={12}><Form.Item name={[field.name, 'name_zh']} label="中文名称" rules={[{ required: true, whitespace: true }]}><Input maxLength={80} /></Form.Item></Col>
-          <Col span={4}><Button type="link" disabled={loading} onClick={() => remove(field.name)} style={{ marginTop: 30 }}>移除</Button></Col>
-        </Row>)}
-        <Button disabled={loading} onClick={() => add({ code: '', name_zh: '' })} style={{ marginBottom: 18 }}>添加语种</Button>
-      </>}</Form.List>
+      <Form.Item label="源语种" extra="从样本的 source_language 自动汇总。">
+        <Space wrap>{draft.report.detected_languages?.length
+          ? draft.report.detected_languages.map((code) => <Tag key={code}>{code}</Tag>)
+          : <Typography.Text type="secondary">未读取到源语种</Typography.Text>}</Space>
+      </Form.Item>
     </Form>
     <Space><Button disabled={loading} onClick={onBack}>更换文件</Button><Button type="primary" loading={loading} onClick={validate}>核验数据集与版本变化</Button></Space>
   </>
