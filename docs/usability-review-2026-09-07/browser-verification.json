@@ -1,0 +1,670 @@
+{
+  "checkedAt": "2026-09-07T12:17:20.033Z",
+  "fixture": {
+    "database": "/tmp/usability-review-2026-09-07.ZAlFgG/test.db",
+    "job_id": "inspection-job",
+    "url": "http://127.0.0.1:8769",
+    "samples": [
+      {
+        "sample_id": "th-eq8-a",
+        "language": "th",
+        "status": "completed",
+        "score": 8
+      },
+      {
+        "sample_id": "th-eq8-b",
+        "language": "th",
+        "status": "completed",
+        "score": 8
+      },
+      {
+        "sample_id": "th-lt8",
+        "language": "th",
+        "status": "completed",
+        "score": 7.5
+      },
+      {
+        "sample_id": "th-zero",
+        "language": "th",
+        "status": "completed",
+        "score": 0
+      },
+      {
+        "sample_id": "th-failed",
+        "language": "th",
+        "status": "failed",
+        "score": 10
+      },
+      {
+        "sample_id": "th-cancelled",
+        "language": "th",
+        "status": "cancelled",
+        "score": null
+      },
+      {
+        "sample_id": "th-no-item",
+        "language": "th",
+        "status": "missing_item",
+        "score": null
+      },
+      {
+        "sample_id": "th-no-prediction",
+        "language": "th",
+        "status": "missing_prediction",
+        "score": null
+      },
+      {
+        "sample_id": "vi-nine",
+        "language": "vi",
+        "status": "completed",
+        "score": 9
+      },
+      {
+        "sample_id": "vi-ten",
+        "language": "vi",
+        "status": "completed",
+        "score": 10
+      },
+      {
+        "sample_id": "vi-five",
+        "language": "vi",
+        "status": "completed",
+        "score": 5
+      },
+      {
+        "sample_id": "vi-queued",
+        "language": "vi",
+        "status": "queued",
+        "score": null
+      },
+      {
+        "sample_id": "id-failed",
+        "language": "id",
+        "status": "failed",
+        "score": null
+      },
+      {
+        "sample_id": "id-running",
+        "language": "id",
+        "status": "running",
+        "score": null
+      }
+    ],
+    "expected": {
+      "total": 14,
+      "successful": 7,
+      "passed_threshold_8": 4,
+      "accuracy_threshold_8": 0.2857142857142857,
+      "accuracy_threshold_9": 0.14285714285714285,
+      "th_total": 8,
+      "th_passed": 2,
+      "th_unscored": 4
+    },
+    "old_version": "inspection-version",
+    "new_version": "inspection-version-v2",
+    "new_languages": [
+      "id",
+      "vi"
+    ],
+    "unscored_job": "unscored-job",
+    "wide_job": "wide-job",
+    "result_count": 24
+  },
+  "checks": [
+    {
+      "name": "列表直接展示全量准确率、默认阈值、平均分及未评分数量",
+      "passed": true
+    },
+    {
+      "name": "1024 宽度列表无页面溢出且分析按钮固定可见",
+      "passed": true
+    },
+    {
+      "name": "搜索数据集与异常状态后进入详情，返回保留列表条件",
+      "passed": true
+    },
+    {
+      "name": "全未评分任务可以参与对比，按 0/14 展示准确率",
+      "passed": true
+    },
+    {
+      "name": "列表未评分入口带状态筛选并保留返回条件",
+      "passed": true
+    },
+    {
+      "name": "列表第二页打开详情并返回、刷新后仍在第二页",
+      "passed": true
+    },
+    {
+      "name": "数据集最新版显示语言对与数量，点击越南语直接查看新版两条样本",
+      "passed": true
+    },
+    {
+      "name": "版本历史旧版泰语入口只打开旧版8条，旧版结果过滤排除新版任务",
+      "passed": true
+    },
+    {
+      "name": "评分详情语言、分数小于8、阈值9及样本ID组合写入URL",
+      "passed": true
+    },
+    {
+      "name": "刷新和复制链接重新打开恢复评分条件与准确率",
+      "passed": true
+    },
+    {
+      "name": "旧版评分展开核对原文时使用旧版与精确样本，关闭保留全部评分条件",
+      "passed": true
+    },
+    {
+      "name": "恢复默认阈值只重置阈值，保留语言分数和样本ID",
+      "passed": true
+    },
+    {
+      "name": "结果详情1024宽度与筛选布局不产生页面横向溢出",
+      "passed": true
+    },
+    {
+      "name": "33个语言对结果分页，每页10个且逐句入口可定位明细",
+      "passed": true
+    },
+    {
+      "name": "对比阈值9进入结果详情后继承相同阈值与准确率",
+      "passed": true
+    },
+    {
+      "name": "未发生浏览器运行时错误或失败API请求",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "ignoredResources": [
+    {
+      "type": "console.error",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "location": {
+        "url": "http://127.0.0.1:8769/favicon.ico",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    },
+    {
+      "type": "console.error",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "location": {
+        "url": "http://127.0.0.1:8769/favicon.ico",
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "apiCalls": [
+    {
+      "url": "http://127.0.0.1:8769/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=inspection-dataset&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=inspection-dataset&status_group=exception",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=inspection-dataset&status_group=exception",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=inspection-dataset&status_group=exception",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/compare",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=unscored",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&item_status=unscored",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=inspection-dataset&status_group=exception",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=inspection-dataset&status_group=exception",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=2&page_size=20&q=fixture-model&status_group=completed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/history-18/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/history-18",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/history-18",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/history-18/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/history-18/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/history-18-dataset/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=2&page_size=20&q=fixture-model&status_group=completed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=2&page_size=20&q=fixture-model&status_group=completed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=2&page_size=20&q=fixture-model&status_group=completed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=2&page_size=20&q=fixture-model&status_group=completed",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/datasets",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version-v2",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version-v2/samples?page=1&page_size=20&language=vi",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version-v2",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all&dataset_version_id=inspection-version-v2",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all&dataset_version_id=inspection-version-v2",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/datasets",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/datasets/inspection-dataset/versions",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all&dataset_version_id=inspection-version",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all&dataset_version_id=inspection-version",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&sample_id=th-lt8&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&sample_id=th-lt8&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&sample_id=th-lt8&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&sample_id=th-lt8&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&sample_id=th-lt8&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&sample_id=th-lt8&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th&sample_id=th-lt8&score_operator=lt&score_value=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sample_id=th-lt8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/wide-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/wide-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/wide-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/wide-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/wide-job-dataset/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/wide-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=exception",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/page?page=1&page_size=20&q=&status_group=exception",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/results/compare",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8769/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    }
+  ]
+}

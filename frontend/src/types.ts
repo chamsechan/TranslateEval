@@ -16,13 +16,25 @@ export interface PageResponse<T> {
   page_size: number
 }
 
+export interface LanguagePair {
+  source_language: string
+  source_name: string
+  target_language: 'zh'
+  target_name: '中文'
+  sample_count: number
+}
+
 export interface DatasetVersion {
   id: string
+  dataset_id: string
+  dataset_key: string
+  dataset_name: string
   version_label: string
   change_note?: string
   content_sha256: string
   sample_count: number
   source_languages: string[]
+  language_pairs: LanguagePair[]
   created_at: string
 }
 
@@ -121,6 +133,7 @@ export interface EvaluatorJob {
   evaluator_type: string
   revision: number
   prompt_version_id: string | null
+  prompt_version_label?: string | null
   status: Status
   total_items: number
   completed_items: number

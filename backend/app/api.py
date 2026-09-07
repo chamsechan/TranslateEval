@@ -11,9 +11,9 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from .config import settings
 from .database import SessionLocal, get_session
@@ -46,7 +46,7 @@ from .models import (
     SubmissionDataset,
 )
 from .validation import validate_threshold
-from .queries import cancelled_item_counts, comparable_item_score, comparison_checks, model_search, page_tasks, scored_item_condition, task_change_version, task_load_options, threshold_summary
+from .queries import TASK_GROUPS, cancelled_item_counts, comparable_item_score, comparison_checks, dataset_language_pairs, model_search, page_tasks, result_summaries, scored_item_condition, task_change_version, task_load_options, threshold_summary
 from .queue import (
     JobStateConflict,
     cancel_dataset_job,
@@ -231,6 +231,7 @@ def task_dict(task: EvaluationTask, cancelled_counts: dict[str, int]) -> dict[st
                     "evaluator_type": revision.profile.evaluator_type,
                     "revision": revision.revision,
                     "prompt_version_id": evaluator_job.prompt_version_id,
+                    "prompt_version_label": evaluator_job.prompt_version.version_label if evaluator_job.prompt_version else None,
                     "status": evaluator_job.status,
                     "total_items": evaluator_job.total_items,
                     "completed_items": evaluator_job.completed_items,
@@ -245,6 +246,9 @@ def task_dict(task: EvaluationTask, cancelled_counts: dict[str, int]) -> dict[st
             {
                 "id": dataset_job.id,
                 "dataset_key": dataset_job.submission_dataset.dataset_key,
+                "dataset_id": dataset_job.submission_dataset.dataset_version.dataset_id,
+                "dataset_version_id": dataset_job.submission_dataset.dataset_version_id,
+                "dataset_name": dataset_job.submission_dataset.dataset_version.dataset.name,
                 "version_label": dataset_job.submission_dataset.dataset_version.version_label,
                 "status": dataset_job.status,
                 "total_items": dataset_job.total_items,
@@ -261,6 +265,7 @@ def task_dict(task: EvaluationTask, cancelled_counts: dict[str, int]) -> dict[st
         "submission_id": task.submission_id,
         "run_name": model.run_name,
         "model_family": model.model_family,
+        "checkpoint_name": model.checkpoint_name,
         "platform": model.inference_platform,
         "status": task.status,
         "force_reevaluate": task.force_reevaluate,
@@ -352,31 +357,41 @@ def get_import_report(report_id: str, session: Session = Depends(get_session)) -
     return report_dict(report)
 
 
+def dataset_version_dict(version: DatasetVersion, language_pairs: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "id": version.id,
+        "dataset_id": version.dataset_id,
+        "dataset_key": version.dataset.key,
+        "dataset_name": version.dataset.name,
+        "version_label": version.version_label,
+        "change_note": version.change_note,
+        "content_sha256": version.content_sha256,
+        "sample_count": version.sample_count,
+        "source_languages": version.source_languages,
+        "language_pairs": language_pairs,
+        "created_at": utc_iso(version.created_at),
+    }
+
+
 @router.get("/datasets")
 def list_datasets(session: Session = Depends(get_session)) -> list[dict[str, Any]]:
+    datasets = session.scalars(select(Dataset).options(selectinload(Dataset.versions)).order_by(Dataset.name)).all()
+    latest_versions = {
+        dataset.id: max(dataset.versions, key=lambda item: (item.created_at, item.id), default=None)
+        for dataset in datasets
+    }
+    pairs = dataset_language_pairs(session, [version.id for version in latest_versions.values() if version])
     result = []
-    for dataset in session.scalars(select(Dataset).order_by(Dataset.name)):
-        versions = sorted(dataset.versions, key=lambda item: item.created_at, reverse=True)
-        latest = versions[0] if versions else None
+    for dataset in datasets:
+        latest = latest_versions[dataset.id]
         result.append(
             {
                 "id": dataset.id,
                 "key": dataset.key,
                 "name": dataset.name,
                 "description": dataset.description,
-                "version_count": len(versions),
-                "latest_version": (
-                    {
-                        "id": latest.id,
-                        "version_label": latest.version_label,
-                        "sample_count": latest.sample_count,
-                        "source_languages": latest.source_languages,
-                        "content_sha256": latest.content_sha256,
-                        "created_at": utc_iso(latest.created_at),
-                    }
-                    if latest
-                    else None
-                ),
+                "version_count": len(dataset.versions),
+                "latest_version": dataset_version_dict(latest, pairs[latest.id]) if latest else None,
             }
         )
     return result
@@ -389,18 +404,17 @@ def list_dataset_versions(
     dataset = session.get(Dataset, dataset_id)
     if not dataset:
         raise fail(404, "数据集不存在")
-    return [
-        {
-            "id": item.id,
-            "version_label": item.version_label,
-            "change_note": item.change_note,
-            "content_sha256": item.content_sha256,
-            "sample_count": item.sample_count,
-            "source_languages": item.source_languages,
-            "created_at": utc_iso(item.created_at),
-        }
-        for item in sorted(dataset.versions, key=lambda row: row.created_at, reverse=True)
-    ]
+    versions = sorted(dataset.versions, key=lambda row: (row.created_at, row.id), reverse=True)
+    pairs = dataset_language_pairs(session, [version.id for version in versions])
+    return [dataset_version_dict(version, pairs[version.id]) for version in versions]
+
+
+@router.get("/dataset-versions/{version_id}")
+def dataset_version_detail(version_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    version = session.get(DatasetVersion, version_id)
+    if not version:
+        raise fail(404, "数据集版本不存在")
+    return dataset_version_dict(version, dataset_language_pairs(session, [version_id])[version_id])
 
 
 @router.get("/dataset-versions/{version_id}/samples")
@@ -410,6 +424,7 @@ def list_dataset_samples(
     page_size: int = Query(50, ge=1, le=200),
     language: str | None = None,
     session: Session = Depends(get_session),
+    sample_id: str | None = None,
 ) -> dict[str, Any]:
     query = select(DatasetSample).where(DatasetSample.dataset_version_id == version_id)
     count_query = select(func.count(DatasetSample.id)).where(
@@ -418,6 +433,9 @@ def list_dataset_samples(
     if language:
         query = query.where(DatasetSample.source_language == language)
         count_query = count_query.where(DatasetSample.source_language == language)
+    if sample_id is not None:
+        query = query.where(DatasetSample.sample_id == sample_id)
+        count_query = count_query.where(DatasetSample.sample_id == sample_id)
     rows = session.scalars(
         query.order_by(DatasetSample.id).offset((page - 1) * page_size).limit(page_size)
     )
@@ -667,11 +685,15 @@ def evaluator_job_detail(
             "submission_id": task.submission_id,
             "run_name": model.run_name,
             "model_family": model.model_family,
+            "checkpoint_name": model.checkpoint_name,
             "created_at": utc_iso(task.created_at),
         },
         "dataset": {
             "id": dataset_job.id,
             "dataset_key": dataset_job.submission_dataset.dataset_key,
+            "dataset_id": dataset_job.submission_dataset.dataset_version.dataset_id,
+            "dataset_version_id": dataset_job.submission_dataset.dataset_version_id,
+            "dataset_name": dataset_job.submission_dataset.dataset_version.dataset.name,
             "version_label": dataset_job.submission_dataset.dataset_version.version_label,
         },
         "evaluator": {
@@ -680,6 +702,7 @@ def evaluator_job_detail(
             "evaluator_type": revision.profile.evaluator_type,
             "revision": revision.revision,
             "prompt_version_id": job.prompt_version_id,
+            "prompt_version_label": job.prompt_version.version_label if job.prompt_version else None,
             "status": job.status,
             "total_items": job.total_items,
             "completed_items": job.completed_items,
@@ -718,10 +741,24 @@ def api_language_detection_summary(
 def paginated_results(
     page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
     q: str = "", session: Session = Depends(get_session),
+    dataset_version_id: str | None = None,
+    status_group: Literal["all", "completed", "active", "exception"] = "all",
 ) -> dict[str, Any]:
-    statement = select(EvaluatorJob).join(DatasetJob).join(EvaluationTask).join(InferenceSubmission).join(ModelRun)
+    statement = (
+        select(EvaluatorJob).join(DatasetJob).join(EvaluationTask).join(InferenceSubmission).join(ModelRun)
+        .join(SubmissionDataset, SubmissionDataset.id == DatasetJob.submission_dataset_id)
+        .join(DatasetVersion, DatasetVersion.id == SubmissionDataset.dataset_version_id)
+        .join(Dataset, Dataset.id == DatasetVersion.dataset_id)
+    )
     if q:
-        statement = statement.where(model_search(q))
+        statement = statement.where(or_(model_search(q), *(
+            column.icontains(q, autoescape=True)
+            for column in (Dataset.key, Dataset.name, DatasetVersion.version_label)
+        )))
+    if dataset_version_id:
+        statement = statement.where(SubmissionDataset.dataset_version_id == dataset_version_id)
+    if status_group in TASK_GROUPS:
+        statement = statement.where(EvaluatorJob.status.in_(TASK_GROUPS[status_group]))
     total = session.scalar(select(func.count()).select_from(statement.subquery())) or 0
     jobs = session.scalars(statement.order_by(EvaluationTask.created_at.desc(), EvaluatorJob.id.desc()).offset((page - 1) * page_size).limit(page_size)).all()
     # Fetch all parent relationships in batches, shared by the detail serializers below.
@@ -733,7 +770,8 @@ def paginated_results(
             for task in task_dicts(session, parents)
             for dataset in task["dataset_jobs"] for evaluator in dataset["evaluator_jobs"]
         }
-        items = [by_job[job.id] for job in jobs]
+        summaries = result_summaries(session, jobs)
+        items = [{**by_job[job.id], "summary": summaries[job.id]} for job in jobs]
     else:
         items = []
     return {"items": items, "total": total, "page": page, "page_size": page_size}
@@ -766,6 +804,7 @@ def compare_results(
                 "evaluator_name": job.evaluator_revision.profile.name,
                 "evaluator_revision_id": job.evaluator_revision_id,
                 "prompt_version_id": job.prompt_version_id,
+                "status": job.status,
                 **summary,
             }
         )
@@ -784,6 +823,7 @@ def evaluator_job_items(
     score_operator: Literal["eq", "lt", "lte", "gt", "gte"] | None = None,
     score_value: float | None = None,
     session: Session = Depends(get_session),
+    sample_id: str | None = None,
 ) -> dict[str, Any]:
     job = session.get(EvaluatorJob, job_id)
     if not job:
@@ -808,6 +848,8 @@ def evaluator_job_items(
         filters.append(EvaluationItem.status == item_status)
     if language:
         filters.append(DatasetSample.source_language == language)
+    if sample_id is not None:
+        filters.append(DatasetSample.sample_id == sample_id)
     if score_operator is not None:
         comparisons = {
             "eq": current_score == score_value,

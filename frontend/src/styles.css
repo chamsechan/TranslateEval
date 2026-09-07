@@ -93,11 +93,14 @@ body { margin: 0; min-width: 320px; min-height: 100vh; }
 .score-ring span { color:#a9bfd9; font-size:11px; }
 .result-summary-caption { margin-top: 18px; color: #c3d3e8; line-height: 1.7; }
 .result-table-link { padding-inline: 0; }
-.result-items-section { scroll-margin-top: 24px; }
+.result-items-section { scroll-margin-top: 88px; }
 .result-items-section:focus-visible { outline: 2px solid #246bfd; outline-offset: 4px; border-radius: 12px; }
 .result-filters { width: 100%; align-items: end; }
 .result-filter { display: flex; flex-direction: column; gap: 6px; color: #5e6d82; font-size: 13px; }
 .result-error-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.result-threshold-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,.2); color: #c3d3e8; }
+.result-threshold-toolbar .ant-input-number { width: 90px; }
+.result-table-link { white-space: normal; text-align: left; height: auto; }
 .chart-box { height: 320px; width: 100%; }
 .score-cell { font-variant-numeric: tabular-nums; font-weight: 650; color: #173666; }
 .source-cell { max-width: 330px; white-space: normal; line-height: 1.55; }

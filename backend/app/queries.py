@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from .validation import validate_threshold
 from .models import (
-    AggregateScore, DatasetJob, DatasetSample, EvaluationItem, EvaluationTask, EvaluatorJob, EvaluatorRevision,
-    InferenceSubmission, ModelRun, Prediction, ScoreResult, SubmissionDataset,
+    AggregateScore, DatasetJob, DatasetSample, DatasetVersion, EvaluationItem, EvaluationTask, EvaluatorJob, EvaluatorRevision,
+    InferenceSubmission, Language, ModelRun, Prediction, ScoreResult, SubmissionDataset,
 )
 
 
@@ -24,8 +24,9 @@ def task_load_options():
     datasets = selectinload(EvaluationTask.dataset_jobs)
     return (
         selectinload(EvaluationTask.submission).selectinload(InferenceSubmission.model_run),
-        datasets.selectinload(DatasetJob.submission_dataset).selectinload(SubmissionDataset.dataset_version),
+        datasets.selectinload(DatasetJob.submission_dataset).selectinload(SubmissionDataset.dataset_version).selectinload(DatasetVersion.dataset),
         datasets.selectinload(DatasetJob.evaluator_jobs).selectinload(EvaluatorJob.evaluator_revision).selectinload(EvaluatorRevision.profile),
+        datasets.selectinload(DatasetJob.evaluator_jobs).selectinload(EvaluatorJob.prompt_version),
     )
 
 
@@ -139,6 +140,68 @@ def scored_item_condition(evaluator_type: str):
         & comparable_item_score(evaluator_type).between(0, maximum),
         False,
     )
+
+
+def dataset_language_pairs(session: Session, version_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+    """Count the actual samples of each immutable version in bounded batches."""
+    result = {version_id: [] for version_id in version_ids}
+    for offset in range(0, len(version_ids), 500):
+        rows = session.execute(
+            select(DatasetSample.dataset_version_id, DatasetSample.source_language, Language.name_zh,
+                   func.count(DatasetSample.id))
+            .outerjoin(Language, Language.code == DatasetSample.source_language)
+            .where(DatasetSample.dataset_version_id.in_(version_ids[offset:offset + 500]))
+            .group_by(DatasetSample.dataset_version_id, DatasetSample.source_language, Language.name_zh)
+            .order_by(DatasetSample.source_language)
+        )
+        for version_id, language, name, count in rows:
+            result[version_id].append({
+                "source_language": language, "source_name": name or language,
+                "target_language": "zh", "target_name": "中文", "sample_count": count,
+            })
+    return result
+
+
+def result_summaries(session: Session, jobs: list[EvaluatorJob]) -> dict[str, dict[str, Any]]:
+    """List summaries use each job's threshold and the same complete denominator as detail."""
+    grouped: dict[str, list[str]] = {}
+    for job in jobs:
+        grouped.setdefault(job.evaluator_revision.profile.evaluator_type, []).append(job.id)
+    summaries = {}
+    for evaluator_type, job_ids in grouped.items():
+        successful = scored_item_condition(evaluator_type)
+        score_value = comparable_item_score(evaluator_type)
+        rows = session.execute(
+            select(
+                EvaluatorJob.id, EvaluatorRevision.default_threshold.label("threshold"),
+                func.count(DatasetSample.id).label("total"),
+                func.sum(case((successful, 1), else_=0)).label("successful"),
+                func.avg(case((successful, ScoreResult.score), else_=None)).label("micro_mean"),
+                func.sum(case((successful & (score_value >= EvaluatorRevision.default_threshold), 1), else_=0)).label("passed"),
+            )
+            .select_from(EvaluatorJob)
+            .join(EvaluatorRevision, EvaluatorRevision.id == EvaluatorJob.evaluator_revision_id)
+            .join(DatasetJob, DatasetJob.id == EvaluatorJob.dataset_job_id)
+            .join(SubmissionDataset, SubmissionDataset.id == DatasetJob.submission_dataset_id)
+            .outerjoin(DatasetSample, DatasetSample.dataset_version_id == SubmissionDataset.dataset_version_id)
+            .outerjoin(Prediction, (Prediction.submission_dataset_id == SubmissionDataset.id)
+                       & (Prediction.sample_id == DatasetSample.sample_id))
+            .outerjoin(EvaluationItem, (EvaluationItem.prediction_id == Prediction.id)
+                       & (EvaluationItem.evaluator_job_id == EvaluatorJob.id))
+            .outerjoin(ScoreResult, ScoreResult.id == EvaluationItem.score_result_id)
+            .where(EvaluatorJob.id.in_(job_ids))
+            .group_by(EvaluatorJob.id, EvaluatorRevision.default_threshold)
+        ).mappings()
+        for row in rows:
+            total, successful_count, passed = row["total"], row["successful"], row["passed"]
+            summaries[row["id"]] = {
+                "threshold": row["threshold"], "score_max": 100 if evaluator_type == "sacrebleu_zh" else 10,
+                "unit": "BLEU" if evaluator_type == "sacrebleu_zh" else "point",
+                "micro_accuracy": passed / total if total else None, "micro_mean": row["micro_mean"],
+                "passed": passed, "total": total, "successful": successful_count,
+                "unscored": total - successful_count, "coverage": successful_count / total if total else 0,
+            }
+    return summaries
 
 
 def threshold_summary(session: Session, job_id: str, threshold: float) -> dict[str, Any]:
