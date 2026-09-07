@@ -1,0 +1,64 @@
+{
+  "page_errors": [],
+  "layouts": [
+    {
+      "page": "results",
+      "viewport": 1440,
+      "document_width": 1440,
+      "statistic_title_color": "rgb(168, 189, 215)"
+    },
+    {
+      "page": "results",
+      "viewport": 1024,
+      "document_width": 1024,
+      "statistic_title_color": "rgb(168, 189, 215)"
+    }
+  ],
+  "llm_config_edit": {
+    "changed_field": "concurrency",
+    "before": {
+      "temperature": 0.7,
+      "max_tokens": 1024,
+      "concurrency": 1
+    },
+    "after": {
+      "temperature": 0,
+      "max_tokens": 256,
+      "concurrency": 2
+    }
+  },
+  "bleu_config_edit": {
+    "changed_fields": [],
+    "before": {
+      "tokenize": "zh",
+      "smooth_method": "floor",
+      "smooth_value": 0.5,
+      "effective_order": false
+    },
+    "after": {
+      "tokenize": "zh",
+      "smooth_method": "floor",
+      "smooth_value": null,
+      "effective_order": true
+    }
+  },
+  "dataset_version_dialog": {
+    "sample_tables": 0,
+    "visible_buttons": [
+      ""
+    ]
+  },
+  "models_table": {
+    "headers": [
+      "运行名称",
+      "模型族",
+      "版本",
+      "推理平台",
+      "模式",
+      "备注",
+      "提交时间"
+    ],
+    "row_links": 0,
+    "row_buttons": 0
+  }
+}

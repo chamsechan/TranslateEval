@@ -11,10 +11,10 @@ class LanguageManifest(BaseModel):
     code: str = Field(min_length=1, max_length=35)
     name_zh: str = Field(min_length=1, max_length=80)
 
-    @field_validator("code")
+    @field_validator("code", mode="before")
     @classmethod
     def normalize_code(cls, value: str) -> str:
-        return value.strip().lower()
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 class DatasetManifest(BaseModel):
@@ -47,10 +47,10 @@ class DatasetSampleInput(BaseModel):
             raise ValueError("字段不能只包含空白")
         return value
 
-    @field_validator("source_language")
+    @field_validator("source_language", mode="before")
     @classmethod
     def normalize_language(cls, value: str) -> str:
-        return value.strip().lower()
+        return value.strip().lower() if isinstance(value, str) else value
 
 
 class InferenceDatasetManifest(BaseModel):

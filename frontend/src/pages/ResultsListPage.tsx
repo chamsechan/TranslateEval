@@ -45,7 +45,7 @@ export default function ResultsListPage() {
       { title: '状态', render: (_, row) => <StatusTag status={row.evaluator.status} /> },
       { title: '覆盖', render: (_, row) => `${row.evaluator.completed_items}/${row.evaluator.total_items}` },
       { title: '提交时间', render: (_, row) => formatDate(row.task.created_at) },
-      { title: '', render: (_, row) => <Button type="link" disabled={!row.evaluator.completed_items} onClick={() => navigate(`/results/${row.evaluator.id}`)}>分析结果</Button> },
+      { title: '', render: (_, row) => <Button type="link" disabled={!row.evaluator.completed_items && !row.evaluator.failed_items} onClick={() => navigate(`/results/${row.evaluator.id}`)}>{row.evaluator.completed_items ? '分析结果' : '查看失败明细'}</Button> },
     ]} /></Card>
     <Modal title={`模型结果对比 · 阈值 ≥ ${comparison?.threshold ?? compareThreshold}`} width={960} open={compareOpen} footer={null} onCancel={() => setCompareOpen(false)}>
       {comparison && !comparison.strictly_comparable && <Alert type="warning" showIcon message="所选结果不是严格同口径" description={comparison.warning} style={{ marginBottom: 15 }} />}

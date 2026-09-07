@@ -36,7 +36,7 @@ interface ResultItem {
 interface ItemsResponse { total: number; page: number; page_size: number; items: ResultItem[] }
 interface LanguageDetectionSummary { applicable: boolean; reason?: string; total?: number; covered?: number; coverage?: number; correct?: number; accuracy?: number | null; by_language?: Array<Record<string, unknown>>; labels?: string[]; confusion_matrix?: number[][] }
 interface ResultContext {
-  task: { id: string; run_name: string; model_family: string; created_at: string }
+  task: { id: string; submission_id: string; run_name: string; model_family: string; created_at: string }
   dataset: { id: string; dataset_key: string; version_label: string }
   evaluator: EvaluatorJob
 }
@@ -73,7 +73,7 @@ function ResultDetail({ jobId }: { jobId: string }) {
   const languageDetection = languageQuery.data
   const refresh = () => { contextQuery.refresh(); summaryQuery.refresh(); itemsQuery.refresh() }
   useTaskChanges(refresh, !context || active.has(context.evaluator.status))
-  const back = <Space wrap><Button onClick={refresh}>刷新结果</Button><Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/results')}>返回结果列表</Button></Space>
+  const back = <Space wrap>{context && <Button type="primary" onClick={() => navigate(`/submit?submission=${context.task.submission_id}`)}>再次评测</Button>}<Button onClick={refresh}>刷新结果</Button><Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/results')}>返回结果列表</Button></Space>
   if (contextError && !context) return <><PageHeader title="结果分析" subtitle="无法读取评测上下文" actions={back} /><QueryError error={contextError} retry={contextQuery.refresh} /></>
   if (!context || threshold == null || draftThreshold == null) return <><PageHeader title="结果分析" subtitle="正在加载评测上下文…" actions={back} /><Card className="panel-card"><Skeleton active /></Card></>
   const max = summary?.score_max || (context.evaluator.evaluator_type === 'sacrebleu_zh' ? 100 : 10)
@@ -125,7 +125,7 @@ function ResultDetail({ jobId }: { jobId: string }) {
         { title: '失败', dataIndex: 'failed' }, { title: '取消', dataIndex: 'cancelled' },
       ]} />
     </Card>}
-    {!!summary?.aggregates.length && <Card className="panel-card" title="标准语料级指标" style={{ marginTop: 18 }}><Space wrap>{summary.aggregates.filter((item) => item.metric_name === 'corpus_bleu').map((item, index) => <Tag key={index} color="purple">{String(item.source_language || '全部')} corpus BLEU: {formatScore(Number(item.value))}</Tag>)}</Space></Card>}
+    {context.evaluator.evaluator_type === 'sacrebleu_zh' && <Card className="panel-card" title="标准语料级指标" style={{ marginTop: 18 }}><Typography.Paragraph type="secondary">按当前成功评分样本计算；失败和取消项不参与。任务结束后更新语料级指标。</Typography.Paragraph>{summary?.aggregates.some((item) => item.metric_name === 'corpus_bleu') ? <Space wrap>{summary.aggregates.filter((item) => item.metric_name === 'corpus_bleu').map((item, index) => <Tag key={index} color="purple">{String(item.source_language || '全部成功样本')} corpus BLEU: {formatScore(Number(item.value))} · {Number(item.sample_count)} 条</Tag>)}</Space> : <Typography.Text type="secondary">语料级指标暂未生成</Typography.Text>}</Card>}
     <Card className="panel-card" title="逐句原始结果" style={{ marginTop: 18 }} extra={<Space><Select value={language} allowClear placeholder="语种" style={{ width: 110 }} options={summary?.by_language.map((item) => ({ label: item.source_language, value: item.source_language }))} onChange={(value) => { setLanguage(value); setPage(1) }} /><Select value={status} allowClear placeholder="状态" style={{ width: 120 }} options={[{ label: '成功', value: 'completed' }, { label: '失败', value: 'failed' }, { label: '已取消', value: 'cancelled' }]} onChange={(value) => { setStatus(value); setPage(1) }} /></Space>}>
       <QueryError error={itemsError} retry={itemsQuery.refresh} />
       <Table scroll={{ x: 800 }} loading={itemsQuery.loading} onChange={(_, __, sorter, extra) => {

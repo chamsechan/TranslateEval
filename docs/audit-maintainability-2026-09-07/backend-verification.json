@@ -1,0 +1,41 @@
+{
+  "bleu_smoke": {
+    "status": "completed",
+    "completed": 6,
+    "total": 6,
+    "job_id": "65ecfeae-cd43-4a78-9170-0145118b6838"
+  },
+  "credential_rotation_retry": {
+    "initial_status": "failed",
+    "after_retry_status": "failed",
+    "job_revision": 1,
+    "latest_profile_revision": 2,
+    "retry_requests": 6,
+    "retry_requests_using_new_credential": 0,
+    "new_task_status": "completed"
+  },
+  "prompt_change_default_cache": {
+    "status": "completed",
+    "cached_items": 6,
+    "total_items": 6,
+    "new_model_calls": 0
+  },
+  "registry_extension": {
+    "registry_validation": "accepted",
+    "api_status": 422,
+    "api_error_type": "literal_error"
+  },
+  "old_dataset_version_duplicate": {
+    "validation_passed": true,
+    "commit_status": 400,
+    "raw_database_error_in_response": true
+  },
+  "reuse_submission_via_commit": {
+    "different_evaluator_request_returns_original_task": true
+  },
+  "model_list_reproducibility_fields": {
+    "has_result_info": false,
+    "has_decoding": false,
+    "has_code_revision": false
+  }
+}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from time import perf_counter
 from typing import Any
@@ -107,6 +108,8 @@ def render_template(template: str, item: ScoreInput) -> str:
 
 
 def parse_json_content(content: str) -> dict[str, Any]:
+    if not isinstance(content, str) or not content.strip():
+        raise RetriableEvaluatorError("评分响应 content 必须是非空文本")
     stripped = content.strip()
     fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", stripped, re.DOTALL | re.IGNORECASE)
     if fenced:
@@ -208,13 +211,24 @@ class OpenAICompatibleEvaluator(BaseEvaluator):
             )
         try:
             raw = response.json()
-            content = raw["choices"][0]["message"]["content"]
+            if not isinstance(raw, dict) or not isinstance(raw.get("choices"), list) or not raw["choices"]:
+                raise RetriableEvaluatorError("评分响应缺少有效 choices")
+            choice = raw["choices"][0]
+            if not isinstance(choice, dict) or not isinstance(choice.get("message"), dict):
+                raise RetriableEvaluatorError("评分响应缺少有效 message")
+            message = choice["message"]
+            if message.get("refusal") or choice.get("finish_reason") == "content_filter":
+                raise PermanentEvaluatorError("评分模型拒绝了本次评分请求")
+            content = message.get("content")
             data = parse_json_content(content)
-            score = float(data["score"])
+            value = data["score"]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise RetriableEvaluatorError("评分响应 score 必须是 JSON 数值")
+            score = float(value)
             reason = str(data.get("reason", ""))
-        except (KeyError, TypeError, ValueError) as exc:
+        except (KeyError, TypeError, ValueError, OverflowError) as exc:
             raise RetriableEvaluatorError("评分响应缺少有效 score") from exc
-        if not 0.0 <= score <= 10.0:
+        if not math.isfinite(score) or not 0.0 <= score <= 10.0:
             raise RetriableEvaluatorError(f"评分 {score} 超出 0–10 范围")
         return ScoreOutput(
             score=score,

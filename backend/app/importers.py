@@ -190,6 +190,18 @@ def validate_dataset_import(session: Session, source_path: str | Path) -> Import
         "details": [],
     }
     if dataset:
+        existing_label = session.scalar(select(DatasetVersion).where(
+            DatasetVersion.dataset_id == dataset.id,
+            DatasetVersion.version_label == manifest.version_label,
+        ))
+        if existing_label:
+            errors.append({"message": f"版本标签已存在: {manifest.version_label}", "existing_version_id": existing_label.id})
+        existing_content = session.scalar(select(DatasetVersion).where(
+            DatasetVersion.dataset_id == dataset.id,
+            DatasetVersion.content_sha256 == content_hash,
+        )) if content_hash else None
+        if existing_content:
+            errors.append({"message": "数据内容与已有版本完全相同", "existing_version_id": existing_content.id})
         latest = session.scalar(
             select(DatasetVersion)
             .where(DatasetVersion.dataset_id == dataset.id)
@@ -197,12 +209,6 @@ def validate_dataset_import(session: Session, source_path: str | Path) -> Import
             .limit(1)
         )
         if latest:
-            if latest.version_label == manifest.version_label:
-                errors.append({"message": f"版本标签已存在: {manifest.version_label}"})
-            if latest.content_sha256 == content_hash and content_hash:
-                errors.append(
-                    {"message": "数据内容与已有版本完全相同", "existing_version_id": latest.id}
-                )
             old_rows = {
                 item.sample_id: item
                 for item in session.scalars(
@@ -276,7 +282,10 @@ def commit_dataset_import(session: Session, report_id: str) -> DatasetVersion:
     if not record.report.get("valid"):
         raise ImportValidationError("校验未通过，不能导入")
 
-    manifest = DatasetManifest.model_validate(record.manifest)
+    try:
+        manifest = DatasetManifest.model_validate(record.manifest)
+    except ValidationError as exc:
+        raise ImportValidationError("数据集清单无效，请修改后重新核验") from exc
     sample_models, errors = _load_jsonl(Path(record.staged_path) / "samples.jsonl", DatasetSampleInput)
     if errors:
         raise ImportValidationError("暂存文件在提交前发生变化，请重新校验")

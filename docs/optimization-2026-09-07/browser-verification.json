@@ -1,0 +1,57 @@
+{
+  "page_errors": [],
+  "layouts": [
+    {
+      "page": "results",
+      "viewport": 1440,
+      "document_width": 1440
+    },
+    {
+      "page": "results",
+      "viewport": 1024,
+      "document_width": 1024
+    }
+  ],
+  "external_llm_calls": 0,
+  "llm_config_edit": {
+    "temperature": 0.7,
+    "max_tokens": 1024,
+    "concurrency": 2,
+    "revision": 2
+  },
+  "bleu_noop_edit": {
+    "preserved_config": {
+      "tokenize": "zh",
+      "smooth_method": "floor",
+      "smooth_value": 0.5,
+      "effective_order": false
+    },
+    "revision_count": 1
+  },
+  "prompt_history_copy": {
+    "copied_version": 1,
+    "latest_version": 2,
+    "templates_match_source": true
+  },
+  "model_detail": {
+    "precision": "fp16",
+    "decoding_visible": true
+  },
+  "reevaluation": {
+    "task_status": "completed",
+    "successful": 6,
+    "reused_submission": true,
+    "added_tasks": 1,
+    "model_run_count": 1
+  },
+  "result_reevaluation_link": true,
+  "switch_back_to_import": true,
+  "dataset_preview": {
+    "initial_samples": 6,
+    "language_filter": "de",
+    "filtered_samples": 2,
+    "copied_hash_length": 64,
+    "viewport": 1024,
+    "document_width": 1024
+  }
+}

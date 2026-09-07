@@ -65,7 +65,10 @@ export default function SettingsPage() {
     try {
       const value = await evaluatorForm.validateFields()
       setSavingEvaluator(true)
-      const config = value.evaluator_type === 'openai_compatible_llm' ? { base_url: value.base_url, model: value.model, api_key: value.api_key, concurrency: value.concurrency, timeout_seconds: value.timeout_seconds, max_retries: value.max_retries, temperature: 0, max_tokens: 256 } : { tokenize: value.tokenize || 'zh', smooth_method: value.smooth_method || 'exp', effective_order: true }
+      const original = revisionProfile?.revisions[0].config || {}
+      const config = value.evaluator_type === 'openai_compatible_llm'
+        ? { ...original, base_url: value.base_url, model: value.model, api_key: value.api_key, concurrency: value.concurrency, timeout_seconds: value.timeout_seconds, max_retries: value.max_retries, temperature: original.temperature ?? 0, max_tokens: original.max_tokens ?? 256 }
+        : { ...original, tokenize: value.tokenize || 'zh', smooth_method: value.smooth_method || 'exp', effective_order: original.effective_order ?? true }
       if (revisionProfile) await api(`/evaluator-profiles/${revisionProfile.id}/revisions`, { method: 'POST', body: JSON.stringify({ config, default_threshold: value.default_threshold }) })
       else await api('/evaluator-profiles', { method: 'POST', body: JSON.stringify({ name: value.name, evaluator_type: value.evaluator_type, config, default_threshold: value.default_threshold, enabled: true }) })
       message.success(revisionProfile ? '模型服务配置已更新' : '评价器配置已创建'); setEvaluatorOpen(false); setRevisionProfile(null); evaluatorForm.resetFields(); await load()
@@ -76,10 +79,10 @@ export default function SettingsPage() {
     catch (error) { message.error((error as Error).message) }
   }
   const openNewPrompt = () => { setVersionProfile(null); promptForm.resetFields(); promptForm.setFieldsValue({ published: true }); setPromptOpen(true) }
-  const openPromptVersion = (profile: PromptProfile) => {
-    const latest = profile.versions[0]
+  const openPromptVersion = (profile: PromptProfile, version = profile.versions[0]) => {
     setVersionProfile(profile)
-    promptForm.setFieldsValue({ system_template: latest.system_template, user_template: latest.user_template, published: true })
+    promptForm.resetFields()
+    promptForm.setFieldsValue({ system_template: version.system_template, user_template: version.user_template, published: true })
     setPromptOpen(true)
   }
   const savePrompt = async () => {
@@ -117,7 +120,7 @@ export default function SettingsPage() {
         </> },
         { key: 'prompts', label: <Space><CopyOutlined />Prompt 版本</Space>, children: <>
           <div className="section-title"><Typography.Title level={4}>Prompt 配置</Typography.Title><Button type="primary" icon={<PlusOutlined />} onClick={openNewPrompt}>新建 Prompt</Button></div>
-          <Collapse items={prompts.map((profile) => ({ key: profile.id, label: <Space><Typography.Text strong>{profile.name}</Typography.Text><Tag>{profile.versions.length} 版本</Tag></Space>, extra: <Button size="small" onClick={(event) => { event.stopPropagation(); openPromptVersion(profile) }}>复制为新版本</Button>, children: <div>{profile.versions.map((version) => <Card key={version.id} size="small" title={<Space>v{version.version}{version.published && <Tag color="success">已发布</Tag>}</Space>} style={{ marginBottom: 12 }}><Typography.Text type="secondary">System</Typography.Text><div className="code-template">{version.system_template}</div><Typography.Text type="secondary" style={{ display: 'block', marginTop: 12 }}>User</Typography.Text><div className="code-template">{version.user_template}</div><Typography.Text type="secondary">创建于 {formatDate(version.created_at)} · ID {version.id}</Typography.Text></Card>)}</div> }))} />
+          <Collapse items={prompts.map((profile) => ({ key: profile.id, label: <Space><Typography.Text strong>{profile.name}</Typography.Text><Tag>{profile.versions.length} 版本</Tag></Space>, extra: <Button size="small" onClick={(event) => { event.stopPropagation(); openPromptVersion(profile) }}>复制最新版本</Button>, children: <div>{profile.versions.map((version) => <Card key={version.id} size="small" title={<Space>v{version.version}<Tag color={version.published ? 'success' : 'default'}>{version.published ? '已发布' : '草稿'}</Tag></Space>} extra={<Button size="small" onClick={() => openPromptVersion(profile, version)}>复制此版本</Button>} style={{ marginBottom: 12 }}><Typography.Text type="secondary">System</Typography.Text><div className="code-template">{version.system_template}</div><Typography.Text type="secondary" style={{ display: 'block', marginTop: 12 }}>User</Typography.Text><div className="code-template">{version.user_template}</div><Typography.Text type="secondary">创建于 {formatDate(version.created_at)} · ID {version.id}</Typography.Text></Card>)}</div> }))} />
         </> },
       ]} />
 

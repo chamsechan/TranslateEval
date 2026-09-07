@@ -45,7 +45,7 @@ from .models import (
     SubmissionDataset,
 )
 from .validation import validate_threshold
-from .queries import comparison_checks, model_search, page_tasks, task_change_version, task_load_options
+from .queries import cancelled_item_counts, comparison_checks, model_search, page_tasks, task_change_version, task_load_options, threshold_summary
 from .queue import (
     JobStateConflict,
     cancel_dataset_job,
@@ -53,7 +53,6 @@ from .queue import (
     create_evaluation_task,
     language_detection_summary,
     retry_failed_job,
-    threshold_summary,
 )
 from .schemas import (
     CompareResultsRequest,
@@ -156,23 +155,14 @@ def prompt_profile_dict(profile: PromptProfile) -> dict[str, Any]:
     }
 
 
-def task_dict(task: EvaluationTask) -> dict[str, Any]:
+def task_dict(task: EvaluationTask, cancelled_counts: dict[str, int]) -> dict[str, Any]:
     model = task.submission.model_run
     dataset_jobs = []
     for dataset_job in sorted(task.dataset_jobs, key=lambda item: item.created_at):
         evaluator_jobs = []
         for evaluator_job in sorted(dataset_job.evaluator_jobs, key=lambda item: item.created_at):
             revision = evaluator_job.evaluator_revision
-            cancelled_items = (
-                max(
-                    evaluator_job.total_items
-                    - evaluator_job.completed_items
-                    - evaluator_job.failed_items,
-                    0,
-                )
-                if evaluator_job.status in {"cancelled", "partial_cancelled"}
-                else 0
-            )
+            cancelled_items = cancelled_counts.get(evaluator_job.id, 0)
             evaluator_jobs.append(
                 {
                     "id": evaluator_job.id,
@@ -224,6 +214,12 @@ def task_dict(task: EvaluationTask) -> dict[str, Any]:
         "finished_at": utc_iso(task.finished_at),
         "dataset_jobs": dataset_jobs,
     }
+
+
+def task_dicts(session: Session, tasks: list[EvaluationTask]) -> list[dict[str, Any]]:
+    job_ids = [job.id for task in tasks for dataset in task.dataset_jobs for job in dataset.evaluator_jobs]
+    counts = cancelled_item_counts(session, job_ids)
+    return [task_dict(task, counts) for task in tasks]
 
 
 @router.get("/health")
@@ -448,6 +444,42 @@ def commit_submission(
         raise fail(400, str(exc)) from exc
 
 
+@router.get("/submissions/{submission_id}")
+def submission_detail(submission_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    submission = session.get(InferenceSubmission, submission_id)
+    if not submission:
+        raise fail(404, "推理提交不存在")
+    model = submission.model_run
+    return {
+        "id": submission.id,
+        "summary": {
+            "run_name": model.run_name, "model_family": model.model_family,
+            "platform": model.inference_platform, "dataset_count": len(submission.datasets),
+            "prediction_count": sum(dataset.prediction_count for dataset in submission.datasets),
+        },
+        "datasets": [
+            {"dataset_key": dataset.dataset_key, "version_label": dataset.dataset_version.version_label,
+             "prediction_count": dataset.prediction_count}
+            for dataset in submission.datasets
+        ],
+    }
+
+
+@router.post("/submissions/{submission_id}/evaluations")
+def evaluate_submission(
+    submission_id: str, body: CommitSubmissionRequest, session: Session = Depends(get_session),
+) -> dict[str, str]:
+    submission = session.get(InferenceSubmission, submission_id)
+    if not submission:
+        raise fail(404, "推理提交不存在")
+    try:
+        task = create_evaluation_task(session, submission, body.evaluators, body.force_reevaluate)
+        return {"submission_id": submission.id, "task_id": task.id}
+    except (ValueError, IntegrityError) as exc:
+        session.rollback()
+        raise fail(400, str(exc)) from exc
+
+
 @router.get("/tasks")
 def list_tasks(
     status: str | None = None,
@@ -457,7 +489,7 @@ def list_tasks(
     query = select(EvaluationTask).options(*task_load_options()).order_by(EvaluationTask.created_at.desc(), EvaluationTask.id.desc()).limit(limit)
     if status:
         query = query.where(EvaluationTask.status == status)
-    return [task_dict(item) for item in session.scalars(query)]
+    return task_dicts(session, list(session.scalars(query)))
 
 
 @router.get("/tasks/page")
@@ -470,7 +502,7 @@ def paginated_tasks(
     session: Session = Depends(get_session),
 ) -> dict[str, Any]:
     rows, total = page_tasks(session, page, page_size, group, q, task_id)
-    return {"items": [task_dict(row) for row in rows], "total": total, "page": page, "page_size": page_size}
+    return {"items": task_dicts(session, rows), "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/tasks/changes")
@@ -507,7 +539,7 @@ async def task_events() -> StreamingResponse:
                     )
                 )
                 payload = json.dumps(
-                    [task_dict(task) for task in tasks], ensure_ascii=False
+                    task_dicts(session, tasks), ensure_ascii=False
                 )
             if payload != previous:
                 yield f"event: tasks\ndata: {payload}\n\n"
@@ -522,13 +554,13 @@ def get_task(task_id: str, session: Session = Depends(get_session)) -> dict[str,
     task = session.get(EvaluationTask, task_id)
     if not task:
         raise fail(404, "任务不存在")
-    return task_dict(task)
+    return task_dicts(session, [task])[0]
 
 
 @router.post("/tasks/{task_id}/cancel")
 def api_cancel_task(task_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
     try:
-        return task_dict(cancel_task(session, task_id))
+        return task_dicts(session, [cancel_task(session, task_id)])[0]
     except ValueError as exc:
         raise fail(404, str(exc)) from exc
 
@@ -567,6 +599,7 @@ def evaluator_job_detail(
     return {
         "task": {
             "id": task.id,
+            "submission_id": task.submission_id,
             "run_name": model.run_name,
             "model_family": model.model_family,
             "created_at": utc_iso(task.created_at),
@@ -587,11 +620,7 @@ def evaluator_job_detail(
             "completed_items": job.completed_items,
             "cached_items": job.cached_items,
             "failed_items": job.failed_items,
-            "cancelled_items": (
-                max(job.total_items - job.completed_items - job.failed_items, 0)
-                if job.status in {"cancelled", "partial_cancelled"}
-                else 0
-            ),
+            "cancelled_items": cancelled_item_counts(session, [job.id]).get(job.id, 0),
             "default_threshold": revision.default_threshold,
             "error": job.error,
         },
@@ -636,7 +665,7 @@ def paginated_results(
         parents = session.scalars(select(EvaluationTask).where(EvaluationTask.id.in_(task_ids)).options(*task_load_options())).all()
         by_job = {
             evaluator["id"]: {"task": task, "dataset": dataset, "evaluator": evaluator}
-            for parent in parents for task in [task_dict(parent)]
+            for task in task_dicts(session, parents)
             for dataset in task["dataset_jobs"] for evaluator in dataset["evaluator_jobs"]
         }
         items = [by_job[job.id] for job in jobs]
@@ -829,14 +858,16 @@ def create_evaluator_revision(
     if not profile:
         raise fail(404, "评价器配置不存在")
     try:
-        raw_config = dict(body.config)
+        latest = max(profile.revisions, key=lambda item: item.revision)
+        raw_config = {**latest.config, **body.config}
         if profile.evaluator_type == "openai_compatible_llm":
             supplied_key = str(raw_config.get("api_key", ""))
             if not supplied_key or supplied_key.startswith("••••"):
-                latest = max(profile.revisions, key=lambda item: item.revision)
                 raw_config["api_key"] = latest.config.get("api_key", "")
         validate_threshold(profile.evaluator_type, body.default_threshold)
         config = validate_evaluator_config(profile.evaluator_type, raw_config)
+        if config == latest.config and body.default_threshold == latest.default_threshold:
+            return evaluator_profile_dict(profile)
         next_revision = max((item.revision for item in profile.revisions), default=0) + 1
         session.add(
             EvaluatorRevision(
@@ -849,7 +880,7 @@ def create_evaluator_revision(
         session.commit()
         session.refresh(profile)
         return evaluator_profile_dict(profile)
-    except ValueError as exc:
+    except (ValueError, IntegrityError) as exc:
         session.rollback()
         raise fail(400, str(exc)) from exc
 
@@ -957,3 +988,15 @@ def list_model_runs(
     limit: int = Query(100, ge=1, le=500), session: Session = Depends(get_session)
 ) -> list[dict[str, Any]]:
     return [model_run_dict(row) for row in session.scalars(select(ModelRun).order_by(ModelRun.created_at.desc()).limit(limit))]
+
+
+@router.get("/model-runs/{model_run_id}")
+def model_run_detail(model_run_id: str, session: Session = Depends(get_session)) -> dict[str, Any]:
+    model = session.get(ModelRun, model_run_id)
+    if not model:
+        raise fail(404, "模型运行不存在")
+    submissions = session.scalars(select(InferenceSubmission).where(InferenceSubmission.model_run_id == model.id))
+    return {
+        **model_run_dict(model), "result_info": model.result_info,
+        "submissions": [{"id": item.id, "created_at": utc_iso(item.created_at)} for item in submissions],
+    }

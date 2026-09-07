@@ -1,7 +1,7 @@
 import { ApiOutlined, CheckCircleOutlined, CloudUploadOutlined, FileSearchOutlined, FolderOpenOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Checkbox, Col, Descriptions, Form, Input, Row, Select, Space, Steps, Switch, Tag, Typography, Upload } from 'antd'
+import { Alert, App, Button, Card, Checkbox, Col, Descriptions, Form, Input, Row, Select, Skeleton, Space, Steps, Switch, Tag, Typography, Upload } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import PageHeader from '../components/PageHeader'
 import QueryError from '../components/QueryError'
@@ -9,14 +9,24 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorProfile, ImportReport, PromptProfile } from '../types'
 
 const { Dragger } = Upload
+interface ExistingSubmission { id: string; summary: Record<string, string | number>; datasets: Array<{ dataset_key: string; version_label: string; prediction_count: number }> }
+const summaryLabels: Record<string, string> = { run_name: '运行名称', model_family: '模型族', platform: '推理平台', dataset_count: '数据集数', prediction_count: '预测条数' }
 
 export default function SubmitPage() {
+  const [params] = useSearchParams()
+  const submissionId = params.get('submission')
+  return <SubmissionForm key={submissionId || 'new'} submissionId={submissionId} />
+}
+
+function SubmissionForm({ submissionId }: { submissionId: string | null }) {
   const { message } = App.useApp()
   const navigate = useNavigate()
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(submissionId ? 1 : 0)
   const [path, setPath] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
+  const existingQuery = useApiQuery<ExistingSubmission>(submissionId ? `/submissions/${submissionId}` : null)
+  const existing = existingQuery.data
   const evaluatorQuery = useApiQuery<EvaluatorProfile[]>('/evaluator-profiles?enabled_only=true')
   const evaluators = evaluatorQuery.data || []
   const promptQuery = useApiQuery<PromptProfile[]>('/prompt-profiles')
@@ -55,7 +65,7 @@ export default function SubmitPage() {
   }
 
   const submit = async () => {
-    if (!report) return
+    if (!report && !existing) return
     if (!selected.length) return message.warning('至少选择一种评价方式')
     const selections = selected.map((id) => {
       const profile = evaluators.find((item) => item.revisions[0]?.id === id)
@@ -64,7 +74,8 @@ export default function SubmitPage() {
     if (selections.some((item) => item.prompt_version_id === undefined)) return message.warning('请为所有 LLM 评价器选择 Prompt 版本')
     setLoading(true)
     try {
-      const value = await api<{ task_id: string }>(`/submission-imports/${report.id}/commit`, { method: 'POST', body: JSON.stringify({ evaluators: selections, force_reevaluate: force }) })
+      const endpoint = existing ? `/submissions/${existing.id}/evaluations` : `/submission-imports/${report!.id}/commit`
+      const value = await api<{ task_id: string }>(endpoint, { method: 'POST', body: JSON.stringify({ evaluators: selections, force_reevaluate: force }) })
       message.success('评测任务已进入工作队列')
       navigate(`/tasks?task=${value.task_id}`)
     } catch (error) { message.error((error as Error).message) } finally { setLoading(false) }
@@ -72,7 +83,9 @@ export default function SubmitPage() {
 
   return (
     <>
-      <PageHeader title="提交评测" subtitle="核验标准结果目录，选择数据集版本与一个或多个评价器。" />
+      <PageHeader title={submissionId ? '再次评测' : '提交评测'} subtitle={submissionId ? '复用已保存的预测，选择最新模型配置或其他 Prompt，创建独立评测任务。' : '核验标准结果目录，选择数据集版本与一个或多个评价器。'} />
+      <QueryError error={existingQuery.error} retry={existingQuery.refresh} />
+      {existingQuery.loading && !existing && <Skeleton active />}
       <QueryError error={evaluatorQuery.error || promptQuery.error} retry={() => { evaluatorQuery.refresh(); promptQuery.refresh() }} />
       <Card className="panel-card" style={{ marginBottom: 20 }}><Steps current={step} items={[{ title: '导入与核验', icon: <FileSearchOutlined /> }, { title: '选择评价方式', icon: <ApiOutlined /> }, { title: '进入评分队列', icon: <CheckCircleOutlined /> }]} /></Card>
       {step === 0 && <Card className="panel-card" title="1. 选择推理结果目录">
@@ -89,10 +102,10 @@ export default function SubmitPage() {
         {report && !report.report.valid && <Alert type="error" showIcon message="未通过核验，数据库没有写入" description={<div className="code-template" style={{ marginTop: 10 }}>{report.report.errors.map((item) => JSON.stringify(item, null, 2)).join('\n')}</div>} style={{ marginTop: 20 }} />}
       </Card>}
 
-      {step === 1 && report && <Space direction="vertical" size={18} style={{ width: '100%' }}>
-        <Card className="panel-card" title={<Space><SafetyCertificateOutlined style={{ color: '#10a779' }} />核验摘要</Space>} extra={<Button disabled={loading} type="link" onClick={() => { setStep(0); setReport(null) }}>更换目录</Button>}>
-          <Descriptions bordered column={4} size="small" items={Object.entries(report.report.summary || {}).map(([key, value]) => ({ key, label: key, children: String(value) }))} />
-          <Row gutter={12} style={{ marginTop: 16 }}>{report.report.datasets?.map((item) => <Col span={8} key={String(item.dataset_key)}><Card size="small"><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{String(item.dataset_key)}</Typography.Text><Tag color="success">匹配</Tag></Space><div style={{ marginTop: 8 }}><Typography.Text type="secondary">版本 {String(item.version_label)} · {String(item.prediction_count)} 条</Typography.Text></div></Card></Col>)}</Row>
+      {step === 1 && (report || existing) && <Space direction="vertical" size={18} style={{ width: '100%' }}>
+        <Card className="panel-card" title={<Space><SafetyCertificateOutlined style={{ color: '#10a779' }} />{existing ? '已保存的推理结果' : '核验摘要'}</Space>} extra={<Button disabled={loading} type="link" onClick={() => { if (submissionId) navigate('/submit'); else { setStep(0); setReport(null) } }}>{existing ? '导入其他结果' : '更换目录'}</Button>}>
+          <Descriptions bordered column={{ xs: 1, sm: 2, xl: 4 }} size="small" items={Object.entries(existing?.summary || report?.report.summary || {}).map(([key, value]) => ({ key, label: summaryLabels[key] || key, children: String(value) }))} />
+          <Row gutter={12} style={{ marginTop: 16 }}>{(existing?.datasets || report?.report.datasets)?.map((item) => <Col xs={24} md={8} key={String(item.dataset_key)}><Card size="small"><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{String(item.dataset_key)}</Typography.Text><Tag color="success">匹配</Tag></Space><div style={{ marginTop: 8 }}><Typography.Text type="secondary">版本 {String(item.version_label)} · {String(item.prediction_count)} 条</Typography.Text></div></Card></Col>)}</Row>
         </Card>
         <Card className="panel-card" title="2. 选择评价方式" extra={<Typography.Text type="secondary">可多选，评价器依次执行</Typography.Text>}>
           <Row gutter={[14, 14]}>
@@ -107,7 +120,7 @@ export default function SubmitPage() {
             })}
           </Row>
           {!evaluators.some((item) => item.evaluator_type === 'openai_compatible_llm') && <Alert type="warning" showIcon message="尚未配置 OpenAI 兼容评价器" description="当前可以运行 BLEU；在评价设置页面添加 Base URL、模型名和 API Key 后即可多选 LLM 评分。" style={{ marginTop: 16 }} />}
-          <Card size="small" style={{ marginTop: 18, background: '#fafbfd' }}><Space style={{ width: '100%', justifyContent: 'space-between' }}><div><Typography.Text strong>强制重新评分</Typography.Text><div><Typography.Text type="secondary">关闭时按“语句对 + 评分模型名”复用最近成功评分</Typography.Text></div></div><Switch checked={force} onChange={setForce} /></Space></Card>
+          <Card size="small" style={{ marginTop: 18, background: '#fafbfd' }}><Space style={{ width: '100%', justifyContent: 'space-between' }}><div><Typography.Text strong>强制重新评分</Typography.Text><div><Typography.Text type="secondary">关闭时按“语句对 + 评分模型名”复用最近成功评分，忽略 Prompt 和服务地址的变化。验证新 Prompt 的效果时请开启。</Typography.Text></div></div><Switch checked={force} onChange={setForce} /></Space></Card>
           <Button type="primary" size="large" block loading={loading} onClick={submit} style={{ marginTop: 18 }}>提交并进入工作队列</Button>
         </Card>
       </Space>}

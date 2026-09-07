@@ -47,7 +47,7 @@ export default function TaskCard({ task, onChange }: { task: EvaluationTask; onC
     <Card
       className={`task-card ${task.status}`}
       title={<Space><Typography.Text strong>{task.run_name}</Typography.Text><StatusTag status={task.status} /></Space>}
-      extra={active.has(task.status) && <Tooltip title="取消任务"><Button danger type="text" icon={<CloseOutlined />} onClick={cancelTask} /></Tooltip>}
+      extra={<Space><Button size="small" onClick={() => navigate(`/submit?submission=${task.submission_id}`)}>再次评测</Button>{active.has(task.status) && <Tooltip title="取消任务"><Button danger type="text" icon={<CloseOutlined />} onClick={cancelTask} /></Tooltip>}</Space>}
     >
       <div className="task-meta">
         <span><ExperimentOutlined /> {task.model_family}</span>
@@ -55,6 +55,7 @@ export default function TaskCard({ task, onChange }: { task: EvaluationTask; onC
         <span>创建 {formatDate(task.created_at)}</span>
         <span>缓存 {task.cached_items.toLocaleString()}</span>
         <span>失败 {task.failed_items.toLocaleString()}</span>
+        <span>取消 {task.cancelled_items.toLocaleString()}</span>
       </div>
       <Progress percent={progress} status={['failed', 'partial_failed'].includes(task.status) ? 'exception' : task.status === 'completed' ? 'success' : active.has(task.status) ? 'active' : 'normal'} style={{ marginTop: 17 }} />
       {task.dataset_jobs.map((job) => (
@@ -72,7 +73,7 @@ export default function TaskCard({ task, onChange }: { task: EvaluationTask; onC
               <Space>
                 <span>{evaluator.completed_items}/{evaluator.total_items}</span>
                 {evaluator.failed_items > 0 && <Button size="small" disabled={active.has(evaluator.status) || task.status === 'cancelling'} onClick={() => retryEvaluator(evaluator.id)}>重试失败项</Button>}
-                {evaluator.completed_items > 0 && <Button size="small" type="link" onClick={() => navigate(`/results/${evaluator.id}`)}>查看结果</Button>}
+                {(evaluator.completed_items > 0 || evaluator.failed_items > 0) && <Button size="small" type="link" onClick={() => navigate(`/results/${evaluator.id}`)}>{evaluator.completed_items ? '查看结果' : '查看失败明细'}</Button>}
               </Space>
               {evaluator.error && <Typography.Text type="danger" ellipsis={{ tooltip: evaluator.error }} className="evaluator-error">{evaluator.error}</Typography.Text>}
             </div>

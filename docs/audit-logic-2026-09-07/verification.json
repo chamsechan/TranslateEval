@@ -1,0 +1,213 @@
+{
+  "retry_after_failure_and_cancel": {
+    "before_retry": {
+      "task_status": "partial_cancelled",
+      "job_status": "partial_cancelled",
+      "item_status_counts": {
+        "cancelled": 5,
+        "failed": 1
+      },
+      "task_api_cancelled_items": 5,
+      "summary_cancelled_items": 5,
+      "coverage": 0.0,
+      "aggregate_count": 0
+    },
+    "after_retry": {
+      "task_status": "completed",
+      "job_status": "completed",
+      "item_status_counts": {
+        "cancelled": 5,
+        "completed": 1
+      },
+      "task_api_cancelled_items": 0,
+      "summary_cancelled_items": 5,
+      "coverage": 0.16666666666666666,
+      "aggregate_count": 3
+    }
+  },
+  "cancelled_bleu_aggregates": {
+    "task_status": "partial_cancelled",
+    "job_status": "partial_cancelled",
+    "item_status_counts": {
+      "cancelled": 3,
+      "completed": 3
+    },
+    "task_api_cancelled_items": 3,
+    "summary_cancelled_items": 3,
+    "coverage": 0.5,
+    "aggregate_count": 0
+  },
+  "restart_recovery": {
+    "before_restart": {
+      "task_status": "running",
+      "job_status": "running",
+      "item_status_counts": {
+        "completed": 3,
+        "queued": 3
+      },
+      "task_api_cancelled_items": 0,
+      "summary_cancelled_items": 0,
+      "coverage": 0.5,
+      "aggregate_count": 0
+    },
+    "recovered_jobs": 1,
+    "after_restart": {
+      "task_status": "completed",
+      "job_status": "completed",
+      "item_status_counts": {
+        "completed": 6
+      },
+      "task_api_cancelled_items": 0,
+      "summary_cancelled_items": 0,
+      "coverage": 1.0,
+      "aggregate_count": 5
+    },
+    "resumed_calls": 3,
+    "already_committed_samples_rescored": 0
+  },
+  "independent_statistics_oracle": {
+    "expected": {
+      "micro_mean": 6.0,
+      "macro_mean": 4.666666666666667,
+      "micro_accuracy": 0.5,
+      "macro_accuracy": 0.3333333333333333,
+      "coverage": 0.5714285714285714,
+      "successful": 4,
+      "failed": 3,
+      "total": 7
+    },
+    "actual": {
+      "micro_mean": 6.0,
+      "macro_mean": 4.666666666666666,
+      "micro_accuracy": 0.5,
+      "macro_accuracy": 0.3333333333333333,
+      "coverage": 0.5714285714285714,
+      "successful": 4,
+      "failed": 3,
+      "total": 7
+    },
+    "matches": true,
+    "all_failed_language_retained": {
+      "source_language": "vi",
+      "total": 2,
+      "count": 0,
+      "mean": null,
+      "passed": 0,
+      "failed": 2,
+      "cancelled": 0,
+      "accuracy": null,
+      "coverage": 0.0
+    }
+  },
+  "language_detection": {
+    "total": 7,
+    "covered": 4,
+    "correct": 4,
+    "coverage": 0.5714285714285714,
+    "accuracy": 1.0,
+    "confusion_matrix": [
+      [
+        3,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "blank_source_language": {
+    "validation_passed": true,
+    "normalized_languages": [
+      ""
+    ],
+    "commit_status": 500,
+    "commit_exception": "ValidationError",
+    "commit_error_summary": [
+      "1 validation error for DatasetManifest",
+      "source_languages.0.code",
+      "  String should have at least 1 character [type=string_too_short, input_value='', input_type=str]"
+    ]
+  },
+  "malformed_llm_responses": {
+    "empty_choices": {
+      "calls": 1,
+      "attempts": 1,
+      "score": null,
+      "error": "未预期的评价器错误: list index out of range"
+    },
+    "null_content": {
+      "calls": 1,
+      "attempts": 1,
+      "score": null,
+      "error": "未预期的评价器错误: 'NoneType' object has no attribute 'strip'"
+    },
+    "boolean_score": {
+      "calls": 1,
+      "attempts": 1,
+      "score": 1.0,
+      "error": null
+    },
+    "malformed_json": {
+      "calls": 2,
+      "attempts": 2,
+      "score": 9.0,
+      "error": null
+    },
+    "out_of_range": {
+      "calls": 2,
+      "attempts": 2,
+      "score": 9.0,
+      "error": null
+    }
+  },
+  "stale_bleu_aggregates_after_retry_cancel": {
+    "before_successful": 4,
+    "after_successful": 5,
+    "after_cancelled": 1,
+    "before_corpus": {
+      "metric_name": "corpus_bleu",
+      "source_language": "",
+      "value": 53.02521248314443,
+      "sample_count": 4,
+      "unit": "BLEU",
+      "details": {
+        "signature": "nrefs:1|case:mixed|eff:yes|tok:zh|smooth:exp|version:2.6.0"
+      }
+    },
+    "after_corpus": {
+      "metric_name": "corpus_bleu",
+      "source_language": "",
+      "value": 53.02521248314443,
+      "sample_count": 4,
+      "unit": "BLEU",
+      "details": {
+        "signature": "nrefs:1|case:mixed|eff:yes|tok:zh|smooth:exp|version:2.6.0"
+      }
+    },
+    "current_micro_mean": 49.96232711217333,
+    "stored_sentence_mean": 60.88424506246797,
+    "corpus_recalculated_for_current_successes": 40.56319909699935
+  },
+  "boolean_score_persisted": {
+    "status": "completed",
+    "model_calls": 6,
+    "successful": 6,
+    "micro_mean": 1.0,
+    "failed": 0
+  },
+  "validation": {
+    "base_commit": "9574551",
+    "targeted_existing_cases_passed": 8,
+    "full_suite_passed_in_preceding_audit": 36,
+    "uses_isolated_database": true,
+    "uses_real_external_llm": false
+  }
+}

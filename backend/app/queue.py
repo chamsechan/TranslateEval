@@ -381,7 +381,7 @@ def _persist_score(
     return result
 
 
-def _refresh_progress(session: Session, job: EvaluatorJob) -> None:
+def _refresh_progress(session: Session, job: EvaluatorJob) -> dict[str, int]:
     session.flush()
     counts = dict(
         session.execute(
@@ -417,6 +417,18 @@ def _refresh_progress(session: Session, job: EvaluatorJob) -> None:
     task.completed_items = sum(item.completed_items for item in dataset_jobs)
     task.failed_items = sum(item.failed_items for item in dataset_jobs)
     task.cached_items = sum(item.cached_items for item in dataset_jobs)
+    return counts
+
+
+def _item_status(counts: dict[str, int]) -> str:
+    """Derive the job state from all item outcomes, including prior cancellations."""
+    if counts.get("queued"):
+        return "queued"
+    if counts.get("cancelled"):
+        return "partial_cancelled" if counts.get("completed") or counts.get("failed") else "cancelled"
+    if counts.get("failed"):
+        return "partial_failed" if counts.get("completed") else "failed"
+    return "completed"
 
 
 def _cancel_remaining(session: Session, job: EvaluatorJob) -> None:
@@ -432,7 +444,7 @@ def _cancel_remaining(session: Session, job: EvaluatorJob) -> None:
     job.status = "partial_cancelled" if job.completed_items or job.failed_items else "cancelled"
 
 
-def _store_aggregates(session: Session, job: EvaluatorJob, evaluator: BaseEvaluator) -> None:
+def _store_aggregates(session: Session, job: EvaluatorJob, evaluator: BaseEvaluator | None = None) -> None:
     session.execute(delete(AggregateScore).where(AggregateScore.evaluator_job_id == job.id))
     submission_dataset = job.dataset_job.submission_dataset
     rows = session.execute(
@@ -449,6 +461,10 @@ def _store_aggregates(session: Session, job: EvaluatorJob, evaluator: BaseEvalua
             EvaluationItem.status == "completed",
         )
     ).all()
+    # A cancelled job may never construct its scoring client. BLEU aggregates are
+    # local; LLM means below only need the already persisted numeric scores.
+    if rows and evaluator is None and job.evaluator_revision.profile.evaluator_type == "sacrebleu_zh":
+        evaluator = build_evaluator("sacrebleu_zh", job.evaluator_revision.config)
     grouped: dict[str, list[tuple[ScoreResult, DatasetSample, Prediction]]] = defaultdict(list)
     for score, sample, prediction in rows:
         grouped[sample.source_language].append((score, sample, prediction))
@@ -478,7 +494,7 @@ def _store_aggregates(session: Session, job: EvaluatorJob, evaluator: BaseEvalua
                 unit=language_rows[0][0].unit,
             )
         )
-        if evaluator.evaluator_type == "sacrebleu_zh":
+        if evaluator is not None and evaluator.evaluator_type == "sacrebleu_zh":
             inputs = [
                 ScoreInput(
                     source_language=sample.source_language,
@@ -511,7 +527,7 @@ def _store_aggregates(session: Session, job: EvaluatorJob, evaluator: BaseEvalua
                 unit=rows[0][0].unit,
             )
         )
-    if rows and evaluator.evaluator_type == "sacrebleu_zh":
+    if rows and evaluator is not None and evaluator.evaluator_type == "sacrebleu_zh":
         all_inputs = [
             ScoreInput(
                 source_language=sample.source_language,
@@ -578,7 +594,8 @@ async def process_evaluator_job(job_id: str) -> None:
         task = job.dataset_job.task
         if task.cancel_requested or job.dataset_job.cancel_requested:
             _cancel_remaining(session, job)
-            _refresh_progress(session, job)
+            job.status = _item_status(_refresh_progress(session, job))
+            _store_aggregates(session, job)
             _finish_parent_statuses(session, job)
             session.commit()
             return
@@ -686,24 +703,9 @@ async def process_evaluator_job(job_id: str) -> None:
                     _cancel_remaining(session, job)
                     break
 
-            _refresh_progress(session, job)
-            if job.status not in {"cancelled", "partial_cancelled"}:
-                unfinished = session.scalar(
-                    select(func.count(EvaluationItem.id)).where(
-                        EvaluationItem.evaluator_job_id == job.id,
-                        EvaluationItem.status == "queued",
-                    )
-                ) or 0
-                if unfinished:
-                    job.status = "queued"
-                elif job.failed_items and job.completed_items:
-                    job.status = "partial_failed"
-                elif job.failed_items:
-                    job.status = "failed"
-                else:
-                    job.status = "completed"
-                if not unfinished:
-                    _store_aggregates(session, job, evaluator)
+            job.status = _item_status(_refresh_progress(session, job))
+            if job.status in TERMINAL:
+                _store_aggregates(session, job, evaluator)
             _finish_parent_statuses(session, job)
             session.commit()
         except Exception as exc:

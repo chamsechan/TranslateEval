@@ -3,11 +3,13 @@ import { Alert, App, Button, Card, Col, Descriptions, Empty, Form, Input, Modal,
 import { useState } from 'react'
 import { api, formatDate } from '../api'
 import PageHeader from '../components/PageHeader'
+import DatasetSamples from '../components/DatasetSamples'
 import QueryError from '../components/QueryError'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { Dataset, DatasetVersion, ImportReport } from '../types'
 
 const { Dragger } = Upload
+const fieldLabels: Record<string, string> = { dataset_key: '数据集标识', name: '名称', version_label: '版本标签', sample_count: '样本数', source_languages: '源语种', content_sha256: '内容哈希', added: '新增', removed: '移除', source_changed: '源文变化', reference_changed: '参考译文变化', unchanged: '未变化' }
 
 export default function DatasetsPage() {
   const { message } = App.useApp()
@@ -20,6 +22,7 @@ export default function DatasetsPage() {
   const [file, setFile] = useState<File | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
   const [selected, setSelected] = useState<Dataset | null>(null)
+  const [sampleVersion, setSampleVersion] = useState<DatasetVersion | null>(null)
   const versionQuery = useApiQuery<DatasetVersion[]>(selected ? `/datasets/${selected.id}/versions` : null)
   const versions = versionQuery.data || []
 
@@ -85,8 +88,8 @@ export default function DatasetsPage() {
           <Button type="primary" size="large" block loading={loading} disabled={!path && !file} onClick={validate}>开始核验</Button>
         </> : <div className={report.report.valid ? 'validation-ok' : 'validation-error'} style={{ paddingLeft: 18 }}>
           <Alert type={report.report.valid ? 'success' : 'error'} showIcon icon={report.report.valid ? <CheckCircleOutlined /> : <WarningOutlined />} message={report.report.valid ? '核验通过' : '核验失败'} description={report.report.valid ? '数据结构、ID 与语种声明均有效。' : `发现 ${report.report.errors.length} 项问题，数据库未发生变化。`} />
-          {report.report.summary && <Descriptions bordered size="small" column={2} style={{ marginTop: 18 }} items={Object.entries(report.report.summary).map(([key, value]) => ({ key, label: key, children: Array.isArray(value) ? value.join(', ') : String(value) }))} />}
-          {report.report.diff && <Card size="small" title="相对最新版本的变化" style={{ marginTop: 16 }}><Space size="large">{['added', 'removed', 'source_changed', 'reference_changed', 'unchanged'].map((key) => <Statistic key={key} title={key} value={Number(report.report.diff?.[key] || 0)} valueStyle={{ fontSize: 18 }} />)}</Space></Card>}
+          {report.report.summary && <Descriptions bordered size="small" column={{ xs: 1, sm: 2 }} style={{ marginTop: 18 }} items={Object.entries(report.report.summary).map(([key, value]) => ({ key, label: fieldLabels[key] || key, children: Array.isArray(value) ? value.join(', ') : String(value) }))} />}
+          {report.report.diff && <Card size="small" title="相对最新版本的变化" style={{ marginTop: 16 }}><Space wrap size="large">{['added', 'removed', 'source_changed', 'reference_changed', 'unchanged'].map((key) => <Statistic key={key} title={fieldLabels[key]} value={Number(report.report.diff?.[key] || 0)} valueStyle={{ fontSize: 18 }} />)}</Space></Card>}
           {!!report.report.errors.length && <Card size="small" title="错误明细" style={{ marginTop: 16 }}><div className="code-template">{report.report.errors.map((item) => JSON.stringify(item, null, 2)).join('\n')}</div></Card>}
         </div>}
       </Modal>
@@ -94,9 +97,9 @@ export default function DatasetsPage() {
       <Modal title={<Space><HistoryOutlined />版本历史 · {selected?.name}</Space>} width={720} open={!!selected} footer={null} onCancel={() => setSelected(null)}>
         <QueryError error={versionQuery.error} retry={versionQuery.refresh} />
         {versionQuery.loading && <Skeleton active />}
-        <Timeline items={versions.map((version, index) => ({ color: index === 0 ? 'blue' : 'gray', children: <Card size="small" style={{ marginBottom: 10 }}><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{version.version_label}</Typography.Text>{index === 0 && <Tag color="blue">最新</Tag>}</Space><div style={{ margin: '8px 0', color: '#66758a' }}>{version.change_note || '无版本备注'}</div><Space size="large"><span>{version.sample_count.toLocaleString()} 句对</span><span>{version.source_languages.length} 语种</span><span>{formatDate(version.created_at)}</span></Space><div className="hash-text" style={{ marginTop: 8 }}>{version.content_sha256}</div></Card> }))} />
+        <Timeline items={versions.map((version, index) => ({ color: index === 0 ? 'blue' : 'gray', children: <Card size="small" style={{ marginBottom: 10 }}><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{version.version_label}</Typography.Text>{index === 0 && <Tag color="blue">最新</Tag>}</Space><div style={{ margin: '8px 0', color: '#66758a' }}>{version.change_note || '无版本备注'}</div><Space wrap size="large"><span>{version.sample_count.toLocaleString()} 句对</span><span>{version.source_languages.length} 语种</span><span>{formatDate(version.created_at)}</span></Space><Typography.Paragraph className="hash-text" copyable={{ text: version.content_sha256 }} style={{ marginTop: 8, overflowWrap: 'anywhere' }}>{version.content_sha256}</Typography.Paragraph><Button onClick={() => setSampleVersion(version)}>预览样本</Button></Card> }))} />
       </Modal>
+      {sampleVersion && <DatasetSamples key={sampleVersion.id} version={sampleVersion} onClose={() => setSampleVersion(null)} />}
     </>
   )
 }
-

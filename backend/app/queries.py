@@ -35,6 +35,17 @@ def model_search(query: str):
     )))
 
 
+def cancelled_item_counts(session: Session, job_ids: list[str]) -> dict[str, int]:
+    counts = {}
+    for offset in range(0, len(job_ids), 500):
+        counts.update(session.execute(
+            select(EvaluationItem.evaluator_job_id, func.count(EvaluationItem.id))
+            .where(EvaluationItem.evaluator_job_id.in_(job_ids[offset:offset + 500]), EvaluationItem.status == "cancelled")
+            .group_by(EvaluationItem.evaluator_job_id)
+        ).all())
+    return counts
+
+
 def page_tasks(session: Session, page: int, page_size: int, group: str, query: str, task_id: str | None):
     statement = select(EvaluationTask).join(InferenceSubmission).join(ModelRun)
     if group in TASK_GROUPS:
@@ -148,6 +159,12 @@ def threshold_summary(session: Session, job_id: str, threshold: float) -> dict[s
          "sample_count": row.sample_count, "unit": row.unit, "details": row.details}
         for row in session.scalars(select(AggregateScore).where(AggregateScore.evaluator_job_id == job.id))
     ]
+    # Aggregate rows describe a completed scoring pass. Never expose an older
+    # pass while retrying, or legacy aggregates with a different sample count.
+    aggregate_total = next((row["sample_count"] for row in aggregates
+                            if row["metric_name"] == "sentence_mean" and not row["source_language"]), None)
+    if job.status in TASK_GROUPS["active"] or aggregate_total != successful_count:
+        aggregates = []
     return {
         "evaluator_job_id": job.id, "threshold": threshold, "score_min": 0,
         "score_max": 100 if evaluator_type == "sacrebleu_zh" else 10,
