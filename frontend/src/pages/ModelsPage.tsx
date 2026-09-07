@@ -1,21 +1,24 @@
 import { ExperimentOutlined } from '@ant-design/icons'
 import { Card, Empty, Input, Table, Tag, Typography } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
-import { api, formatDate } from '../api'
+import { useState } from 'react'
+import { formatDate } from '../api'
 import PageHeader from '../components/PageHeader'
+import QueryError from '../components/QueryError'
+import { useApiQuery } from '../hooks/useApiQuery'
+import type { PageResponse } from '../types'
 
 interface ModelRun { id: string; run_name: string; model_family: string; checkpoint_name: string; model_version: string; notes: string; inference_platform: string; inference_mode: string; created_at: string }
 
 export default function ModelsPage() {
-  const [rows, setRows] = useState<ModelRun[]>([])
   const [query, setQuery] = useState('')
-  useEffect(() => { api<ModelRun[]>('/model-runs').then(setRows) }, [])
-  const filtered = useMemo(() => rows.filter((item) => [item.run_name, item.model_family, item.checkpoint_name, item.inference_platform].some((value) => value.toLowerCase().includes(query.toLowerCase()))), [rows, query])
+  const [page, setPage] = useState(1)
+  const { data, error, loading, refresh } = useApiQuery<PageResponse<ModelRun>>(`/model-runs/page?page=${page}&page_size=20&q=${encodeURIComponent(query)}`)
   return (
     <>
-      <PageHeader title="模型记录" subtitle="模型族、微调检查点、推理平台与解码信息随每次提交永久记录。" actions={<Input.Search allowClear placeholder="搜索模型或平台" style={{ width: 280 }} onChange={(event) => setQuery(event.target.value)} />} />
+      <PageHeader title="模型记录" subtitle="模型族、微调检查点、推理平台与解码信息随每次提交永久记录。" actions={<Input.Search allowClear placeholder="搜索模型或平台" style={{ width: 280 }} onSearch={(value) => { setQuery(value); setPage(1) }} />} />
+      <QueryError error={error} retry={refresh} />
       <Card className="panel-card">
-        <Table rowKey="id" dataSource={filtered} locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="提交结果后会自动建立模型记录" /> }} columns={[
+        <Table rowKey="id" loading={loading} scroll={{ x: 850 }} dataSource={data?.items || []} pagination={{ current: page, pageSize: 20, total: data?.total || 0, showSizeChanger: false, onChange: setPage }} locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={error ? '暂时无法获取模型记录' : loading ? '正在加载…' : '提交结果后会自动建立模型记录'} /> }} columns={[
           { title: '运行名称', dataIndex: 'run_name', render: (value: string, row: ModelRun) => <div><Typography.Text strong><ExperimentOutlined /> {value}</Typography.Text><div><Typography.Text type="secondary" style={{ fontSize: 12 }}>{row.checkpoint_name}</Typography.Text></div></div> },
           { title: '模型族', dataIndex: 'model_family', render: (value: string) => <Tag color="blue">{value}</Tag> },
           { title: '版本', dataIndex: 'model_version', render: (value: string) => value || '—' },

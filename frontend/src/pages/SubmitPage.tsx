@@ -1,9 +1,11 @@
 import { ApiOutlined, CheckCircleOutlined, CloudUploadOutlined, FileSearchOutlined, FolderOpenOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Card, Checkbox, Col, Descriptions, Form, Input, Row, Select, Space, Steps, Switch, Tag, Typography, Upload } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import PageHeader from '../components/PageHeader'
+import QueryError from '../components/QueryError'
+import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorProfile, ImportReport, PromptProfile } from '../types'
 
 const { Dragger } = Upload
@@ -15,20 +17,23 @@ export default function SubmitPage() {
   const [path, setPath] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
-  const [evaluators, setEvaluators] = useState<EvaluatorProfile[]>([])
-  const [prompts, setPrompts] = useState<PromptProfile[]>([])
+  const evaluatorQuery = useApiQuery<EvaluatorProfile[]>('/evaluator-profiles?enabled_only=true')
+  const evaluators = evaluatorQuery.data || []
+  const promptQuery = useApiQuery<PromptProfile[]>('/prompt-profiles')
+  const prompts = promptQuery.data || []
+  const initialized = useRef(false)
   const [selected, setSelected] = useState<string[]>([])
   const [promptByRevision, setPromptByRevision] = useState<Record<string, string>>({})
   const [force, setForce] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    Promise.all([api<EvaluatorProfile[]>('/evaluator-profiles?enabled_only=true'), api<PromptProfile[]>('/prompt-profiles')]).then(([e, p]) => {
-      setEvaluators(e); setPrompts(p)
-      const bleu = e.find((item) => item.evaluator_type === 'sacrebleu_zh')?.revisions[0]
+    if (!initialized.current && evaluatorQuery.data) {
+      const bleu = evaluatorQuery.data.find((item) => item.evaluator_type === 'sacrebleu_zh')?.revisions[0]
       if (bleu) setSelected([bleu.id])
-    }).catch((error) => message.error(error.message))
-  }, [message])
+      initialized.current = true
+    }
+  }, [evaluatorQuery.data])
 
   const publishedPrompts = useMemo(() => prompts.flatMap((profile) => profile.versions.filter((version) => version.published).map((version) => ({ value: version.id, label: `${profile.name} · v${version.version}` }))), [prompts])
 
@@ -61,22 +66,23 @@ export default function SubmitPage() {
     try {
       const value = await api<{ task_id: string }>(`/submission-imports/${report.id}/commit`, { method: 'POST', body: JSON.stringify({ evaluators: selections, force_reevaluate: force }) })
       message.success('评测任务已进入工作队列')
-      navigate('/tasks', { state: { taskId: value.task_id } })
+      navigate(`/tasks?task=${value.task_id}`)
     } catch (error) { message.error((error as Error).message) } finally { setLoading(false) }
   }
 
   return (
     <>
       <PageHeader title="提交评测" subtitle="核验标准结果目录，选择数据集版本与一个或多个评价器。" />
+      <QueryError error={evaluatorQuery.error || promptQuery.error} retry={() => { evaluatorQuery.refresh(); promptQuery.refresh() }} />
       <Card className="panel-card" style={{ marginBottom: 20 }}><Steps current={step} items={[{ title: '导入与核验', icon: <FileSearchOutlined /> }, { title: '选择评价方式', icon: <ApiOutlined /> }, { title: '进入评分队列', icon: <CheckCircleOutlined /> }]} /></Card>
       {step === 0 && <Card className="panel-card" title="1. 选择推理结果目录">
         <Alert type="info" showIcon message="统一结果协议" description="根目录包含 result_info.json；每个数据集子目录包含 predictions.jsonl。系统按 dataset_content_sha256 自动定位正确版本。" style={{ marginBottom: 20 }} />
         <Row gutter={20}>
           <Col span={12}>
-            <Form layout="vertical"><Form.Item label="服务器目录或 ZIP 路径"><Input size="large" prefix={<FolderOpenOutlined />} placeholder="/data/results/qwen3-exp-042" value={path} onChange={(event) => { setPath(event.target.value); setFile(null) }} /></Form.Item></Form>
+            <Form layout="vertical"><Form.Item label="服务器目录或 ZIP 路径"><Input disabled={loading} size="large" prefix={<FolderOpenOutlined />} placeholder="/data/results/qwen3-exp-042" value={path} onChange={(event) => { setPath(event.target.value); setFile(null) }} /></Form.Item></Form>
           </Col>
           <Col span={12}>
-            <Dragger accept=".zip" maxCount={1} beforeUpload={(value) => { setFile(value); setPath(''); return false }} onRemove={() => setFile(null)} style={{ height: 112 }}><p className="ant-upload-drag-icon" style={{ margin: 0 }}><CloudUploadOutlined /></p><p style={{ margin: 3 }}>或拖入结果 ZIP</p></Dragger>
+            <Dragger disabled={loading} fileList={file ? [{ uid: 'result-zip', name: file.name, status: 'done' }] : []} accept=".zip" maxCount={1} beforeUpload={(value) => { setFile(value); setPath(''); return false }} onRemove={() => setFile(null)} style={{ height: 112 }}><p className="ant-upload-drag-icon" style={{ margin: 0 }}><CloudUploadOutlined /></p><p style={{ margin: 3 }}>或拖入结果 ZIP</p></Dragger>
           </Col>
         </Row>
         <Button type="primary" size="large" block loading={loading} disabled={!path && !file} onClick={validate}>核验模型信息、数据集版本和预测 ID</Button>
@@ -84,11 +90,11 @@ export default function SubmitPage() {
       </Card>}
 
       {step === 1 && report && <Space direction="vertical" size={18} style={{ width: '100%' }}>
-        <Card className="panel-card" title={<Space><SafetyCertificateOutlined style={{ color: '#10a779' }} />核验摘要</Space>} extra={<Button type="link" onClick={() => { setStep(0); setReport(null) }}>更换目录</Button>}>
+        <Card className="panel-card" title={<Space><SafetyCertificateOutlined style={{ color: '#10a779' }} />核验摘要</Space>} extra={<Button disabled={loading} type="link" onClick={() => { setStep(0); setReport(null) }}>更换目录</Button>}>
           <Descriptions bordered column={4} size="small" items={Object.entries(report.report.summary || {}).map(([key, value]) => ({ key, label: key, children: String(value) }))} />
           <Row gutter={12} style={{ marginTop: 16 }}>{report.report.datasets?.map((item) => <Col span={8} key={String(item.dataset_key)}><Card size="small"><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{String(item.dataset_key)}</Typography.Text><Tag color="success">匹配</Tag></Space><div style={{ marginTop: 8 }}><Typography.Text type="secondary">版本 {String(item.version_label)} · {String(item.prediction_count)} 条</Typography.Text></div></Card></Col>)}</Row>
         </Card>
-        <Card className="panel-card" title="2. 选择评价方式" extra={<Typography.Text type="secondary">可多选并行评测</Typography.Text>}>
+        <Card className="panel-card" title="2. 选择评价方式" extra={<Typography.Text type="secondary">可多选，评价器依次执行</Typography.Text>}>
           <Row gutter={[14, 14]}>
             {evaluators.map((profile) => {
               const revision = profile.revisions[0]; if (!revision) return null
@@ -108,4 +114,3 @@ export default function SubmitPage() {
     </>
   )
 }
-

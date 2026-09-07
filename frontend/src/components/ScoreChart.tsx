@@ -37,7 +37,7 @@ export default function ScoreChart({ data }: { data: ThresholdSummary['by_langua
           { type: 'value', name: '准确率', min: 0, max: 1, axisLabel: { formatter: (value: number) => `${Math.round(value * 100)}%` } },
         ],
         series: [
-          { name: '平均分', type: 'bar', data: data.map((item) => Number(item.mean.toFixed(3))), barMaxWidth: 24, itemStyle: { borderRadius: [5, 5, 0, 0] } },
+          { name: '平均分', type: 'bar', data: data.map((item) => item.mean == null ? null : Number(item.mean.toFixed(3))), barMaxWidth: 24, itemStyle: { borderRadius: [5, 5, 0, 0] } },
           { name: '阈值准确率', type: 'line', yAxisIndex: 1, smooth: true, data: data.map((item) => item.accuracy), symbolSize: 7 },
         ],
       })

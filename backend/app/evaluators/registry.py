@@ -17,7 +17,10 @@ def validate_evaluator_config(evaluator_type: str, config: dict[str, Any]) -> di
     evaluator_class = EVALUATORS.get(evaluator_type)
     if not evaluator_class:
         raise ValueError(f"未知评价器类型: {evaluator_type}")
-    return evaluator_class.validate_config(config)
+    try:
+        return evaluator_class.validate_config(config)
+    except (TypeError, OverflowError) as exc:
+        raise ValueError("评价器配置字段类型或数值无效") from exc
 
 
 def build_evaluator(
@@ -38,4 +41,3 @@ def build_evaluator(
             kwargs["user_template"] = user_template
         return OpenAICompatibleEvaluator(config, **kwargs)
     return evaluator_class(config)
-

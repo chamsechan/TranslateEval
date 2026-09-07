@@ -34,7 +34,7 @@ const menuItems = [
 ]
 
 export default function App() {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1200)
   const [serviceStatus, setServiceStatus] = useState<'checking' | 'connected' | 'worker-offline' | 'offline'>('checking')
   const navigate = useNavigate()
   const location = useLocation()
@@ -64,7 +64,7 @@ export default function App() {
 
   return (
     <Layout className="app-shell">
-      <Sider width={236} collapsedWidth={76} collapsed={collapsed} className="app-sider">
+      <Sider breakpoint="xl" onBreakpoint={setCollapsed} width={236} collapsedWidth={76} collapsed={collapsed} className="app-sider">
         <div className={`brand ${collapsed ? 'brand-collapsed' : ''}`}>
           <div className="brand-mark">译</div>
           {!collapsed && <div><strong>译研评测台</strong><small>TRANSLATION LAB</small></div>}
@@ -74,7 +74,7 @@ export default function App() {
       </Sider>
       <Layout>
         <Header className="app-header">
-          <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
+          <Button aria-label={collapsed ? '展开导航' : '收起导航'} type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
           <Space className="header-status">
             <span className={`live-dot ${serviceStatus}`} />
             <Typography.Text type={serviceStatus === 'connected' ? 'secondary' : 'warning'}>{serviceText}</Typography.Text>

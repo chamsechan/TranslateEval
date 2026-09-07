@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
@@ -36,6 +36,7 @@ from .models import (
     EvaluatorProfile,
     EvaluatorRevision,
     ImportValidationReport,
+    InferenceSubmission,
     ModelRun,
     Prediction,
     PromptProfile,
@@ -43,7 +44,10 @@ from .models import (
     ScoreResult,
     SubmissionDataset,
 )
+from .validation import validate_threshold
+from .queries import comparison_checks, model_search, page_tasks, task_change_version, task_load_options
 from .queue import (
+    JobStateConflict,
     cancel_dataset_job,
     cancel_task,
     create_evaluation_task,
@@ -267,6 +271,8 @@ def validate_dataset_upload(
         temp_path = Path(handle.name)
     try:
         return report_dict(validate_dataset_import(session, temp_path))
+    except ImportValidationError as exc:
+        raise fail(400, str(exc)) from exc
     finally:
         temp_path.unlink(missing_ok=True)
 
@@ -398,6 +404,8 @@ def validate_submission_upload(
         temp_path = Path(handle.name)
     try:
         return report_dict(validate_submission_import(session, temp_path))
+    except ImportValidationError as exc:
+        raise fail(400, str(exc)) from exc
     finally:
         temp_path.unlink(missing_ok=True)
 
@@ -446,10 +454,43 @@ def list_tasks(
     limit: int = Query(50, ge=1, le=200),
     session: Session = Depends(get_session),
 ) -> list[dict[str, Any]]:
-    query = select(EvaluationTask).order_by(EvaluationTask.created_at.desc()).limit(limit)
+    query = select(EvaluationTask).options(*task_load_options()).order_by(EvaluationTask.created_at.desc(), EvaluationTask.id.desc()).limit(limit)
     if status:
         query = query.where(EvaluationTask.status == status)
     return [task_dict(item) for item in session.scalars(query)]
+
+
+@router.get("/tasks/page")
+def paginated_tasks(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    group: Literal["all", "active", "completed", "exception"] = "all",
+    q: str = "",
+    task_id: str | None = None,
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    rows, total = page_tasks(session, page, page_size, group, q, task_id)
+    return {"items": [task_dict(row) for row in rows], "total": total, "page": page, "page_size": page_size}
+
+
+@router.get("/tasks/changes")
+async def task_changes() -> StreamingResponse:
+    def read_version():
+        with SessionLocal() as session:
+            return task_change_version(session)
+
+    async def stream():
+        previous = None
+        while True:
+            version = await asyncio.to_thread(read_version)
+            if version != previous:
+                yield f"event: tasks-changed\ndata: {json.dumps({'version': version})}\n\n"
+                previous = version
+            else:
+                yield ": heartbeat\n\n"
+            await asyncio.sleep(1)
+
+    return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @router.get("/tasks/events")
@@ -460,7 +501,7 @@ async def task_events() -> StreamingResponse:
             with SessionLocal() as session:
                 tasks = list(
                     session.scalars(
-                        select(EvaluationTask)
+                        select(EvaluationTask).options(*task_load_options())
                         .order_by(EvaluationTask.created_at.desc())
                         .limit(50)
                     )
@@ -506,6 +547,8 @@ def api_retry_failed_job(job_id: str, session: Session = Depends(get_session)) -
     try:
         job = retry_failed_job(session, job_id)
         return {"id": job.id, "status": job.status}
+    except JobStateConflict as exc:
+        raise fail(409, str(exc)) from exc
     except ValueError as exc:
         raise fail(404 if "不存在" in str(exc) else 400, str(exc)) from exc
 
@@ -564,7 +607,7 @@ def evaluator_job_summary(
     try:
         return threshold_summary(session, job_id, threshold)
     except ValueError as exc:
-        raise fail(404, str(exc)) from exc
+        raise fail(404 if "不存在" in str(exc) else 400, str(exc)) from exc
 
 
 @router.get("/dataset-jobs/{job_id}/language-detection-summary")
@@ -577,16 +620,46 @@ def api_language_detection_summary(
         raise fail(404, str(exc)) from exc
 
 
+@router.get("/results/page")
+def paginated_results(
+    page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+    q: str = "", session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    statement = select(EvaluatorJob).join(DatasetJob).join(EvaluationTask).join(InferenceSubmission).join(ModelRun)
+    if q:
+        statement = statement.where(model_search(q))
+    total = session.scalar(select(func.count()).select_from(statement.subquery())) or 0
+    jobs = session.scalars(statement.order_by(EvaluationTask.created_at.desc(), EvaluatorJob.id.desc()).offset((page - 1) * page_size).limit(page_size)).all()
+    # Fetch all parent relationships in batches, shared by the detail serializers below.
+    if jobs:
+        task_ids = select(DatasetJob.task_id).where(DatasetJob.id.in_({job.dataset_job_id for job in jobs}))
+        parents = session.scalars(select(EvaluationTask).where(EvaluationTask.id.in_(task_ids)).options(*task_load_options())).all()
+        by_job = {
+            evaluator["id"]: {"task": task, "dataset": dataset, "evaluator": evaluator}
+            for parent in parents for task in [task_dict(parent)]
+            for dataset in task["dataset_jobs"] for evaluator in dataset["evaluator_jobs"]
+        }
+        items = [by_job[job.id] for job in jobs]
+    else:
+        items = []
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
 @router.post("/results/compare")
 def compare_results(
     body: CompareResultsRequest, session: Session = Depends(get_session)
 ) -> dict[str, Any]:
     rows = []
+    jobs = []
     for job_id in body.evaluator_job_ids:
         job = session.get(EvaluatorJob, job_id)
         if not job:
             raise fail(404, f"评价器任务不存在: {job_id}")
-        summary = threshold_summary(session, job_id, body.threshold)
+        jobs.append(job)
+        try:
+            summary = threshold_summary(session, job_id, body.threshold)
+        except ValueError as exc:
+            raise fail(400, str(exc)) from exc
         dataset_job = job.dataset_job
         model = dataset_job.task.submission.model_run
         rows.append(
@@ -602,18 +675,7 @@ def compare_results(
                 **summary,
             }
         )
-    comparable = len(
-        {
-            (row["dataset_version_id"], row["evaluator_revision_id"], row["prompt_version_id"])
-            for row in rows
-        }
-    ) == 1
-    return {
-        "threshold": body.threshold,
-        "strictly_comparable": comparable,
-        "warning": None if comparable else "所选结果的数据集版本、评价器修订或 Prompt 版本不完全一致",
-        "items": rows,
-    }
+    return {"threshold": body.threshold, **comparison_checks(session, jobs), "items": rows}
 
 
 @router.get("/evaluator-jobs/{job_id}/items")
@@ -623,6 +685,8 @@ def evaluator_job_items(
     page_size: int = Query(50, ge=1, le=200),
     language: str | None = None,
     item_status: str | None = None,
+    sort: Literal["id", "score"] = "id",
+    direction: Literal["asc", "desc"] = "asc",
     session: Session = Depends(get_session),
 ) -> dict[str, Any]:
     job = session.get(EvaluatorJob, job_id)
@@ -655,8 +719,11 @@ def evaluator_job_items(
         )
         .where(*filters)
     )
+    order = [EvaluationItem.id.asc()]
+    if sort == "score":
+        order = [ScoreResult.score.is_(None), ScoreResult.score.desc() if direction == "desc" else ScoreResult.score.asc(), EvaluationItem.id.asc()]
     rows = session.execute(
-        base.order_by(EvaluationItem.id).offset((page - 1) * page_size).limit(page_size)
+        base.order_by(*order).offset((page - 1) * page_size).limit(page_size)
     ).all()
     return {
         "total": session.scalar(count_query) or 0,
@@ -727,6 +794,7 @@ def create_evaluator_profile(
     body: EvaluatorProfileCreate, session: Session = Depends(get_session)
 ) -> dict[str, Any]:
     try:
+        validate_threshold(body.evaluator_type, body.default_threshold)
         config = validate_evaluator_config(body.evaluator_type, body.config)
         profile = EvaluatorProfile(
             name=body.name,
@@ -767,6 +835,7 @@ def create_evaluator_revision(
             if not supplied_key or supplied_key.startswith("••••"):
                 latest = max(profile.revisions, key=lambda item: item.revision)
                 raw_config["api_key"] = latest.config.get("api_key", "")
+        validate_threshold(profile.evaluator_type, body.default_threshold)
         config = validate_evaluator_config(profile.evaluator_type, raw_config)
         next_revision = max((item.revision for item in profile.revisions), default=0) + 1
         session.add(
@@ -856,12 +925,8 @@ def create_prompt_version(
     return prompt_profile_dict(profile)
 
 
-@router.get("/model-runs")
-def list_model_runs(
-    limit: int = Query(100, ge=1, le=500), session: Session = Depends(get_session)
-) -> list[dict[str, Any]]:
-    return [
-        {
+def model_run_dict(item: ModelRun) -> dict[str, Any]:
+    return {
             "id": item.id,
             "run_name": item.run_name,
             "model_family": item.model_family,
@@ -872,7 +937,23 @@ def list_model_runs(
             "inference_mode": item.inference_mode,
             "created_at": utc_iso(item.created_at),
         }
-        for item in session.scalars(
-            select(ModelRun).order_by(ModelRun.created_at.desc()).limit(limit)
-        )
-    ]
+
+
+@router.get("/model-runs/page")
+def paginated_model_runs(
+    page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+    q: str = "", session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    statement = select(ModelRun)
+    if q:
+        statement = statement.where(model_search(q))
+    total = session.scalar(select(func.count()).select_from(statement.subquery())) or 0
+    rows = session.scalars(statement.order_by(ModelRun.created_at.desc(), ModelRun.id.desc()).offset((page - 1) * page_size).limit(page_size))
+    return {"items": [model_run_dict(row) for row in rows], "total": total, "page": page, "page_size": page_size}
+
+
+@router.get("/model-runs")
+def list_model_runs(
+    limit: int = Query(100, ge=1, le=500), session: Session = Depends(get_session)
+) -> list[dict[str, Any]]:
+    return [model_run_dict(row) for row in session.scalars(select(ModelRun).order_by(ModelRun.created_at.desc()).limit(limit))]

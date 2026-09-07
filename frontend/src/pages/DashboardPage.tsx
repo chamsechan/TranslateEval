@@ -1,9 +1,10 @@
 import { ArrowRightOutlined, CloudUploadOutlined, DatabaseOutlined, ExperimentOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Button, Card, Col, Empty, Row, Skeleton, Space, Statistic, Typography } from 'antd'
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../api'
 import PageHeader from '../components/PageHeader'
+import QueryError from '../components/QueryError'
+import { useApiQuery } from '../hooks/useApiQuery'
+import { useTaskChanges } from '../hooks/useTaskChanges'
 import TaskCard from '../components/TaskCard'
 import type { Dataset, EvaluationTask } from '../types'
 
@@ -11,21 +12,19 @@ interface Dashboard { datasets: number; dataset_versions: number; model_runs: nu
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const [data, setData] = useState<Dashboard | null>(null)
-  const [tasks, setTasks] = useState<EvaluationTask[]>([])
-  const [datasets, setDatasets] = useState<Dataset[]>([])
-
-  const load = async () => {
-    const [dashboard, taskRows, datasetRows] = await Promise.all([
-      api<Dashboard>('/dashboard'), api<EvaluationTask[]>('/tasks?limit=3'), api<Dataset[]>('/datasets'),
-    ])
-    setData(dashboard); setTasks(taskRows); setDatasets(datasetRows)
-  }
-  useEffect(() => { void load() }, [])
+  const dashboardQuery = useApiQuery<Dashboard>('/dashboard')
+  const tasksQuery = useApiQuery<EvaluationTask[]>('/tasks?limit=3')
+  const datasetsQuery = useApiQuery<Dataset[]>('/datasets')
+  const data = dashboardQuery.data
+  const tasks = tasksQuery.data || []
+  const datasets = datasetsQuery.data || []
+  const load = () => { dashboardQuery.refresh(); tasksQuery.refresh(); datasetsQuery.refresh() }
+  useTaskChanges(load)
 
   return (
     <>
       <PageHeader title="总览" subtitle="管理语料版本、跟踪评测队列并洞察模型质量。" actions={<Button type="primary" icon={<CloudUploadOutlined />} onClick={() => navigate('/submit')}>提交新评测</Button>} />
+      <QueryError error={dashboardQuery.error || tasksQuery.error || datasetsQuery.error} retry={load} />
       <Card className="hero-panel" style={{ marginBottom: 20 }}>
         <div className="hero-grid">
           <div>
@@ -40,25 +39,25 @@ export default function DashboardPage() {
           <div className="hero-orbit"><strong>33+</strong></div>
         </div>
       </Card>
-      {!data ? <Skeleton active /> : (
+      {!data ? (dashboardQuery.loading ? <Skeleton active /> : null) : (
         <Row gutter={[16, 16]}>
           {[
             { title: '数据集', value: data.datasets, icon: <DatabaseOutlined />, color: '#246bfd' },
             { title: '不可变版本', value: data.dataset_versions, icon: <ThunderboltOutlined />, color: '#6f56d9' },
             { title: '模型运行', value: data.model_runs, icon: <ExperimentOutlined />, color: '#10a779' },
             { title: '活动任务', value: data.active_tasks, icon: <CloudUploadOutlined />, color: '#f39b32' },
-          ].map((item) => <Col span={6} key={item.title}><Card className="metric-card" style={{ '--metric-color': item.color } as React.CSSProperties}><Statistic title={<Space>{item.icon}{item.title}</Space>} value={item.value} /></Card></Col>)}
+          ].map((item) => <Col xs={12} xl={6} key={item.title}><Card className="metric-card" style={{ '--metric-color': item.color } as React.CSSProperties}><Statistic title={<Space>{item.icon}{item.title}</Space>} value={item.value} /></Card></Col>)}
         </Row>
       )}
       <Row gutter={20} style={{ marginTop: 22 }}>
-        <Col span={16}>
+        <Col xs={24} xl={16}>
           <div className="section-title"><Typography.Title level={4}>最近评测</Typography.Title><Button type="link" onClick={() => navigate('/tasks')}>查看全部</Button></div>
           <Space direction="vertical" size={14} style={{ width: '100%' }}>
             {tasks.map((task) => <TaskCard key={task.id} task={task} onChange={load} />)}
-            {!tasks.length && <Empty className="empty-soft" description="还没有评测任务" />}
+            {!tasksQuery.loading && !tasksQuery.error && !tasks.length && <Empty className="empty-soft" description="还没有评测任务" />}
           </Space>
         </Col>
-        <Col span={8}>
+        <Col xs={24} xl={8}>
           <div className="section-title"><Typography.Title level={4}>语料资产</Typography.Title><Button type="link" onClick={() => navigate('/datasets')}>版本管理</Button></div>
           <Card className="panel-card">
             {datasets.slice(0, 6).map((dataset, index) => (
@@ -69,7 +68,7 @@ export default function DashboardPage() {
                 </Space>
               </div>
             ))}
-            {!datasets.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据集" />}
+            {!datasetsQuery.loading && !datasetsQuery.error && !datasets.length && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无数据集" />}
           </Card>
         </Col>
       </Row>

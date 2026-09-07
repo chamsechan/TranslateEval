@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+from .validation import validate_prompt_template
 
 
 class LanguageManifest(BaseModel):
@@ -125,24 +126,28 @@ class PromptProfileCreate(BaseModel):
     user_template: str = Field(min_length=1)
     published: bool = True
 
+    _validate_templates = field_validator("system_template", "user_template")(validate_prompt_template)
+
 
 class PromptVersionCreate(BaseModel):
     system_template: str = Field(min_length=1)
     user_template: str = Field(min_length=1)
     published: bool = True
 
+    _validate_templates = field_validator("system_template", "user_template")(validate_prompt_template)
+
 
 class EvaluatorProfileCreate(BaseModel):
     name: str = Field(min_length=1, max_length=160)
     evaluator_type: Literal["openai_compatible_llm", "sacrebleu_zh"]
     config: dict[str, Any]
-    default_threshold: float
+    default_threshold: float = Field(ge=0, le=100, allow_inf_nan=False)
     enabled: bool = True
 
 
 class EvaluatorRevisionCreate(BaseModel):
     config: dict[str, Any]
-    default_threshold: float
+    default_threshold: float = Field(ge=0, le=100, allow_inf_nan=False)
 
 
 class EvaluatorProfileUpdate(BaseModel):
@@ -151,7 +156,7 @@ class EvaluatorProfileUpdate(BaseModel):
 
 class ThresholdSummary(BaseModel):
     evaluator_job_id: str
-    threshold: float
+    threshold: float = Field(ge=0, le=100, allow_inf_nan=False)
     score_min: float
     score_max: float
     unit: str
@@ -170,4 +175,4 @@ class ThresholdSummary(BaseModel):
 
 class CompareResultsRequest(BaseModel):
     evaluator_job_ids: list[str] = Field(min_length=2, max_length=12)
-    threshold: float
+    threshold: float = Field(ge=0, le=100, allow_inf_nan=False)

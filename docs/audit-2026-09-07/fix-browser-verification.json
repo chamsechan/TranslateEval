@@ -1,0 +1,18 @@
+{
+  "focusAfterSubmit": true,
+  "liveResultRefresh": true,
+  "bleuSamples": 6,
+  "heroLabelColor": "rgb(168, 189, 215)",
+  "layout": {
+    "viewport": 1024,
+    "width": 1024
+  },
+  "importRetryRetainsInput": true,
+  "outageRecovery": true,
+  "zeroRetriesPreserved": true,
+  "oldActiveVisible": true,
+  "historyThirdPage": 17,
+  "globalLowestScoreFirst": true,
+  "detailPaginationReset": true,
+  "pageErrors": []
+}

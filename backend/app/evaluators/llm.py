@@ -6,6 +6,7 @@ from time import perf_counter
 from typing import Any
 
 import httpx
+from ..validation import validate_prompt_template
 
 from .base import (
     BaseEvaluator,
@@ -84,7 +85,7 @@ async def check_openai_compatible_connection(
         }
     return {
         "status": "connected",
-        "detail": f"服务与模型 {configured_model} 可用",
+        "detail": f"模型列表包含 {configured_model}，实际评分尚未试跑" if model_available else "服务可达，响应未提供可核验的模型列表",
         "latency_ms": latency_ms,
         "model_available": model_available,
     }
@@ -137,8 +138,8 @@ class OpenAICompatibleEvaluator(BaseEvaluator):
     ) -> None:
         normalized = self.validate_config(config)
         super().__init__(normalized)
-        self.system_template = system_template
-        self.user_template = user_template
+        self.system_template = validate_prompt_template(system_template)
+        self.user_template = validate_prompt_template(user_template)
         self.client = httpx.AsyncClient(
             base_url=normalized["base_url"].rstrip("/") + "/",
             timeout=normalized["timeout_seconds"],

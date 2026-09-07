@@ -1,8 +1,10 @@
 import { ApiOutlined, CopyOutlined, KeyOutlined, PlusOutlined, ReloadOutlined, SafetyOutlined } from '@ant-design/icons'
-import { Alert, App, Badge, Button, Card, Col, Collapse, Form, Input, InputNumber, Modal, Row, Select, Space, Switch, Tabs, Tag, Tooltip, Typography } from 'antd'
+import { Alert, App, Badge, Button, Card, Col, Collapse, Form, Input, InputNumber, Modal, Row, Select, Skeleton, Space, Switch, Tabs, Tag, Tooltip, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { api, formatDate } from '../api'
 import PageHeader from '../components/PageHeader'
+import QueryError from '../components/QueryError'
+import { useApiQuery } from '../hooks/useApiQuery'
 import type { EvaluatorConnection, EvaluatorProfile, PromptProfile } from '../types'
 
 type EvaluatorForm = { name: string; evaluator_type: 'openai_compatible_llm' | 'sacrebleu_zh'; base_url?: string; model?: string; api_key?: string; concurrency?: number; timeout_seconds?: number; max_retries?: number; default_threshold: number; tokenize?: string; smooth_method?: string }
@@ -11,9 +13,13 @@ type ConnectionState = EvaluatorConnection | { status: 'checking'; detail: strin
 
 export default function SettingsPage() {
   const { message } = App.useApp()
-  const [evaluators, setEvaluators] = useState<EvaluatorProfile[]>([])
+  const evaluatorQuery = useApiQuery<EvaluatorProfile[]>('/evaluator-profiles')
+  const evaluators = evaluatorQuery.data || []
   const [connections, setConnections] = useState<Record<string, ConnectionState>>({})
-  const [prompts, setPrompts] = useState<PromptProfile[]>([])
+  const promptQuery = useApiQuery<PromptProfile[]>('/prompt-profiles')
+  const prompts = promptQuery.data || []
+  const [savingEvaluator, setSavingEvaluator] = useState(false)
+  const [savingPrompt, setSavingPrompt] = useState(false)
   const [evaluatorOpen, setEvaluatorOpen] = useState(false)
   const [revisionProfile, setRevisionProfile] = useState<EvaluatorProfile | null>(null)
   const [promptOpen, setPromptOpen] = useState(false)
@@ -31,12 +37,10 @@ export default function SettingsPage() {
       setConnections((current) => ({ ...current, [profile.id]: { status: 'disconnected', detail: (error as Error).message, latency_ms: null, model_available: null } }))
     }
   }
-  const load = async () => {
-    const [e, p] = await Promise.all([api<EvaluatorProfile[]>('/evaluator-profiles'), api<PromptProfile[]>('/prompt-profiles')])
-    setEvaluators(e); setPrompts(p)
-    void Promise.allSettled(e.map(checkConnection))
-  }
-  useEffect(() => { void load() }, [])
+  const load = () => { evaluatorQuery.refresh(); promptQuery.refresh() }
+  useEffect(() => {
+    if (evaluatorQuery.data) void Promise.allSettled(evaluatorQuery.data.map(checkConnection))
+  }, [evaluatorQuery.data])
 
   const openEvaluator = () => {
     setRevisionProfile(null)
@@ -48,28 +52,30 @@ export default function SettingsPage() {
     const latest = profile.revisions[0]
     const config = latest.config
     setRevisionProfile(profile)
+    evaluatorForm.resetFields()
     evaluatorForm.setFieldsValue({
       evaluator_type: profile.evaluator_type,
       base_url: String(config.base_url || ''), model: String(config.model || ''), api_key: '',
-      concurrency: Number(config.concurrency || 8), timeout_seconds: Number(config.timeout_seconds || 60), max_retries: Number(config.max_retries || 3),
+      concurrency: Number(config.concurrency ?? 8), timeout_seconds: Number(config.timeout_seconds ?? 60), max_retries: Number(config.max_retries ?? 3),
       tokenize: String(config.tokenize || 'zh'), smooth_method: String(config.smooth_method || 'exp'), default_threshold: latest.default_threshold,
     })
     setEvaluatorOpen(true)
   }
   const saveEvaluator = async () => {
-    const value = await evaluatorForm.validateFields()
-    const config = value.evaluator_type === 'openai_compatible_llm' ? { base_url: value.base_url, model: value.model, api_key: value.api_key, concurrency: value.concurrency, timeout_seconds: value.timeout_seconds, max_retries: value.max_retries, temperature: 0, max_tokens: 256 } : { tokenize: value.tokenize || 'zh', smooth_method: value.smooth_method || 'exp', effective_order: true }
     try {
+      const value = await evaluatorForm.validateFields()
+      setSavingEvaluator(true)
+      const config = value.evaluator_type === 'openai_compatible_llm' ? { base_url: value.base_url, model: value.model, api_key: value.api_key, concurrency: value.concurrency, timeout_seconds: value.timeout_seconds, max_retries: value.max_retries, temperature: 0, max_tokens: 256 } : { tokenize: value.tokenize || 'zh', smooth_method: value.smooth_method || 'exp', effective_order: true }
       if (revisionProfile) await api(`/evaluator-profiles/${revisionProfile.id}/revisions`, { method: 'POST', body: JSON.stringify({ config, default_threshold: value.default_threshold }) })
       else await api('/evaluator-profiles', { method: 'POST', body: JSON.stringify({ name: value.name, evaluator_type: value.evaluator_type, config, default_threshold: value.default_threshold, enabled: true }) })
       message.success(revisionProfile ? '模型服务配置已更新' : '评价器配置已创建'); setEvaluatorOpen(false); setRevisionProfile(null); evaluatorForm.resetFields(); await load()
-    } catch (error) { message.error((error as Error).message) }
+    } catch (error) { if (error instanceof Error) message.error(error.message) } finally { setSavingEvaluator(false) }
   }
   const setEnabled = async (profile: EvaluatorProfile, enabled: boolean) => {
     try { await api(`/evaluator-profiles/${profile.id}`, { method: 'PATCH', body: JSON.stringify({ enabled }) }); await load() }
     catch (error) { message.error((error as Error).message) }
   }
-  const openNewPrompt = () => { setVersionProfile(null); promptForm.setFieldsValue({ published: true }); setPromptOpen(true) }
+  const openNewPrompt = () => { setVersionProfile(null); promptForm.resetFields(); promptForm.setFieldsValue({ published: true }); setPromptOpen(true) }
   const openPromptVersion = (profile: PromptProfile) => {
     const latest = profile.versions[0]
     setVersionProfile(profile)
@@ -77,17 +83,20 @@ export default function SettingsPage() {
     setPromptOpen(true)
   }
   const savePrompt = async () => {
-    const value = await promptForm.validateFields()
     try {
+      const value = await promptForm.validateFields()
+      setSavingPrompt(true)
       if (versionProfile) await api(`/prompt-profiles/${versionProfile.id}/versions`, { method: 'POST', body: JSON.stringify(value) })
       else await api('/prompt-profiles', { method: 'POST', body: JSON.stringify(value) })
       message.success(versionProfile ? '新 Prompt 版本已创建' : 'Prompt 配置已创建'); setPromptOpen(false); promptForm.resetFields(); await load()
-    } catch (error) { message.error((error as Error).message) }
+    } catch (error) { if (error instanceof Error) message.error(error.message) } finally { setSavingPrompt(false) }
   }
 
   return (
     <>
       <PageHeader title="模型与评价设置" subtitle="在这里维护评分模型服务、查看联通状态，并管理 Prompt 版本。" />
+      <QueryError error={evaluatorQuery.error || promptQuery.error} retry={load} />
+      {(evaluatorQuery.loading || promptQuery.loading) && !evaluatorQuery.data && <Skeleton active />}
       <Tabs items={[
         { key: 'evaluators', label: <Space><ApiOutlined />模型服务 / 评价器</Space>, children: <>
           <Alert className="settings-warning" type="warning" showIcon icon={<KeyOutlined />} message="API Key 按已确认方案明文保存在本机 SQLite" description="接口不会回传原值，页面只显示掩码，应用日志禁止打印密钥。备份数据库时请按敏感文件处理。" />
@@ -98,7 +107,7 @@ export default function SettingsPage() {
             const connection = connections[profile.id]
             const badgeStatus = connection?.status === 'connected' ? 'success' : connection?.status === 'disconnected' ? 'error' : connection?.status === 'checking' ? 'processing' : 'default'
             const connectionText = connection?.status === 'connected' ? '已联通' : connection?.status === 'disconnected' ? '未联通' : connection?.status === 'checking' ? '检测中' : '未检测'
-            return <Col span={12} key={profile.id}><Card className="panel-card model-service-card" title={<Space><SafetyOutlined />{profile.name}</Space>} extra={<Space><Button size="small" onClick={() => openEvaluatorRevision(profile)}>编辑配置</Button><Tooltip title="重新检测联通状态"><Button size="small" icon={<ReloadOutlined />} loading={connection?.status === 'checking'} onClick={() => void checkConnection(profile)} /></Tooltip><Switch size="small" checked={profile.enabled} onChange={(checked) => setEnabled(profile, checked)} /></Space>}>
+            return <Col xs={24} xl={12} key={profile.id}><Card className="panel-card model-service-card" title={<Space><SafetyOutlined />{profile.name}</Space>} extra={<Space><Button size="small" onClick={() => openEvaluatorRevision(profile)}>编辑配置</Button><Tooltip title="重新检测联通状态"><Button size="small" icon={<ReloadOutlined />} loading={connection?.status === 'checking'} onClick={() => void checkConnection(profile)} /></Tooltip><Switch size="small" checked={profile.enabled} onChange={(checked) => setEnabled(profile, checked)} /></Space>}>
               <Space wrap><Tag color={profile.evaluator_type === 'sacrebleu_zh' ? 'purple' : 'blue'}>{profile.evaluator_type}</Tag><span>最新修订 r{latest?.revision}</span><span>默认阈值 {latest?.default_threshold}</span></Space>
               <Tooltip title={connection?.detail || '尚未执行检测'}><div className={`model-connection ${connection?.status || 'unchecked'}`}><Badge status={badgeStatus} text={connectionText} /><Typography.Text type="secondary">{connection?.detail || '等待检测'}{connection?.latency_ms != null ? ` · ${connection.latency_ms} ms` : ''}</Typography.Text></div></Tooltip>
               {latest && <div className="code-template" style={{ marginTop: 14 }}>{JSON.stringify(latest.config, null, 2)}</div>}
@@ -112,7 +121,7 @@ export default function SettingsPage() {
         </> },
       ]} />
 
-      <Modal title={revisionProfile ? `编辑 ${revisionProfile.name}` : '新增评价器配置'} width={650} open={evaluatorOpen} onCancel={() => { setEvaluatorOpen(false); setRevisionProfile(null) }} onOk={saveEvaluator} okText={revisionProfile ? '保存为新修订' : '创建配置'}>
+      <Modal title={revisionProfile ? `编辑 ${revisionProfile.name}` : '新增评价器配置'} width={650} confirmLoading={savingEvaluator} open={evaluatorOpen} onCancel={() => { setEvaluatorOpen(false); setRevisionProfile(null) }} onOk={saveEvaluator} okText={revisionProfile ? '保存为新修订' : '创建配置'}>
         <Form form={evaluatorForm} layout="vertical">
           <Row gutter={14}>{!revisionProfile && <Col span={14}><Form.Item name="name" label="配置名称" rules={[{ required: true }]}><Input placeholder="例如 Qwen Judge · 本地服务" /></Form.Item></Col>}<Col span={revisionProfile ? 24 : 10}><Form.Item name="evaluator_type" label="评价器类型" rules={[{ required: true }]}><Select disabled={!!revisionProfile} options={[{ label: 'OpenAI 兼容 LLM', value: 'openai_compatible_llm' }, { label: 'SacreBLEU 中文', value: 'sacrebleu_zh' }]} /></Form.Item></Col></Row>
           {evaluatorType === 'openai_compatible_llm' ? <>
@@ -120,15 +129,15 @@ export default function SettingsPage() {
             <Row gutter={14}><Col span={12}><Form.Item name="model" label="评分模型名" rules={[{ required: true }]}><Input placeholder="qwen3-judge" /></Form.Item></Col><Col span={12}><Form.Item name="api_key" label={revisionProfile ? 'API Key（留空沿用）' : 'API Key'} rules={revisionProfile ? [] : [{ required: true }]}><Input.Password /></Form.Item></Col></Row>
             <Row gutter={14}><Col span={8}><Form.Item name="concurrency" label="并发数"><InputNumber min={1} max={64} style={{ width: '100%' }} /></Form.Item></Col><Col span={8}><Form.Item name="timeout_seconds" label="超时（秒）"><InputNumber min={1} style={{ width: '100%' }} /></Form.Item></Col><Col span={8}><Form.Item name="max_retries" label="最大重试"><InputNumber min={0} max={10} style={{ width: '100%' }} /></Form.Item></Col></Row>
           </> : <Row gutter={14}><Col span={12}><Form.Item name="tokenize" label="Tokenizer" initialValue="zh"><Input /></Form.Item></Col><Col span={12}><Form.Item name="smooth_method" label="平滑方式" initialValue="exp"><Select options={['exp', 'floor', 'add-k', 'none'].map((value) => ({ value, label: value }))} /></Form.Item></Col></Row>}
-          <Form.Item name="default_threshold" label="结果页默认准确阈值" rules={[{ required: true }]}><InputNumber min={0} step={0.1} style={{ width: '100%' }} /></Form.Item>
+          <Form.Item name="default_threshold" label="结果页默认准确阈值" rules={[{ required: true }]}><InputNumber min={0} max={evaluatorType === 'sacrebleu_zh' ? 100 : 10} step={0.1} style={{ width: '100%' }} /></Form.Item>
         </Form>
       </Modal>
 
-      <Modal title={versionProfile ? `创建 ${versionProfile.name} 的新版本` : '新建 Prompt 配置'} width={760} open={promptOpen} onCancel={() => setPromptOpen(false)} onOk={savePrompt} okText="保存不可变版本">
+      <Modal title={versionProfile ? `创建 ${versionProfile.name} 的新版本` : '新建 Prompt 配置'} width={760} confirmLoading={savingPrompt} open={promptOpen} onCancel={() => setPromptOpen(false)} onOk={savePrompt} okText="保存不可变版本">
         <Form form={promptForm} layout="vertical">
           {!versionProfile && <Row gutter={14}><Col span={12}><Form.Item name="name" label="Prompt 名称" rules={[{ required: true }]}><Input /></Form.Item></Col><Col span={12}><Form.Item name="description" label="说明"><Input /></Form.Item></Col></Row>}
           <Form.Item name="system_template" label="System Prompt" rules={[{ required: true }]}><Input.TextArea rows={5} /></Form.Item>
-          <Form.Item name="user_template" label="User Prompt" extra="可用变量：{source_language}、{source_text}、{reference_zh}、{translation_zh}" rules={[{ required: true }]}><Input.TextArea rows={9} /></Form.Item>
+          <Form.Item name="user_template" label="User Prompt" extra={'可用变量：{source_language}、{source_text}、{reference_zh}、{translation_zh}。JSON 示例中的花括号请写成双花括号，如 {{"score": 8}}。'} rules={[{ required: true }]}><Input.TextArea rows={9} /></Form.Item>
           <Form.Item name="published" label="状态"><Select options={[{ label: '发布，可用于新任务', value: true }, { label: '草稿', value: false }]} /></Form.Item>
         </Form>
       </Modal>

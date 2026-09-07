@@ -23,6 +23,8 @@ class SacreBleuZhEvaluator(BaseEvaluator):
     @classmethod
     def validate_config(cls, config: dict[str, Any]) -> dict[str, Any]:
         tokenize = str(config.get("tokenize", "zh"))
+        if tokenize not in BLEU.TOKENIZERS:
+            raise ValueError("未知 Tokenizer，请选择: " + ", ".join(BLEU.TOKENIZERS))
         smooth_method = str(config.get("smooth_method", "exp"))
         if smooth_method not in {"none", "floor", "add-k", "exp"}:
             raise ValueError("smooth_method 必须为 none、floor、add-k 或 exp")
@@ -57,4 +59,3 @@ class SacreBleuZhEvaluator(BaseEvaluator):
             "corpus_bleu": float(result.score),
             "signature": str(self.metric.get_signature()),
         }
-

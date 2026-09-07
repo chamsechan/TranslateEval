@@ -1,0 +1,102 @@
+{
+  "backend_probes": {
+    "cancellation": {
+      "requests_before_cancel": 1,
+      "total_requests_actually_sent": 6,
+      "samples": 6,
+      "status": "cancelled"
+    },
+    "comparison": {
+      "strictly_comparable": true,
+      "requested_prompt": "8436b720-cba4-443a-bfc7-be7372d1a922",
+      "actual": [
+        {
+          "job_id": "cc37d11d-a44b-43e3-a163-10556d735f36",
+          "actual_prompts": [
+            "ccde33d8-727b-4496-8bdf-8953a35a634a"
+          ],
+          "cached_items": 6
+        },
+        {
+          "job_id": "1c73e0ad-5945-4250-aabb-46f2e352f573",
+          "actual_prompts": [
+            "8436b720-cba4-443a-bfc7-be7372d1a922"
+          ],
+          "cached_items": 0
+        }
+      ]
+    },
+    "staging_change": {
+      "validated_prediction_count": 6,
+      "committed_count": 1,
+      "status": "completed",
+      "coverage": 1.0
+    },
+    "broken_zip": {
+      "status": 500,
+      "response": "Internal Server Error"
+    },
+    "invalid_prompt": {
+      "create_status": 200,
+      "render_error": "Invalid format specifier '8,\"reason\":\"ok\"' for object of type 'str'",
+      "type": "ValueError"
+    },
+    "invalid_config": {
+      "create_status": 200,
+      "default_threshold": 1234.0
+    },
+    "task_limits": {
+      "rest_rows": 60,
+      "sse_rows": 50,
+      "oldest_task_in_rest": true,
+      "oldest_task_in_sse": false,
+      "rest_sql_queries": 132,
+      "sse_sql_queries_per_client_per_tick": 107
+    }
+  },
+  "running_retry": {
+    "job_status": "completed",
+    "completed_items": 100,
+    "total_items": 101,
+    "actual_item_states": {
+      "completed": 100,
+      "queued": 1
+    }
+  },
+  "browser_flow": {
+    "mainFlow": "browser dataset import → result validate → task queued → actual BLEU worker completed → result rendered",
+    "taskStatus": "completed",
+    "completed": 6,
+    "total": 6,
+    "failedDialogButtons": [
+      ""
+    ],
+    "dimensions": {
+      "viewport": 1024,
+      "document": 1149,
+      "body": 1149
+    },
+    "outageShowsEmpty": true,
+    "errors": [
+      "audit simulated outage"
+    ]
+  },
+  "visual_and_settings": {
+    "homepageCharts": [
+      "charts-vendor-By0rFR2D.js"
+    ],
+    "label": {
+      "html": "<div class=\"ant-statistic-title\">微平均分</div>",
+      "color": "rgba(0, 0, 0, 0.45)",
+      "background": "linear-gradient(135deg, rgb(10, 27, 52), rgb(21, 63, 118))"
+    },
+    "storedRetries": 0,
+    "editorRetries": "3"
+  },
+  "baseline": {
+    "pytest": "19 passed in 3.51s",
+    "frontend_build": "passed",
+    "production_data_accessed": false,
+    "real_llm_calls": false
+  }
+}

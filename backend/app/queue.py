@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import random
 from collections import defaultdict
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -33,10 +34,15 @@ from .models import (
     ScoreResult,
     SubmissionDataset,
 )
+from .queries import threshold_summary
 from .schemas import EvaluatorSelection
 
 
 TERMINAL = {"completed", "partial_failed", "partial_cancelled", "failed", "cancelled"}
+
+
+class JobStateConflict(ValueError):
+    pass
 
 
 def create_evaluation_task(
@@ -192,6 +198,8 @@ def retry_failed_job(session: Session, evaluator_job_id: str) -> EvaluatorJob:
     job = session.get(EvaluatorJob, evaluator_job_id)
     if not job:
         raise ValueError("评价器任务不存在")
+    if job.status not in TERMINAL or "cancelling" in {job.dataset_job.status, job.dataset_job.task.status}:
+        raise JobStateConflict("任务仍在执行或取消中，请等待结束后重试失败项")
     failed_items = session.scalar(
         select(func.count(EvaluationItem.id)).where(
             EvaluationItem.evaluator_job_id == job.id,
@@ -200,6 +208,14 @@ def retry_failed_job(session: Session, evaluator_job_id: str) -> EvaluatorJob:
     ) or 0
     if not failed_items:
         raise ValueError("该评价器任务没有可重试的失败项")
+    claimed = session.execute(
+        update(EvaluatorJob)
+        .where(EvaluatorJob.id == job.id, EvaluatorJob.status.in_(TERMINAL))
+        .values(status="queued")
+    )
+    if claimed.rowcount != 1:
+        session.rollback()
+        raise JobStateConflict("任务状态已变化，请刷新后重试")
     session.execute(
         update(EvaluationItem)
         .where(
@@ -311,9 +327,12 @@ async def _score_with_retry(
     evaluator: BaseEvaluator,
     score_input: ScoreInput,
     retries: int,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> tuple[ScoreOutput | None, str | None, int]:
     attempts = 0
     while True:
+        if should_cancel and should_cancel():
+            return None, None, attempts
         attempts += 1
         try:
             return await evaluator.evaluate_one(score_input), None, attempts
@@ -322,6 +341,8 @@ async def _score_with_retry(
         except RetriableEvaluatorError as exc:
             if attempts > retries:
                 return None, str(exc), attempts
+            if should_cancel and should_cancel():
+                return None, None, attempts
             delay = min(8.0, (2 ** (attempts - 1)) + random.random())
             await asyncio.sleep(delay)
         except Exception as exc:
@@ -408,7 +429,7 @@ def _cancel_remaining(session: Session, job: EvaluatorJob) -> None:
         )
         .values(status="cancelled", finished_at=now)
     )
-    job.status = "cancelled"
+    job.status = "partial_cancelled" if job.completed_items or job.failed_items else "cancelled"
 
 
 def _store_aggregates(session: Session, job: EvaluatorJob, evaluator: BaseEvaluator) -> None:
@@ -603,103 +624,86 @@ async def process_evaluator_job(job_id: str) -> None:
             retries = int(revision.config.get("max_retries", 0))
             chunk_size = max(100, concurrency * 8)
             current_results: dict[tuple[str, ...], ScoreResult] = {}
+
+            def should_cancel() -> bool:
+                # Read fresh flags without sharing the writer's ORM state with coroutines.
+                with SessionLocal() as check:
+                    flags = check.execute(
+                        select(EvaluationTask.cancel_requested, DatasetJob.cancel_requested)
+                        .join(DatasetJob, DatasetJob.task_id == EvaluationTask.id)
+                        .where(DatasetJob.id == job.dataset_job_id)
+                    ).one()
+                    return any(flags)
+
             for offset in range(0, len(rows), chunk_size):
-                session.refresh(task)
-                session.refresh(job.dataset_job)
-                if task.cancel_requested or job.dataset_job.cancel_requested:
+                if should_cancel():
                     _cancel_remaining(session, job)
                     break
-                chunk = rows[offset : offset + chunk_size]
                 grouped: dict[tuple[str, ...], list[dict[str, Any]]] = defaultdict(list)
-                for row in chunk:
-                    key = _cache_key(row, evaluator.model_name)
-                    grouped[key].append(row)
+                for row in rows[offset : offset + chunk_size]:
+                    grouped[_cache_key(row, evaluator.model_name)].append(row)
                 semaphore = asyncio.Semaphore(concurrency)
 
-                async def run_group(
-                    key: tuple[str, ...], group: list[dict[str, Any]]
-                ) -> tuple[tuple[str, ...], list[dict[str, Any]], ScoreOutput | None, str | None, int]:
+                async def run_group(key, group):
                     if key in current_results:
                         return key, group, None, None, 0
                     async with semaphore:
                         output, error, attempts = await _score_with_retry(
-                            evaluator, group[0]["input"], retries
+                            evaluator, group[0]["input"], retries, should_cancel
                         )
                         return key, group, output, error, attempts
 
-                outcomes = await asyncio.gather(
-                    *(run_group(key, group) for key, group in grouped.items())
-                )
-                session.refresh(task)
-                session.refresh(job.dataset_job)
-                cancelled_after_requests = task.cancel_requested or job.dataset_job.cancel_requested
-                if cancelled_after_requests:
-                    for key, group, output, _error, attempts in outcomes:
+                pending = [asyncio.create_task(run_group(key, group)) for key, group in grouped.items()]
+                try:
+                    # Persist each finished response before waiting for slower requests.
+                    for finished in asyncio.as_completed(pending):
+                        key, group, output, error, attempts = await finished
+                        cancelled = should_cancel()
                         result = current_results.get(key)
+                        reused = result is not None
                         if output is not None and result is None:
                             result = _persist_score(
-                                session,
-                                evaluator_job=job,
-                                evaluator=evaluator,
-                                row=group[0],
-                                output=output,
+                                session, evaluator_job=job, evaluator=evaluator,
+                                row=group[0], output=output,
                             )
                             current_results[key] = result
-                        for row in group:
+                        for index, row in enumerate(group):
                             item = row["item"]
                             item.score_result_id = result.id if result else None
-                            item.status = "cancelled"
+                            item.status = "cancelled" if cancelled else "completed" if result else "failed"
+                            item.cache_hit = bool(result) and (reused or index > 0)
+                            item.error = None if cancelled or result else error
                             item.attempts = attempts
                             item.finished_at = datetime.now(UTC)
+                        _refresh_progress(session, job)
+                        session.commit()
+                finally:
+                    for pending_task in pending:
+                        if not pending_task.done():
+                            pending_task.cancel()
+                    await asyncio.gather(*pending, return_exceptions=True)
+                if should_cancel():
                     _cancel_remaining(session, job)
-                    _refresh_progress(session, job)
-                    session.commit()
                     break
-                for key, group, output, error, attempts in outcomes:
-                    existing = current_results.get(key)
-                    if existing:
-                        for row in group:
-                            item = row["item"]
-                            item.score_result_id = existing.id
-                            item.status = "completed"
-                            item.cache_hit = True
-                            item.finished_at = datetime.now(UTC)
-                        continue
-                    if output is not None:
-                        result = _persist_score(
-                            session,
-                            evaluator_job=job,
-                            evaluator=evaluator,
-                            row=group[0],
-                            output=output,
-                        )
-                        current_results[key] = result
-                        for row in group:
-                            item = row["item"]
-                            item.score_result_id = result.id
-                            item.status = "completed"
-                            item.cache_hit = row is not group[0]
-                            item.attempts = attempts
-                            item.finished_at = datetime.now(UTC)
-                    else:
-                        for row in group:
-                            item = row["item"]
-                            item.status = "failed"
-                            item.error = error
-                            item.attempts = attempts
-                            item.finished_at = datetime.now(UTC)
-                _refresh_progress(session, job)
-                session.commit()
 
             _refresh_progress(session, job)
-            if job.status != "cancelled":
-                if job.failed_items and job.completed_items:
+            if job.status not in {"cancelled", "partial_cancelled"}:
+                unfinished = session.scalar(
+                    select(func.count(EvaluationItem.id)).where(
+                        EvaluationItem.evaluator_job_id == job.id,
+                        EvaluationItem.status == "queued",
+                    )
+                ) or 0
+                if unfinished:
+                    job.status = "queued"
+                elif job.failed_items and job.completed_items:
                     job.status = "partial_failed"
                 elif job.failed_items:
                     job.status = "failed"
                 else:
                     job.status = "completed"
-                _store_aggregates(session, job, evaluator)
+                if not unfinished:
+                    _store_aggregates(session, job, evaluator)
             _finish_parent_statuses(session, job)
             session.commit()
         except Exception as exc:
@@ -738,91 +742,6 @@ async def worker_loop(once: bool = False) -> None:
         await process_evaluator_job(job_id)
         if once:
             return
-
-
-def threshold_summary(session: Session, job_id: str, threshold: float) -> dict[str, Any]:
-    job = session.get(EvaluatorJob, job_id)
-    if not job:
-        raise ValueError("评价器任务不存在")
-    submission_dataset = job.dataset_job.submission_dataset
-    scored_rows = session.execute(
-        select(ScoreResult, DatasetSample)
-        .join(EvaluationItem, EvaluationItem.score_result_id == ScoreResult.id)
-        .join(Prediction, EvaluationItem.prediction_id == Prediction.id)
-        .join(
-            DatasetSample,
-            (DatasetSample.dataset_version_id == submission_dataset.dataset_version_id)
-            & (DatasetSample.sample_id == Prediction.sample_id),
-        )
-        .where(
-            EvaluationItem.evaluator_job_id == job.id,
-            EvaluationItem.status == "completed",
-        )
-    ).all()
-    counts = dict(
-        session.execute(
-            select(EvaluationItem.status, func.count(EvaluationItem.id))
-            .where(EvaluationItem.evaluator_job_id == job.id)
-            .group_by(EvaluationItem.status)
-        ).all()
-    )
-    by_language_scores: dict[str, list[float]] = defaultdict(list)
-    for score, sample in scored_rows:
-        by_language_scores[sample.source_language].append(score.score)
-    by_language = []
-    for language, scores in sorted(by_language_scores.items()):
-        passed = sum(score >= threshold for score in scores)
-        by_language.append(
-            {
-                "source_language": language,
-                "mean": sum(scores) / len(scores),
-                "accuracy": passed / len(scores),
-                "passed": passed,
-                "count": len(scores),
-            }
-        )
-    scores = [score.score for score, _ in scored_rows]
-    successful = len(scores)
-    total = job.total_items
-    aggregates = [
-        {
-            "metric_name": item.metric_name,
-            "source_language": item.source_language,
-            "value": item.value,
-            "sample_count": item.sample_count,
-            "unit": item.unit,
-            "details": item.details,
-        }
-        for item in session.scalars(
-            select(AggregateScore).where(AggregateScore.evaluator_job_id == job.id)
-        )
-    ]
-    return {
-        "evaluator_job_id": job.id,
-        "threshold": threshold,
-        "score_min": scored_rows[0][0].score_min if scored_rows else 0,
-        "score_max": scored_rows[0][0].score_max if scored_rows else 0,
-        "unit": scored_rows[0][0].unit if scored_rows else "",
-        "micro_mean": sum(scores) / successful if successful else None,
-        "macro_mean": (
-            sum(item["mean"] for item in by_language) / len(by_language) if by_language else None
-        ),
-        "micro_accuracy": (
-            sum(score >= threshold for score in scores) / successful if successful else None
-        ),
-        "macro_accuracy": (
-            sum(item["accuracy"] for item in by_language) / len(by_language)
-            if by_language
-            else None
-        ),
-        "successful": successful,
-        "failed": int(counts.get("failed", 0)),
-        "cancelled": int(counts.get("cancelled", 0)),
-        "total": total,
-        "coverage": successful / total if total else 0,
-        "by_language": by_language,
-        "aggregates": aggregates,
-    }
 
 
 def language_detection_summary(session: Session, dataset_job_id: str) -> dict[str, Any]:

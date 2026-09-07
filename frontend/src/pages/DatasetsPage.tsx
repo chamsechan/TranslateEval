@@ -1,25 +1,27 @@
 import { CheckCircleOutlined, CloudUploadOutlined, DatabaseOutlined, FolderOpenOutlined, HistoryOutlined, PlusOutlined, WarningOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Col, Descriptions, Empty, Form, Input, Modal, Row, Space, Statistic, Tabs, Tag, Timeline, Typography, Upload } from 'antd'
-import { useEffect, useState } from 'react'
+import { Alert, App, Button, Card, Col, Descriptions, Empty, Form, Input, Modal, Row, Space, Skeleton, Statistic, Tabs, Tag, Timeline, Typography, Upload } from 'antd'
+import { useState } from 'react'
 import { api, formatDate } from '../api'
 import PageHeader from '../components/PageHeader'
+import QueryError from '../components/QueryError'
+import { useApiQuery } from '../hooks/useApiQuery'
 import type { Dataset, DatasetVersion, ImportReport } from '../types'
 
 const { Dragger } = Upload
 
 export default function DatasetsPage() {
   const { message } = App.useApp()
-  const [datasets, setDatasets] = useState<Dataset[]>([])
+  const datasetQuery = useApiQuery<Dataset[]>('/datasets')
+  const datasets = datasetQuery.data || []
+  const load = datasetQuery.refresh
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [path, setPath] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [report, setReport] = useState<ImportReport | null>(null)
   const [selected, setSelected] = useState<Dataset | null>(null)
-  const [versions, setVersions] = useState<DatasetVersion[]>([])
-
-  const load = async () => setDatasets(await api<Dataset[]>('/datasets'))
-  useEffect(() => { void load() }, [])
+  const versionQuery = useApiQuery<DatasetVersion[]>(selected ? `/datasets/${selected.id}/versions` : null)
+  const versions = versionQuery.data || []
 
   const resetModal = () => { setOpen(false); setReport(null); setPath(''); setFile(null) }
   const validate = async () => {
@@ -45,16 +47,18 @@ export default function DatasetsPage() {
     } catch (error) { message.error((error as Error).message) } finally { setLoading(false) }
   }
   const showVersions = async (dataset: Dataset) => {
-    setSelected(dataset); setVersions(await api(`/datasets/${dataset.id}/versions`))
+    setSelected(dataset)
   }
 
   return (
     <>
       <PageHeader title="数据集" subtitle="使用不可变快照管理平行语料，并在写入前严格核验每一条变化。" actions={<Button type="primary" icon={<PlusOutlined />} onClick={() => setOpen(true)}>导入数据集</Button>} />
+      <QueryError error={datasetQuery.error} retry={load} />
+      {datasetQuery.loading && !datasetQuery.data && <Skeleton active />}
       <Row gutter={[16, 16]}>
         {datasets.map((dataset) => (
-          <Col span={8} key={dataset.id}>
-            <Card className="dataset-card" onClick={() => showVersions(dataset)} style={{ cursor: 'pointer' }}>
+          <Col xs={24} md={12} xl={8} key={dataset.id}>
+            <Card className="dataset-card" role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void showVersions(dataset) } }} onClick={() => showVersions(dataset)} style={{ cursor: 'pointer' }}>
               <Space align="start" style={{ width: '100%', justifyContent: 'space-between' }}>
                 <Space align="start"><div className="dataset-icon"><DatabaseOutlined /></div><div><Typography.Title level={5} style={{ margin: '1px 0 2px' }}>{dataset.name}</Typography.Title><Typography.Text type="secondary">{dataset.key}</Typography.Text></div></Space>
                 <Tag color="blue">{dataset.version_count} 版本</Tag>
@@ -69,14 +73,14 @@ export default function DatasetsPage() {
           </Col>
         ))}
       </Row>
-      {!datasets.length && <Empty className="empty-soft" description="还没有数据集，先导入 dataset_info.json 与 samples.jsonl" />}
+      {!datasetQuery.loading && !datasetQuery.error && !datasets.length && <Empty className="empty-soft" description="还没有数据集，先导入 dataset_info.json 与 samples.jsonl" />}
 
-      <Modal title="导入数据集或新版本" width={760} open={open} onCancel={resetModal} footer={report?.report.valid ? [<Button key="back" onClick={() => setReport(null)}>重新选择</Button>, <Button key="commit" type="primary" loading={loading} onClick={commit}>确认写入不可变版本</Button>] : null}>
+      <Modal title="导入数据集或新版本" width={760} open={open} onCancel={() => { if (!loading) resetModal() }} footer={report ? [<Button key="back" disabled={loading} onClick={() => setReport(null)}>修改并重新核验</Button>, report.report.valid && <Button key="commit" type="primary" loading={loading} onClick={commit}>确认写入不可变版本</Button>] : null}>
         {!report ? <>
           <Alert type="info" showIcon message="导入采用严格模式" description="缺失文件、重复 ID、未声明语种或格式错误都会阻止整批写入，并生成核验报告。" style={{ marginBottom: 18 }} />
-          <Tabs items={[
+          <Tabs onChange={() => { setPath(''); setFile(null) }} items={[
             { key: 'path', label: '服务器目录', children: <Form layout="vertical"><Form.Item label="数据集目录或 ZIP 的本机路径" required><Input size="large" prefix={<FolderOpenOutlined />} placeholder="/data/corpora/flores-devtest" value={path} onChange={(e) => { setPath(e.target.value); setFile(null) }} /></Form.Item></Form> },
-            { key: 'upload', label: '上传 ZIP', children: <Dragger accept=".zip" maxCount={1} beforeUpload={(value) => { setFile(value); setPath(''); return false }} onRemove={() => setFile(null)}><p className="ant-upload-drag-icon"><CloudUploadOutlined /></p><p>拖入或选择数据集 ZIP</p><p className="ant-upload-hint">ZIP 根目录应包含 dataset_info.json 和 samples.jsonl</p></Dragger> },
+            { key: 'upload', label: '上传 ZIP', children: <Dragger fileList={file ? [{ uid: 'dataset-zip', name: file.name, status: 'done' }] : []} accept=".zip" maxCount={1} beforeUpload={(value) => { setFile(value); setPath(''); return false }} onRemove={() => setFile(null)}><p className="ant-upload-drag-icon"><CloudUploadOutlined /></p><p>拖入或选择数据集 ZIP</p><p className="ant-upload-hint">ZIP 根目录应包含 dataset_info.json 和 samples.jsonl</p></Dragger> },
           ]} />
           <Button type="primary" size="large" block loading={loading} disabled={!path && !file} onClick={validate}>开始核验</Button>
         </> : <div className={report.report.valid ? 'validation-ok' : 'validation-error'} style={{ paddingLeft: 18 }}>
@@ -88,6 +92,8 @@ export default function DatasetsPage() {
       </Modal>
 
       <Modal title={<Space><HistoryOutlined />版本历史 · {selected?.name}</Space>} width={720} open={!!selected} footer={null} onCancel={() => setSelected(null)}>
+        <QueryError error={versionQuery.error} retry={versionQuery.refresh} />
+        {versionQuery.loading && <Skeleton active />}
         <Timeline items={versions.map((version, index) => ({ color: index === 0 ? 'blue' : 'gray', children: <Card size="small" style={{ marginBottom: 10 }}><Space style={{ width: '100%', justifyContent: 'space-between' }}><Typography.Text strong>{version.version_label}</Typography.Text>{index === 0 && <Tag color="blue">最新</Tag>}</Space><div style={{ margin: '8px 0', color: '#66758a' }}>{version.change_note || '无版本备注'}</div><Space size="large"><span>{version.sample_count.toLocaleString()} 句对</span><span>{version.source_languages.length} 语种</span><span>{formatDate(version.created_at)}</span></Space><div className="hash-text" style={{ marginTop: 8 }}>{version.content_sha256}</div></Card> }))} />
       </Modal>
     </>

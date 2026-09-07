@@ -6,7 +6,7 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 1120px; min-height: 100vh; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
 .app-shell { min-height: 100vh; background: #f2f5fa; }
 .app-sider {
   position: sticky !important;
@@ -104,3 +104,30 @@ body { margin: 0; min-width: 1120px; min-height: 100vh; }
 .code-template { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: #f5f7fa; padding: 12px; border-radius: 8px; white-space: pre-wrap; }
 .empty-soft { padding: 52px 0; background: #fafbfd; border: 1px dashed #dce4ef; border-radius: 12px; }
 @media (max-width: 1250px) { .app-content { padding-inline: 22px; } }
+
+/* Keep tables inside their own scroll containers at narrow desktop widths. */
+.app-shell > .ant-layout, .app-content, .ant-col { min-width: 0; }
+.page-head { gap: 16px; flex-wrap: wrap; }
+.page-head > div { min-width: 0; }
+.page-head h2, .hash-text, .code-template, .source-cell { overflow-wrap: anywhere; }
+.result-hero .ant-statistic .ant-statistic-header .ant-statistic-title { color: #a8bdd7; }
+.threshold-control { display: flex; align-items: center; gap: 14px; width: 100%; margin: 14px 0; }
+.threshold-control .ant-input-number { width: 90px; flex-shrink: 0; }
+.dataset-card:focus-visible { outline: 2px solid #246bfd; outline-offset: 3px; }
+@media (max-width: 1199px) {
+  .hero-orbit { display: none; }
+  .hero-grid { grid-template-columns: 1fr; }
+  .page-head { flex-direction: column; }
+  .result-hero .ant-statistic-content { font-size: 22px; }
+  .evaluator-chip { padding-left: 0; grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .app-content { padding: 18px 12px 32px; }
+  .app-header { padding-inline: 12px; }
+  .header-status { font-size: 11px; }
+  .hero-panel .ant-card-body { padding: 20px; }
+  .result-hero .ant-row { row-gap: 16px; }
+  .result-hero .ant-col-6 { flex: 0 0 50%; max-width: 50%; }
+  .job-row > .ant-space, .task-card .ant-card-head-wrapper { align-items: flex-start; flex-wrap: wrap; }
+  .ant-card-head-title { white-space: normal; }
+}

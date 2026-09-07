@@ -1,5 +1,14 @@
+export function getApiBase(): string {
+  let base = window.location.pathname.replace(/\/+$/, '')
+  if (base.endsWith('/index.html') || base === '/index.html') {
+    base = base.slice(0, -'/index.html'.length)
+  }
+  return `${base}/api`
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api${path}`, {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const response = await fetch(`${getApiBase()}${normalizedPath}`, {
     ...init,
     headers: {
       ...(init?.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
@@ -10,7 +19,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     let detail = `请求失败 (${response.status})`
     try {
       const body = await response.json()
-      detail = body.detail || detail
+      if (typeof body.detail === 'string') detail = body.detail
+      else if (Array.isArray(body.detail)) detail = body.detail.map((item: { loc?: Array<string | number>; msg?: string }) => `${item.loc?.filter((part) => part !== 'body').join('.') || '参数'}：${item.msg || '格式无效'}`).join('；')
     } catch {
       // Keep the status-based error when the body is not JSON.
     }
@@ -26,4 +36,3 @@ export function formatDate(value?: string | null): string {
 export function formatScore(value?: number | null, digits = 2): string {
   return value == null ? '—' : value.toFixed(digits)
 }
-

@@ -9,6 +9,13 @@ export type Status =
   | 'partial_failed'
   | 'failed'
 
+export interface PageResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  page_size: number
+}
+
 export interface DatasetVersion {
   id: string
   version_label: string
@@ -149,10 +156,14 @@ export interface ThresholdSummary {
   coverage: number
   by_language: Array<{
     source_language: string
-    mean: number
-    accuracy: number
+    mean: number | null
+    accuracy: number | null
     passed: number
     count: number
+    total: number
+    failed: number
+    cancelled: number
+    coverage: number
   }>
   aggregates: Array<Record<string, unknown>>
 }

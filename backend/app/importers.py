@@ -38,12 +38,15 @@ class ImportValidationError(ValueError):
 
 def _safe_extract(archive: Path, destination: Path) -> None:
     destination = destination.resolve()
-    with zipfile.ZipFile(archive) as zipped:
-        for member in zipped.infolist():
-            target = (destination / member.filename).resolve()
-            if destination not in target.parents and target != destination:
-                raise ImportValidationError(f"ZIP 包含不安全路径: {member.filename}")
-        zipped.extractall(destination)
+    try:
+        with zipfile.ZipFile(archive) as zipped:
+            for member in zipped.infolist():
+                target = (destination / member.filename).resolve()
+                if destination not in target.parents and target != destination:
+                    raise ImportValidationError(f"ZIP 包含不安全路径: {member.filename}")
+            zipped.extractall(destination)
+    except (zipfile.BadZipFile, RuntimeError, NotImplementedError) as exc:
+        raise ImportValidationError("无法读取 ZIP，请确认压缩包完整、未加密且使用受支持的压缩格式") from exc
 
 
 def stage_source(source_path: str | Path, kind: str) -> Path:
@@ -51,25 +54,36 @@ def stage_source(source_path: str | Path, kind: str) -> Path:
     if not source.exists():
         raise ImportValidationError(f"路径不存在: {source}")
     target = settings.import_dir / f"{kind}-{uuid.uuid4()}"
+    if target.resolve().is_relative_to(source):
+        raise ImportValidationError("导入目录不能包含系统暂存目录，请选择具体的数据集或推理结果目录")
     target.mkdir(parents=True, exist_ok=False)
-    if source.is_dir():
-        for child in source.iterdir():
-            destination = target / child.name
-            if child.is_dir():
-                shutil.copytree(child, destination)
-            else:
-                shutil.copy2(child, destination)
-    elif source.suffix.lower() == ".zip":
-        _safe_extract(source, target)
-        children = list(target.iterdir())
-        if len(children) == 1 and children[0].is_dir():
-            nested = children[0]
-            for child in list(nested.iterdir()):
-                shutil.move(str(child), target / child.name)
-            nested.rmdir()
-    else:
-        raise ImportValidationError("只支持目录或 .zip 文件")
+    try:
+        if source.is_dir():
+            for child in source.iterdir():
+                destination = target / child.name
+                if child.is_dir():
+                    shutil.copytree(child, destination)
+                else:
+                    shutil.copy2(child, destination)
+        elif source.suffix.lower() == ".zip":
+            _safe_extract(source, target)
+            children = list(target.iterdir())
+            if len(children) == 1 and children[0].is_dir():
+                nested = children[0]
+                for child in list(nested.iterdir()):
+                    shutil.move(str(child), target / child.name)
+                nested.rmdir()
+        else:
+            raise ImportValidationError("只支持目录或 .zip 文件")
+    except Exception:
+        shutil.rmtree(target, ignore_errors=True)
+        raise
     return target
+
+
+def prediction_content_hash(predictions: list[PredictionInput]) -> str:
+    payload = [row.model_dump(mode="json") for row in sorted(predictions, key=lambda row: row.sample_id)]
+    return sha256_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
 
 
 def _load_json(path: Path, model: type[T]) -> T:
@@ -426,6 +440,7 @@ def validate_submission_import(
                 "dataset_version_id": version.id if version else None,
                 "version_label": version.version_label if version else None,
                 "prediction_count": len(predictions),
+                "predictions_sha256": prediction_content_hash(predictions),
                 "missing_count": len(missing),
                 "unknown_count": len(unknown),
                 "content_sha256": dataset_entry.dataset_content_sha256.lower(),
@@ -468,6 +483,19 @@ def commit_submission_import(
     if not record.report.get("valid"):
         raise ImportValidationError("校验未通过，不能提交")
     manifest = ResultManifest.model_validate(record.manifest)
+    verified_predictions: dict[str, list[PredictionInput]] = {}
+    report_by_key = {item["dataset_key"]: item for item in record.report["datasets"]}
+    for dataset_entry in manifest.datasets:
+        mapping = report_by_key[dataset_entry.dataset_key]
+        predictions, errors = _load_jsonl(
+            Path(record.staged_path) / dataset_entry.dataset_key / "predictions.jsonl", PredictionInput,
+        )
+        if errors or mapping.get("predictions_sha256") != prediction_content_hash(predictions):
+            raise ImportValidationError("暂存结果内容已变化或核验记录需要升级，请重新核验")
+        expected = set(session.scalars(select(DatasetSample.sample_id).where(DatasetSample.dataset_version_id == mapping["dataset_version_id"])))
+        if len(predictions) != len(expected) or {row.sample_id for row in predictions} != expected:
+            raise ImportValidationError("预测 ID 与数据集版本不完整匹配，请重新核验")
+        verified_predictions[dataset_entry.dataset_key] = predictions
     model_run = ModelRun(
         run_name=manifest.run_name,
         model_family=manifest.model_family,
@@ -487,15 +515,9 @@ def commit_submission_import(
     )
     session.add(submission)
     session.flush()
-    report_by_key = {item["dataset_key"]: item for item in record.report["datasets"]}
     for dataset_entry in manifest.datasets:
         mapping = report_by_key[dataset_entry.dataset_key]
-        predictions, errors = _load_jsonl(
-            Path(record.staged_path) / dataset_entry.dataset_key / "predictions.jsonl",
-            PredictionInput,
-        )
-        if errors:
-            raise ImportValidationError("暂存结果在提交前发生变化，请重新校验")
+        predictions = verified_predictions[dataset_entry.dataset_key]
         submission_dataset = SubmissionDataset(
             submission_id=submission.id,
             dataset_version_id=mapping["dataset_version_id"],
