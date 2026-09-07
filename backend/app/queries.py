@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from .validation import validate_threshold
 from .models import (
-    AggregateScore, DatasetJob, DatasetSample, DatasetVersion, EvaluationItem, EvaluationTask, EvaluatorJob, EvaluatorRevision,
+    AggregateScore, DatasetJob, DatasetSample, DatasetVersion, EvaluationItem, EvaluationTask, EvaluatorJob, EvaluatorProfile, EvaluatorRevision,
     InferenceSubmission, Language, ModelRun, Prediction, ScoreResult, SubmissionDataset,
 )
 
@@ -18,6 +18,19 @@ TASK_GROUPS = {
     "completed": {"completed"},
     "exception": {"failed", "partial_failed", "partial_cancelled", "cancelled"},
 }
+
+
+def status_sort_value(column):
+    """Use the same lifecycle order for job and sample table headers."""
+    statuses = ["queued", "preprocessing", "running", "cancelling", "completed",
+                "partial_cancelled", "cancelled", "partial_failed", "failed", "unscored"]
+    return case({status: rank for rank, status in enumerate(statuses)},
+                value=func.coalesce(column, "unscored"), else_=len(statuses))
+
+
+def table_order(column, direction: str, tie_breaker):
+    """Keep missing values last in both directions, and equal values stable."""
+    return (column.is_(None), column.desc() if direction == "desc" else column.asc(), tie_breaker.asc())
 
 
 def task_load_options():
@@ -162,45 +175,57 @@ def dataset_language_pairs(session: Session, version_ids: list[str]) -> dict[str
     return result
 
 
+def result_summary_statement(job_ids):
+    """Shared SQL aggregation for list values and sorting before pagination.
+
+    ``job_ids`` can be a bounded list or the filtered result-list SELECT, so a
+    numeric sort never fetches every matching job/sample into Python.
+    """
+    is_bleu = EvaluatorProfile.evaluator_type == "sacrebleu_zh"
+    score_value = case((is_bleu, comparable_item_score("sacrebleu_zh")), else_=ScoreResult.score)
+    successful = func.coalesce(
+        (EvaluationItem.status == "completed") & ScoreResult.id.is_not(None)
+        & score_value.between(0, case((is_bleu, 100), else_=10)), False,
+    )
+    return (
+        select(
+            EvaluatorJob.id, EvaluatorRevision.default_threshold.label("threshold"),
+            EvaluatorProfile.evaluator_type,
+            func.count(DatasetSample.id).label("total"),
+            func.sum(case((successful, 1), else_=0)).label("successful"),
+            func.avg(case((successful, ScoreResult.score), else_=None)).label("micro_mean"),
+            func.sum(case((successful & (score_value >= EvaluatorRevision.default_threshold), 1), else_=0)).label("passed"),
+        )
+        .select_from(EvaluatorJob)
+        .join(EvaluatorRevision, EvaluatorRevision.id == EvaluatorJob.evaluator_revision_id)
+        .join(EvaluatorProfile, EvaluatorProfile.id == EvaluatorRevision.profile_id)
+        .join(DatasetJob, DatasetJob.id == EvaluatorJob.dataset_job_id)
+        .join(SubmissionDataset, SubmissionDataset.id == DatasetJob.submission_dataset_id)
+        .outerjoin(DatasetSample, DatasetSample.dataset_version_id == SubmissionDataset.dataset_version_id)
+        .outerjoin(Prediction, (Prediction.submission_dataset_id == SubmissionDataset.id)
+                   & (Prediction.sample_id == DatasetSample.sample_id))
+        .outerjoin(EvaluationItem, (EvaluationItem.prediction_id == Prediction.id)
+                   & (EvaluationItem.evaluator_job_id == EvaluatorJob.id))
+        .outerjoin(ScoreResult, ScoreResult.id == EvaluationItem.score_result_id)
+        .where(EvaluatorJob.id.in_(job_ids))
+        .group_by(EvaluatorJob.id, EvaluatorRevision.default_threshold, EvaluatorProfile.evaluator_type)
+    )
+
+
 def result_summaries(session: Session, jobs: list[EvaluatorJob]) -> dict[str, dict[str, Any]]:
     """List summaries use each job's threshold and the same complete denominator as detail."""
-    grouped: dict[str, list[str]] = {}
-    for job in jobs:
-        grouped.setdefault(job.evaluator_revision.profile.evaluator_type, []).append(job.id)
     summaries = {}
-    for evaluator_type, job_ids in grouped.items():
-        successful = scored_item_condition(evaluator_type)
-        score_value = comparable_item_score(evaluator_type)
-        rows = session.execute(
-            select(
-                EvaluatorJob.id, EvaluatorRevision.default_threshold.label("threshold"),
-                func.count(DatasetSample.id).label("total"),
-                func.sum(case((successful, 1), else_=0)).label("successful"),
-                func.avg(case((successful, ScoreResult.score), else_=None)).label("micro_mean"),
-                func.sum(case((successful & (score_value >= EvaluatorRevision.default_threshold), 1), else_=0)).label("passed"),
-            )
-            .select_from(EvaluatorJob)
-            .join(EvaluatorRevision, EvaluatorRevision.id == EvaluatorJob.evaluator_revision_id)
-            .join(DatasetJob, DatasetJob.id == EvaluatorJob.dataset_job_id)
-            .join(SubmissionDataset, SubmissionDataset.id == DatasetJob.submission_dataset_id)
-            .outerjoin(DatasetSample, DatasetSample.dataset_version_id == SubmissionDataset.dataset_version_id)
-            .outerjoin(Prediction, (Prediction.submission_dataset_id == SubmissionDataset.id)
-                       & (Prediction.sample_id == DatasetSample.sample_id))
-            .outerjoin(EvaluationItem, (EvaluationItem.prediction_id == Prediction.id)
-                       & (EvaluationItem.evaluator_job_id == EvaluatorJob.id))
-            .outerjoin(ScoreResult, ScoreResult.id == EvaluationItem.score_result_id)
-            .where(EvaluatorJob.id.in_(job_ids))
-            .group_by(EvaluatorJob.id, EvaluatorRevision.default_threshold)
-        ).mappings()
-        for row in rows:
-            total, successful_count, passed = row["total"], row["successful"], row["passed"]
-            summaries[row["id"]] = {
-                "threshold": row["threshold"], "score_max": 100 if evaluator_type == "sacrebleu_zh" else 10,
-                "unit": "BLEU" if evaluator_type == "sacrebleu_zh" else "point",
-                "micro_accuracy": passed / total if total else None, "micro_mean": row["micro_mean"],
-                "passed": passed, "total": total, "successful": successful_count,
-                "unscored": total - successful_count, "coverage": successful_count / total if total else 0,
-            }
+    rows = session.execute(result_summary_statement([job.id for job in jobs])).mappings()
+    for row in rows:
+        total, successful_count, passed = row["total"], row["successful"], row["passed"]
+        is_bleu = row["evaluator_type"] == "sacrebleu_zh"
+        summaries[row["id"]] = {
+            "threshold": row["threshold"], "score_max": 100 if is_bleu else 10,
+            "unit": "BLEU" if is_bleu else "point",
+            "micro_accuracy": passed / total if total else None, "micro_mean": row["micro_mean"],
+            "passed": passed, "total": total, "successful": successful_count,
+            "unscored": total - successful_count, "coverage": successful_count / total if total else 0,
+        }
     return summaries
 
 

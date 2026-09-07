@@ -46,7 +46,7 @@ from .models import (
     SubmissionDataset,
 )
 from .validation import validate_threshold
-from .queries import TASK_GROUPS, cancelled_item_counts, comparable_item_score, comparison_checks, dataset_language_pairs, model_search, page_tasks, result_summaries, scored_item_condition, task_change_version, task_load_options, threshold_summary
+from .queries import TASK_GROUPS, cancelled_item_counts, comparable_item_score, comparison_checks, dataset_language_pairs, model_search, page_tasks, result_summaries, result_summary_statement, scored_item_condition, status_sort_value, table_order, task_change_version, task_load_options, threshold_summary
 from .queue import (
     JobStateConflict,
     cancel_dataset_job,
@@ -425,6 +425,8 @@ def list_dataset_samples(
     language: str | None = None,
     session: Session = Depends(get_session),
     sample_id: str | None = None,
+    sort: Literal["id", "sample_id", "source_language", "source_text", "reference_zh"] = "id",
+    direction: Literal["asc", "desc"] = "asc",
 ) -> dict[str, Any]:
     query = select(DatasetSample).where(DatasetSample.dataset_version_id == version_id)
     count_query = select(func.count(DatasetSample.id)).where(
@@ -436,9 +438,11 @@ def list_dataset_samples(
     if sample_id is not None:
         query = query.where(DatasetSample.sample_id == sample_id)
         count_query = count_query.where(DatasetSample.sample_id == sample_id)
-    rows = session.scalars(
-        query.order_by(DatasetSample.id).offset((page - 1) * page_size).limit(page_size)
-    )
+    sort_columns = {"id": DatasetSample.id, "sample_id": DatasetSample.sample_id,
+                    "source_language": DatasetSample.source_language, "source_text": DatasetSample.source_text,
+                    "reference_zh": DatasetSample.reference_zh}
+    rows = session.scalars(query.order_by(*table_order(sort_columns[sort], direction, DatasetSample.id))
+                           .offset((page - 1) * page_size).limit(page_size))
     return {
         "total": session.scalar(count_query) or 0,
         "page": page,
@@ -743,6 +747,8 @@ def paginated_results(
     q: str = "", session: Session = Depends(get_session),
     dataset_version_id: str | None = None,
     status_group: Literal["all", "completed", "active", "exception"] = "all",
+    sort: Literal["default", "run_name", "dataset", "micro_accuracy", "micro_mean", "status", "created_at"] = "default",
+    direction: Literal["asc", "desc"] = "asc",
 ) -> dict[str, Any]:
     statement = (
         select(EvaluatorJob).join(DatasetJob).join(EvaluationTask).join(InferenceSubmission).join(ModelRun)
@@ -760,7 +766,22 @@ def paginated_results(
     if status_group in TASK_GROUPS:
         statement = statement.where(EvaluatorJob.status.in_(TASK_GROUPS[status_group]))
     total = session.scalar(select(func.count()).select_from(statement.subquery())) or 0
-    jobs = session.scalars(statement.order_by(EvaluationTask.created_at.desc(), EvaluatorJob.id.desc()).offset((page - 1) * page_size).limit(page_size)).all()
+    order = (EvaluationTask.created_at.desc(), EvaluatorJob.id.desc())
+    if sort != "default":
+        if sort in {"micro_accuracy", "micro_mean"}:
+            summary = result_summary_statement(statement.with_only_columns(EvaluatorJob.id)).subquery()
+            statement = statement.join(summary, summary.c.id == EvaluatorJob.id)
+            sort_column = (summary.c.passed * 1.0 / func.nullif(summary.c.total, 0)
+                           if sort == "micro_accuracy" else summary.c.micro_mean)
+        else:
+            sort_column = {"run_name": ModelRun.run_name, "dataset": Dataset.key,
+                           "status": status_sort_value(EvaluatorJob.status),
+                           "created_at": EvaluationTask.created_at}[sort]
+        order = table_order(sort_column, direction, EvaluatorJob.id)
+        if sort == "dataset":
+            order = (*table_order(Dataset.key, direction, EvaluatorJob.id)[:2],
+                     *table_order(DatasetVersion.version_label, direction, EvaluatorJob.id))
+    jobs = session.scalars(statement.order_by(*order).offset((page - 1) * page_size).limit(page_size)).all()
     # Fetch all parent relationships in batches, shared by the detail serializers below.
     if jobs:
         task_ids = select(DatasetJob.task_id).where(DatasetJob.id.in_({job.dataset_job_id for job in jobs}))
@@ -818,12 +839,13 @@ def evaluator_job_items(
     page_size: int = Query(50, ge=1, le=200),
     language: str | None = None,
     item_status: Literal["completed", "failed", "cancelled", "queued", "running", "unscored"] | None = None,
-    sort: Literal["id", "score"] = "id",
+    sort: Literal["id", "sample_id", "source_language", "translation_zh", "score", "status", "verdict", "cache_hit", "reason"] = "id",
     direction: Literal["asc", "desc"] = "asc",
     score_operator: Literal["eq", "lt", "lte", "gt", "gte"] | None = None,
     score_value: float | None = None,
     session: Session = Depends(get_session),
     sample_id: str | None = None,
+    threshold: float | None = None,
 ) -> dict[str, Any]:
     job = session.get(EvaluatorJob, job_id)
     if not job:
@@ -837,6 +859,11 @@ def evaluator_job_items(
             validate_threshold(evaluator_type, score_value)
         except ValueError as exc:
             raise fail(400, str(exc).replace("阈值", "筛选得分")) from exc
+    if threshold is not None:
+        try:
+            validate_threshold(evaluator_type, threshold)
+        except ValueError as exc:
+            raise fail(400, str(exc)) from exc
     scored = scored_item_condition(evaluator_type)
     current_score = comparable_item_score(evaluator_type)
     filters = [DatasetSample.dataset_version_id == submission_dataset.dataset_version_id]
@@ -876,10 +903,19 @@ def evaluator_job_items(
         .where(*filters)
     )
     count_query = select(func.count()).select_from(base.subquery())
-    order = [DatasetSample.id.desc() if direction == "desc" else DatasetSample.id.asc()]
-    if sort == "score":
-        visible_score = case((scored, current_score), else_=None)
-        order = [visible_score.is_(None), visible_score.desc() if direction == "desc" else visible_score.asc(), DatasetSample.id.asc()]
+    verdict_threshold = threshold if threshold is not None else job.evaluator_revision.default_threshold
+    visible_reason = case((scored, func.nullif(ScoreResult.reason, "")), else_=None)
+    sort_columns = {
+        "id": DatasetSample.id, "sample_id": DatasetSample.sample_id,
+        "source_language": DatasetSample.source_language,
+        "translation_zh": func.nullif(Prediction.translation_zh, ""),
+        "score": case((scored, current_score), else_=None),
+        "status": status_sort_value(EvaluationItem.status),
+        "verdict": case((~scored, 0), (current_score < verdict_threshold, 1), else_=2),
+        "cache_hit": case((scored, EvaluationItem.cache_hit), else_=None),
+        "reason": func.coalesce(visible_reason, func.nullif(EvaluationItem.error, "")),
+    }
+    order = table_order(sort_columns[sort], direction, DatasetSample.id)
     rows = session.execute(
         base.order_by(*order).offset((page - 1) * page_size).limit(page_size)
     ).all()
@@ -1162,12 +1198,21 @@ def model_run_dict(item: ModelRun) -> dict[str, Any]:
 def paginated_model_runs(
     page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
     q: str = "", session: Session = Depends(get_session),
+    sort: Literal["default", "run_name", "model_family", "model_version", "inference_platform", "inference_mode", "notes", "created_at"] = "default",
+    direction: Literal["asc", "desc"] = "asc",
 ) -> dict[str, Any]:
     statement = select(ModelRun)
     if q:
         statement = statement.where(model_search(q))
     total = session.scalar(select(func.count()).select_from(statement.subquery())) or 0
-    rows = session.scalars(statement.order_by(ModelRun.created_at.desc(), ModelRun.id.desc()).offset((page - 1) * page_size).limit(page_size))
+    order = (ModelRun.created_at.desc(), ModelRun.id.desc())
+    if sort != "default":
+        sort_columns = {"run_name": ModelRun.run_name, "model_family": ModelRun.model_family,
+                        "model_version": func.nullif(ModelRun.model_version, ""),
+                        "inference_platform": ModelRun.inference_platform, "inference_mode": ModelRun.inference_mode,
+                        "notes": func.nullif(ModelRun.notes, ""), "created_at": ModelRun.created_at}
+        order = table_order(sort_columns[sort], direction, ModelRun.id)
+    rows = session.scalars(statement.order_by(*order).offset((page - 1) * page_size).limit(page_size))
     return {"items": [model_run_dict(row) for row in rows], "total": total, "page": page, "page_size": page_size}
 
 

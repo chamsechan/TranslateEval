@@ -9,6 +9,7 @@ import ScoreChart from '../components/ScoreChart'
 import StatusTag from '../components/StatusTag'
 import DatasetSamples from '../components/DatasetSamples'
 import { languageLabel, languagePairLabel } from '../languages'
+import { sortableColumns } from '../tableSorting'
 import { useApiQuery } from '../hooks/useApiQuery'
 import { useTaskChanges } from '../hooks/useTaskChanges'
 import ResultsListPage from './ResultsListPage'
@@ -46,6 +47,8 @@ interface ResultContext {
 }
 
 const parseScore = (value: string | null, max: number): number | null => value != null && value.trim() !== '' && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= max ? Number(value) : null
+const itemSortKeys = new Set(['sample_id', 'source_language', 'translation_zh', 'score', 'status', 'verdict', 'cache_hit', 'reason'])
+const languageSortKeys = new Set(['source_language', 'passed', 'accuracy', 'count', 'coverage', 'mean', 'unscored'])
 const itemStatuses = new Set(['completed', 'unscored', 'failed', 'cancelled', 'queued', 'running'])
 const active = new Set(['queued', 'preprocessing', 'running', 'cancelling'])
 const scoreOperators = [
@@ -87,13 +90,19 @@ function ResultDetail({ jobId }: { jobId: string }) {
   const onlyUnscored = !!status && status !== 'completed'
   const scoreValue = onlyUnscored ? null : parseScore(searchParams.get('score_value'), max)
   const sampleId = searchParams.get('sample_id') || ''
-  const sortOrder = searchParams.get('sort') === 'score' ? searchParams.get('direction') === 'desc' ? 'descend' : 'ascend' : null
+  const sortKey = itemSortKeys.has(searchParams.get('sort') || '') ? searchParams.get('sort')! : undefined
+  const sortOrder = sortKey ? searchParams.get('direction') === 'desc' ? 'descend' : 'ascend' : null
+  const languageSortKey = languageSortKeys.has(searchParams.get('language_sort') || '') ? searchParams.get('language_sort')! : undefined
+  const languageSortOrder = languageSortKey ? searchParams.get('language_direction') === 'desc' ? 'descend' : 'ascend' : null
+  const rawLanguagePage = Number(searchParams.get('language_page') || 1)
+  const languagePage = Number.isSafeInteger(rawLanguagePage) && rawLanguagePage > 0 ? rawLanguagePage : 1
   const returnTo = searchParams.get('return_to') || '/results'
   const listPath = /^\/results(?:\?|$)/.test(returnTo) ? returnTo : '/results'
   const versionQuery = useApiQuery<DatasetVersion>(context && datasetPreview ? `/dataset-versions/${context.dataset.dataset_version_id}` : null)
   const summaryQuery = useApiQuery<ThresholdSummary>(threshold == null ? null : `/evaluator-jobs/${jobId}/summary?threshold=${threshold}`)
   const { data: summary, error: summaryError } = summaryQuery
-  const params = new URLSearchParams({ page: String(page), page_size: '50', sort: sortOrder ? 'score' : 'id', direction: sortOrder === 'descend' ? 'desc' : 'asc' })
+  const params = new URLSearchParams({ page: String(page), page_size: '50', sort: sortKey || 'id', direction: sortOrder === 'descend' ? 'desc' : 'asc' })
+  if (sortKey === 'verdict' && threshold != null) params.set('threshold', String(threshold))
   if (language) params.set('language', language)
   if (sampleId) params.set('sample_id', sampleId)
   if (status) params.set('item_status', status)
@@ -160,17 +169,21 @@ function ResultDetail({ jobId }: { jobId: string }) {
       <div className="result-summary-caption">正确 {summary?.passed ?? '—'} / 总数 {summary?.total ?? '—'} · 未评分 {summary?.unscored ?? '—'}（计为未通过）。加权平均准确率 = 总正确数 / 总样本数；宏平均准确率按语种等权。</div>
     </Card>
     {summary && <Card className="panel-card" title="各语种评测结果" style={{ marginBottom: 18 }}>
-      <Typography.Paragraph type="secondary">得分 ≥ {threshold} 为正确，准确率 = 正确数 / 该语种总数。点击语种查看全部句子，点击未评分数量排查异常。</Typography.Paragraph>
-      <Table rowKey="source_language" size="small" pagination={{ pageSize: 10, hideOnSinglePage: true, showSizeChanger: false, showTotal: total => `${total} 个语言对` }} scroll={{ x: 1000 }} dataSource={summary.by_language} columns={[
-        { title: '语言对', dataIndex: 'source_language', width: 220, render: (value: string) => <Button type="link" className="result-table-link" onClick={() => inspectLanguage(value)}>{languagePairLabel(value)}</Button> },
-        { title: '正确 / 总数', render: (_, row) => `${row.passed} / ${row.total}` },
-        { title: '准确率', sorter: (a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0), render: (_, row) => row.accuracy == null ? '—' : `${(row.accuracy * 100).toFixed(1)}%` },
-        { title: '已评分 / 总数', render: (_, row) => `${row.count} / ${row.total}` },
-        { title: '评分覆盖率', render: (_, row) => `${(row.coverage * 100).toFixed(1)}%` },
-        { title: '已评分平均分', dataIndex: 'mean', render: (value: number | null) => formatScore(value) },
-        { title: '未评分（计失败）', render: (_, row) => row.unscored ? <Button danger type="link" className="result-table-link" aria-label={`查看 ${row.source_language} 未评分样本`} onClick={() => inspectLanguage(row.source_language, true)}>{row.unscored}</Button> : 0 },
+      <Typography.Paragraph type="secondary">得分 ≥ {threshold} 为正确，准确率 = 正确数 / 该语种总数。点击语种查看全部句子，点击未评分数量排查异常。点击列标题：升序 → 降序 → 默认；语言对按语种代码排序。</Typography.Paragraph>
+      <Table rowKey="source_language" size="small" onChange={(_, __, sorter, extra) => {
+        if (extra.action !== 'sort') return
+        const next = Array.isArray(sorter) ? sorter[0] : sorter
+        updateFilters({ language_sort: next.order ? String(next.columnKey) : null, language_direction: next.order ? next.order === 'descend' ? 'desc' : 'asc' : null, language_page: null })
+      }} pagination={{ current: languagePage, pageSize: 10, hideOnSinglePage: true, showSizeChanger: false, showTotal: total => `${total} 个语言对`, onChange: value => updateFilters({ language_page: value > 1 ? value : null }) }} scroll={{ x: 1000 }} dataSource={summary.by_language} columns={sortableColumns<ThresholdSummary['by_language'][number]>([
+        { title: '语言对', key: 'source_language', dataIndex: 'source_language', width: 220, render: (value: string) => <Button type="link" className="result-table-link" onClick={() => inspectLanguage(value)}>{languagePairLabel(value)}</Button> },
+        { title: '正确 / 总数', key: 'passed', render: (_, row) => `${row.passed} / ${row.total}` },
+        { title: '准确率', key: 'accuracy', render: (_, row) => row.accuracy == null ? '—' : `${(row.accuracy * 100).toFixed(1)}%` },
+        { title: '已评分 / 总数', key: 'count', render: (_, row) => `${row.count} / ${row.total}` },
+        { title: '评分覆盖率', key: 'coverage', render: (_, row) => `${(row.coverage * 100).toFixed(1)}%` },
+        { title: '已评分平均分', key: 'mean', dataIndex: 'mean', render: (value: number | null) => formatScore(value) },
+        { title: '未评分（计失败）', key: 'unscored', render: (_, row) => row.unscored ? <Button danger type="link" className="result-table-link" aria-label={`查看 ${row.source_language} 未评分样本`} onClick={() => inspectLanguage(row.source_language, true)}>{row.unscored}</Button> : 0 },
         { title: '操作', fixed: 'right', width: 90, render: (_, row) => <Button type="link" className="result-table-link" onClick={() => inspectLanguage(row.source_language)}>查看明细</Button> },
-      ]} />
+      ], { source_language: row => row.source_language, passed: row => row.passed, accuracy: row => row.accuracy, count: row => row.count, coverage: row => row.coverage, mean: row => row.mean, unscored: row => row.unscored }).map(column => languageSortKeys.has(String(column.key)) ? { ...column, sortOrder: languageSortKey === column.key ? languageSortOrder : null } : column)} />
     </Card>}
     <div ref={itemsRef} tabIndex={-1} className="result-items-section" aria-label="逐句评分明细">
     <Card className="panel-card" title="逐句评分明细" style={{ marginTop: 18 }}>
@@ -182,19 +195,19 @@ function ResultDetail({ jobId }: { jobId: string }) {
         <Button onClick={clearFilters}>清除筛选</Button>
       </Space>
       <Space wrap style={{ marginTop: 12 }}><Typography.Text type="secondary">快捷筛选：</Typography.Text><Button size="small" onClick={() => updateFilters({ status: 'completed', score_operator: 'gte', score_value: threshold, page: null })}>正确句子（≥ {threshold}）</Button><Button size="small" onClick={() => updateFilters({ status: 'completed', score_operator: 'lt', score_value: threshold, page: null })}>低于阈值（&lt; {threshold}）</Button><Button size="small" onClick={() => updateFilters({ status: 'unscored', score_value: null, page: null })}>未评分</Button></Space>
-      <Typography.Paragraph type="secondary" style={{ marginTop: 12 }}>当前匹配 {items?.total ?? '—'} 条。分数条件仅匹配已评分句子，等于按原始分数精确匹配；展开可查看原始分数及异常详情。</Typography.Paragraph>
+      <Typography.Paragraph type="secondary" style={{ marginTop: 12 }}>当前匹配 {items?.total ?? '—'} 条。分数条件仅匹配已评分句子，等于按原始分数精确匹配；展开可查看原始分数及异常详情。点击列标题：升序 → 降序 → 默认，排序应用于全部匹配句子；源语种按语种代码排序。</Typography.Paragraph>
       <QueryError error={itemsError} retry={itemsQuery.refresh} />
-      <Table scroll={{ x: 1100 }} loading={itemsQuery.loading} onChange={(_, __, sorter, extra) => {
-        if (extra.action === 'sort') { const next = Array.isArray(sorter) ? sorter[0] : sorter; updateFilters({ sort: next.order ? 'score' : null, direction: next.order === 'descend' ? 'desc' : 'asc', page: null }) }
+      <Table sortDirections={['ascend', 'descend']} scroll={{ x: 1100 }} loading={itemsQuery.loading} onChange={(_, __, sorter, extra) => {
+        if (extra.action === 'sort') { const next = Array.isArray(sorter) ? sorter[0] : sorter; updateFilters({ sort: next.order ? String(next.columnKey) : null, direction: next.order ? next.order === 'descend' ? 'desc' : 'asc' : null, page: null }) }
       }} rowKey="sample_id" dataSource={items?.items || []} locale={{ emptyText: language || status || sampleId || scoreValue != null ? '没有符合当前筛选条件的句子，请调整或清除筛选。' : '暂无样本' }} pagination={{ current: page, pageSize: 50, total: items?.total || 0, showSizeChanger: false, onChange: value => updateFilters({ page: value }) }} expandable={{ expandedRowRender: (row) => <Row gutter={14}><Col xs={24} md={8}><Typography.Text type="secondary">源文</Typography.Text><div className="code-template">{row.source_text}</div></Col><Col xs={24} md={8}><Typography.Text type="secondary">中文 GT</Typography.Text><div className="code-template">{row.reference_zh}</div></Col><Col xs={24} md={8}><Typography.Text type="secondary">候选译文</Typography.Text><div className="code-template">{row.translation_zh}</div></Col>{row.reason && <Col span={24} style={{ marginTop: 12 }}><Typography.Text type="secondary">评分理由：</Typography.Text> {row.reason}</Col>}{row.error && <Col span={24} style={{ marginTop: 12 }}><Alert type="error" showIcon message="评分异常" description={<div className="result-error-text">{row.error}</div>} /></Col>}<Col span={24} style={{ marginTop: 8 }}><Space size="large" wrap><Button size="small" onClick={() => setDatasetPreview({ language: row.source_language, sample: row.sample_id })}>核对数据集原文</Button><span>原始分数 {row.score ?? '—'} {row.unit}</span><span>评分尝试 {row.attempts} 次</span><span>实际模型 {row.actual_evaluator_model || '—'}</span><span>Prompt {row.actual_prompt_version_id || '—'}</span><span>Base URL {row.actual_base_url || '—'}</span></Space></Col></Row> }} columns={[
-        { title: '样本 ID', dataIndex: 'sample_id', width: 160 },
-        { title: '源语种', dataIndex: 'source_language', width: 130, render: (value: string) => <Tag>{languageLabel(value)}</Tag> },
-        { title: '候选译文', dataIndex: 'translation_zh', render: (value: string) => <div className="source-cell">{value}</div> },
-        { title: '分数', dataIndex: 'score', width: 100, sorter: true, sortOrder, render: (value: number | null, row) => <span className="score-cell" title={value == null ? '未评分' : `原始分数：${value}`}>{formatScore(value)} {row.unit}</span> },
-        { title: '评分状态', width: 110, render: (_, row) => row.status === 'unscored' ? <Tag>未评分</Tag> : <StatusTag status={row.status} /> },
-        { title: '判定', width: 160, render: (_, row) => !row.scored ? <Tag color="error">未评分，计失败</Tag> : row.score != null && row.score >= threshold ? <Tag color="success">正确</Tag> : <Tag color="error">未达标</Tag> },
-        { title: '来源', width: 95, render: (_, row) => !row.scored ? '—' : row.cache_hit ? <Tag color="gold">缓存</Tag> : <Tag color="blue">新评分</Tag> },
-        { title: '说明', dataIndex: 'reason', ellipsis: true, render: (value: string | null, row) => <span className="reason-text">{value || row.error || '—'}</span> },
+        { title: '样本 ID', key: 'sample_id', sorter: true, sortOrder: sortKey === 'sample_id' ? sortOrder : null, dataIndex: 'sample_id', width: 160 },
+        { title: '源语种', key: 'source_language', sorter: true, sortOrder: sortKey === 'source_language' ? sortOrder : null, dataIndex: 'source_language', width: 130, render: (value: string) => <Tag>{languageLabel(value)}</Tag> },
+        { title: '候选译文', key: 'translation_zh', sorter: true, sortOrder: sortKey === 'translation_zh' ? sortOrder : null, dataIndex: 'translation_zh', render: (value: string) => <div className="source-cell">{value}</div> },
+        { title: '分数', key: 'score', sorter: true, sortOrder: sortKey === 'score' ? sortOrder : null, dataIndex: 'score', width: 100, render: (value: number | null, row) => <span className="score-cell" title={value == null ? '未评分' : `原始分数：${value}`}>{formatScore(value)} {row.unit}</span> },
+        { title: '评分状态', key: 'status', sorter: true, sortOrder: sortKey === 'status' ? sortOrder : null, width: 110, render: (_, row) => row.status === 'unscored' ? <Tag>未评分</Tag> : <StatusTag status={row.status} /> },
+        { title: '判定', key: 'verdict', sorter: true, sortOrder: sortKey === 'verdict' ? sortOrder : null, width: 160, render: (_, row) => !row.scored ? <Tag color="error">未评分，计失败</Tag> : row.score != null && row.score >= threshold ? <Tag color="success">正确</Tag> : <Tag color="error">未达标</Tag> },
+        { title: '来源', key: 'cache_hit', sorter: true, sortOrder: sortKey === 'cache_hit' ? sortOrder : null, width: 95, render: (_, row) => !row.scored ? '—' : row.cache_hit ? <Tag color="gold">缓存</Tag> : <Tag color="blue">新评分</Tag> },
+        { title: '说明', key: 'reason', sorter: true, sortOrder: sortKey === 'reason' ? sortOrder : null, dataIndex: 'reason', ellipsis: true, render: (value: string | null, row) => <span className="reason-text">{value || row.error || '—'}</span> },
       ]} />
     </Card>
     </div>

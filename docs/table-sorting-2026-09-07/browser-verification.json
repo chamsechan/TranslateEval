@@ -1,0 +1,837 @@
+{
+  "base": "http://127.0.0.1:8770",
+  "fixture": "/tmp/table-sorting-2026-09-07/test.db",
+  "checks": [
+    {
+      "name": "结果列表六个数据列可排序，选择列及详情操作列无排序按钮",
+      "passed": true
+    },
+    {
+      "name": "结果列表全量数值排序在分页之前执行，均分三次点击恢复原始顺序并将空值放在末尾",
+      "passed": true
+    },
+    {
+      "name": "结果列表准确率与提交时间完整三态，切换列从升序开始",
+      "passed": true
+    },
+    {
+      "name": "结果排序后保留勾选的对比任务，刷新保留排序URL",
+      "passed": true
+    },
+    {
+      "name": "对比表九个数据列均可三态排序，均分空值升降都在末尾",
+      "passed": true
+    },
+    {
+      "name": "逐语种七个数据列完整三态排序，第三次恢复接口原始顺序",
+      "passed": true
+    },
+    {
+      "name": "逐语种零分与未评分分开，空均分在两个方向均置底",
+      "passed": true
+    },
+    {
+      "name": "逐句八个数据列三态传递API排序参数，保持语言和阈值筛选，第三次清除URL排序",
+      "passed": true
+    },
+    {
+      "name": "逐句切列从升序开始，排序刷新保持，未评分分数升降均置底",
+      "passed": true
+    },
+    {
+      "name": "数据集样本四列三态排序，写入sample_sort并在刷新后保持，第三次恢复默认",
+      "passed": true
+    },
+    {
+      "name": "模型记录首次点击时间列为升序，第二次降序，第三次恢复原默认倒序",
+      "passed": true
+    },
+    {
+      "name": "模型记录其余六列三态，操作列不可排序",
+      "passed": true
+    },
+    {
+      "name": "浏览器无JavaScript运行时异常或失败API请求",
+      "passed": true
+    },
+    {
+      "name": "语种表第二页点列标题后回到第一页，独立保留逐句语言筛选",
+      "passed": true
+    },
+    {
+      "name": "语种表调整判定阈值及刷新后保持排序、页码和逐句筛选",
+      "passed": true
+    },
+    {
+      "name": "语种第三次点击清理专属排序URL并恢复第一页默认顺序，切列首次升序",
+      "passed": true
+    },
+    {
+      "name": "受控语种表七列三态复验，0分与空值升降排序保持正确",
+      "passed": true
+    },
+    {
+      "name": "结果列表模型、数据集及状态三列完整三态，操作列始终无排序",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "apiCalls": [
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_mean&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=2&page_size=20&q=&status_group=all&sort=micro_mean&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_mean&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=2&page_size=20&q=&status_group=all&sort=micro_mean&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_accuracy&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_accuracy&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=created_at&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=created_at&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_mean&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_mean&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=created_at&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_mean&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/compare",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_mean&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_mean&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=sample_id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=sample_id&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=source_language&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=source_language&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=translation_zh&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=translation_zh&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=score&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=score&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=status&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=status&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=verdict&direction=asc&threshold=9&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=verdict&direction=desc&threshold=9&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=cache_hit&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=cache_hit&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=reason&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=reason&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=sample_id&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=sample_id&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=score&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=score&direction=asc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=score&direction=desc&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/datasets",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=sample_id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=sample_id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=sample_id&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=sample_id&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/datasets",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=sample_id&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_language&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_language&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_language&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_language&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_text&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_text&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_text&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=source_text&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=reference_zh&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=reference_zh&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=reference_zh&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=reference_zh&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=sample_id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-versions/inspection-version/samples?page=1&page_size=20&language=th&sort=sample_id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=created_at&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=created_at&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=run_name&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=run_name&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=model_family&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=model_family&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=model_version&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=model_version&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=inference_platform&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=inference_platform&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=inference_mode&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=inference_mode&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=notes&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=&sort=notes&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/model-runs/page?page=1&page_size=20&q=",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/items?page=1&page_size=50&sort=id&direction=asc&language=en",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/wide-job-dataset/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/items?page=1&page_size=50&sort=id&direction=asc&language=en",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/wide-job-dataset/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/items?page=1&page_size=50&sort=id&direction=asc&language=en",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/wide-job-dataset/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/items?page=1&page_size=50&sort=id&direction=asc&language=en",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/items?page=1&page_size=50&sort=id&direction=asc&language=en",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job/summary?threshold=9",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/wide-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/wide-job-dataset/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/items?page=1&page_size=50&sort=id&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/dataset-jobs/inspection-dataset-job/language-detection-summary",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/evaluator-jobs/inspection-job/summary?threshold=8",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/tasks/changes",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=run_name&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=run_name&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=dataset&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=dataset&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=status&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=status&direction=desc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_accuracy&direction=asc",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8770/api/results/page?page=1&page_size=20&q=&status_group=all&sort=micro_accuracy&direction=desc",
+      "status": 200
+    }
+  ]
+}

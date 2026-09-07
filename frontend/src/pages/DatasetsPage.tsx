@@ -45,6 +45,8 @@ export default function DatasetsPage() {
   const requestedVersionId = params.get('version')
   const requestedLanguage = params.get('language') || undefined
   const requestedSampleId = params.get('sample') || undefined
+  const requestedSort = params.get('sample_sort') || undefined
+  const requestedDirection = params.get('sample_direction') || undefined
   const samplePageNumber = Number(params.get('sample_page') || '1')
   const requestedPage = Number.isSafeInteger(samplePageNumber) && samplePageNumber > 0 ? samplePageNumber : 1
   const sampleVersionQuery = useApiQuery<DatasetVersion>(requestedVersionId ? `/dataset-versions/${encodeURIComponent(requestedVersionId)}` : null)
@@ -67,12 +69,14 @@ export default function DatasetsPage() {
       else next.delete('language')
       next.delete('sample')
       next.delete('sample_page')
+      next.delete('sample_sort')
+      next.delete('sample_direction')
       return next
     })
   }
   const closeSamples = () => setParams(previous => {
     const next = new URLSearchParams(previous)
-    for (const key of ['version', 'language', 'sample', 'sample_page']) next.delete(key)
+    for (const key of ['version', 'language', 'sample', 'sample_page', 'sample_sort', 'sample_direction']) next.delete(key)
     return next
   }, { replace: true })
   const updateSampleFilters = (filters: DatasetSampleFilters) => setParams(previous => {
@@ -83,6 +87,13 @@ export default function DatasetsPage() {
     else next.delete('sample')
     if (filters.page > 1) next.set('sample_page', String(filters.page))
     else next.delete('sample_page')
+    if (filters.sort) {
+      next.set('sample_sort', filters.sort)
+      next.set('sample_direction', filters.direction || 'asc')
+    } else {
+      next.delete('sample_sort')
+      next.delete('sample_direction')
+    }
     return next
   }, { replace: true })
   const viewResults = (version: DatasetVersion) => navigate(`/results?dataset_version_id=${encodeURIComponent(version.id)}`)
@@ -140,7 +151,7 @@ export default function DatasetsPage() {
         </Card> }))} />
       </Modal>
       {requestedVersionId && !sampleVersion && <Modal title="样本预览" width={900} open footer={null} onCancel={closeSamples}><QueryError error={sampleVersionQuery.error} retry={sampleVersionQuery.refresh} />{sampleVersionQuery.loading && <Skeleton active />}</Modal>}
-      {sampleVersion && <DatasetSamples key={JSON.stringify([sampleVersion.id, requestedLanguage, requestedSampleId, requestedPage])} version={sampleVersion} initialLanguage={requestedLanguage} initialSampleId={requestedSampleId} initialPage={requestedPage} onFiltersChange={updateSampleFilters} onClose={closeSamples} />}
+      {sampleVersion && <DatasetSamples key={JSON.stringify([sampleVersion.id, requestedLanguage, requestedSampleId, requestedPage, requestedSort, requestedDirection])} version={sampleVersion} initialLanguage={requestedLanguage} initialSampleId={requestedSampleId} initialPage={requestedPage} initialSort={requestedSort} initialDirection={requestedDirection} onFiltersChange={updateSampleFilters} onClose={closeSamples} />}
     </>
   )
 }
